@@ -1,0 +1,24 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Data Compare Result</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta http-equiv="refresh" content="60">
+    <style>
+    	h1{font-family: Arial; font-size: 14pt;}
+    	p {font-family: Arial; font-size: 12pt;} 
+		a {background-color: #4CAF50;border: none;border-radius:5px;color: white;padding: 10px 25px;text-decoration: none;margin: 4px 2px;cursor: pointer;}
+    </style>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+	<script type="text/javascript">
+		setTimeout(function(){
+		   window.location.reload(1);
+		}, 60000);
+	</script>    
+</head>
+<body>
+	<h1>Result: <small><span th:text="${msg}"></span></small></h1>
+    <p th:text="'Report will be displayed once data compare is completed.'" />
+    <a href="/">Click here to compare</a>
+</body>
+</html>
