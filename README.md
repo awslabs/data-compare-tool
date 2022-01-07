@@ -87,7 +87,7 @@ Fields to understand after launching the application.
 
 ## Creating an executable jar
 
-Get the latestcode from git barnch hhttps://github.com/awslabs/data-compare-tool.git
+Get the latestcode from git barnch https://github.com/awslabs/data-compare-tool.git
 
 Import the code into IDE
 
