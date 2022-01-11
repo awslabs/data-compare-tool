@@ -1,3 +1,13 @@
+/**
+ * Model class for Application and database connection properties .
+ *
+ *
+ * @author      Harnath Valeti
+ * @author      Madhu Athinarapu
+ * @version     1.0
+ * @since       1.0
+ */
+
 package com.datacompare.model;
 
 public class AppProperties {
@@ -5,6 +15,8 @@ public class AppProperties {
 	private int fetchSize;
 
 	private int maxDecimals;
+	
+	private int maxTextSize;
 	
 	private int maxNoofThreads;
 
@@ -23,6 +35,8 @@ public class AppProperties {
 	private String sourceUserName;
 
 	private String sourceUserPassword;
+
+	private boolean fssl;
 
 	private boolean ignoreTables;
 	
@@ -63,6 +77,8 @@ public class AppProperties {
 	private String targetJdbcUrl;
 	
 	private String reportType;
+
+	private boolean sourceSSLRequire;
 
 	/**
 	 * @return the fetchSize
@@ -501,6 +517,29 @@ public class AppProperties {
 		this.ignoreColumns = ignoreColumns;
 	}
 
+	/**
+	 * @return the maxTextSize
+	 */
+	public int getMaxTextSize() {
+		return maxTextSize;
+	}
+
+	/**
+	 * @param maxTextSize the maxTextSize to set
+	 */
+	public void setMaxTextSize(int maxTextSize) {
+		this.maxTextSize = maxTextSize;
+	}
+
+
+	public boolean isSourceSSLRequire() {
+		return sourceSSLRequire;
+	}
+
+	public void setSourceSSLRequire(boolean sourceSSLRequire) {
+		this.sourceSSLRequire = sourceSSLRequire;
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
@@ -508,6 +547,8 @@ public class AppProperties {
 		builder.append(fetchSize);
 		builder.append(", maxDecimals=");
 		builder.append(maxDecimals);
+		builder.append(", maxTextSize=");
+		builder.append(maxTextSize);
 		builder.append(", maxNoofThreads=");
 		builder.append(maxNoofThreads);
 		builder.append(", schemaName=");
@@ -524,6 +565,8 @@ public class AppProperties {
 		builder.append(sourcePort);
 		builder.append(", sourceUserName=");
 		builder.append(sourceUserName);
+		builder.append(", sourceSSLRequire=");
+		builder.append(sourceSSLRequire);
 		builder.append(", ignoreTables=");
 		builder.append(ignoreTables);
 		builder.append(", tableName=");

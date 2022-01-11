@@ -1,3 +1,12 @@
+/**
+ * Model class for Comparison Results.
+ *
+ *
+ * @author      Harnath Valeti
+ * @author      Madhu Athinarapu
+ * @version     1.0
+ * @since       1.0
+ */
 package com.datacompare.model;
 
 import java.util.ArrayList;

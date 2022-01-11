@@ -1,4 +1,13 @@
-
+/**
+ * Service class to execute the chunk. Chunk is a set of DB records to compare.
+ * This runs a thread for multiple chunks
+ *
+ *
+ * @author      Harnath Valeti
+ * @author      Madhu Athinarapu
+ * @version     1.0
+ * @since       1.0
+ */
 package com.datacompare.service;
 
 import java.sql.Connection;

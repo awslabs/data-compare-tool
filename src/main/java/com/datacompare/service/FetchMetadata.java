@@ -1,4 +1,14 @@
 
+/**
+ * Service class to Fatch the metadata of the database tables for multiple databases( source and target)
+ *
+ *
+ * @author      Harnath Valeti
+ * @author      Madhu Athinarapu
+ * @version     1.0
+ * @since       1.0
+ */
+
 package com.datacompare.service;
 
 import java.sql.Connection;
@@ -28,6 +38,8 @@ public class FetchMetadata {
 
 	private List<String> chunks = new ArrayList<String>();
 
+	public List<String> sortColumns = new ArrayList<String>();
+
 	public List<String> columns = new ArrayList<String>();
 
 	private String dbType = null;
@@ -35,6 +47,8 @@ public class FetchMetadata {
 	private int fetchSize;
 
 	private int maxDecimals;
+	
+	private int maxTextSize;
 	
 	private long rowCount;
 	
@@ -65,7 +79,7 @@ public class FetchMetadata {
 	 * @throws Exception
 	 */
 	public FetchMetadata(String dbType, String sourceDBType, Connection connection, String schemaName, String tableName,
-			long rowCount, String sourceSortKey, String sourcePrimaryKey,
+			long rowCount, String sourceSortKey, String sourcePrimaryKey, boolean sourceHasNoUniqueKey,
 			Map<String, TableColumnMetadata> sourceTableMetadataMap, List<String> columnList,
 			AppProperties appProperties) throws Exception {
 		
@@ -74,7 +88,7 @@ public class FetchMetadata {
 		if("Detail".equals(appProperties.getReportType())) {
 			
 			fetchDetailData(dbType, sourceDBType, connection, schemaName, tableName, rowCount, sourceSortKey,
-					sourcePrimaryKey, sourceTableMetadataMap, columnList, appProperties);
+					sourcePrimaryKey, sourceHasNoUniqueKey, sourceTableMetadataMap, columnList, appProperties);
 			
 		} else if("Basic".equals(appProperties.getReportType())) {
 			
@@ -92,13 +106,14 @@ public class FetchMetadata {
 	 * @param rowCount
 	 * @param sourceSortKey
 	 * @param sourcePrimaryKey
+	 * @param sourceHasNoUniqueKey
 	 * @param sourceTableMetadataMap
 	 * @param columnList
 	 * @param appProperties
 	 * @throws Exception
 	 */
 	private void fetchDetailData(String dbType, String sourceDBType, Connection connection, String schemaName,
-			String tableName, long rowCount, String sourceSortKey, String sourcePrimaryKey,
+			String tableName, long rowCount, String sourceSortKey, String sourcePrimaryKey, boolean sourceHasNoUniqueKey,
 			Map<String, TableColumnMetadata> sourceTableMetadataMap, List<String> columnList,
 			AppProperties appProperties) throws Exception {
 		
@@ -109,12 +124,13 @@ public class FetchMetadata {
 		setDbType(dbType);
 		setFetchSize(appProperties.getFetchSize());
 		setMaxDecimals(appProperties.getMaxDecimals());
+		setMaxTextSize(appProperties.getMaxTextSize()); 
 
 		Map<Integer, String> primaryKeyMap = new TreeMap<Integer, String>();
 
 		fetchTableColumns(sourceDBType, connection, schemaName, tableName, columnList, appProperties.isIgnoreColumns()); 
 		fetchPrimaryColumns(connection, schemaName, tableName, primaryKeyMap, sourceSortKey, sourcePrimaryKey,
-				sortKey, primaryKey, uniqueKeyCol);
+				sourceHasNoUniqueKey, sortKey, primaryKey, uniqueKeyCol);
 		prepareQuery(connection, schemaName, tableName, sortKey.toString(), primaryKey.toString(),
 				uniqueKeyCol.toString(), appProperties.getFilter(), appProperties.getFilterType(), rowCount, sourceTableMetadataMap);
 	}
@@ -154,19 +170,26 @@ public class FetchMetadata {
 			Map<String, TableColumnMetadata> sourceTableMetadataMap) throws SQLException {
 		
 		String query = null;
+		String sortCols = null;
 		String cols = null;
 		
 		switch (getDbType()) {
 
 		case "POSTGRESQL":
 
-			cols = getTargetColumns(sourceTableMetadataMap);
+			sortCols = replaceColumnWithHash(getTargetColumns(sourceTableMetadataMap,true));
+
+			cols = replaceColumnWithHash(getTargetColumns(sourceTableMetadataMap,false));
+			uniqueKeyCol=replaceColumnWithHash(uniqueKeyCol);
 			
 			query = "SELECT " + uniqueKeyCol + cols + " FROM " + schemaName + "." + tableName;
 
+
 			if(isHasNoUniqueKey()) {
 				
-				query = "SELECT t.* FROM (" + query + " order by " + cols + ") t";
+				String subQuery = "SELECT " + uniqueKeyCol + cols + " FROM (" + "SELECT " + cols + " FROM " + schemaName + "." + tableName + " order by " + sortCols + ") t1";
+				
+				query = "SELECT t2.* FROM (" + subQuery + ") t2";
 			}
 			
 			generateChunksPostgresql(connection, schemaName, tableName, rowCount, filter);
@@ -175,33 +198,32 @@ public class FetchMetadata {
 
 		case "ORACLE":
 
-			cols = getSourceColumns();
-			
+			sortCols = getSourceColumns(true);
+			cols=getSourceColumns(false);
 			query = "SELECT " + uniqueKeyCol + cols + " FROM " + schemaName + "." + tableName;
 			
 			if(isHasNoUniqueKey()) {
 				
-				query = "SELECT * FROM (" + query + " order by " + cols + ")";
+				String subQuery = "SELECT " + uniqueKeyCol + cols + " FROM (" + "SELECT " + cols + " FROM " + schemaName + "." + tableName  + " order by " + sortCols + ")";
+				
+				query = "SELECT * FROM (" + subQuery +  ")";
 			}
 			
-			generateSourceChunks(connection, schemaName, tableName, sortKey, primaryKey, filter, filterType, cols);
+			generateSourceChunks(connection, schemaName, tableName, sortKey, primaryKey, filter, filterType, sortCols);
 
 			break;
 
 		case "SQLSERVER":
 
-			cols = getSourceColumns();
-			
+			cols = getSourceColumns(false);
+			sortCols=getSourceColumns(true);
 			query = "SELECT " + uniqueKeyCol + cols + " FROM " + schemaName + "." + tableName;
-			
 			//TODO
 			if(isHasNoUniqueKey()) {
-				
-				query = "SELECT t.* FROM (" + query + " order by " + cols + ") t";
+				String subQuery = "SELECT " + uniqueKeyCol + cols + " FROM (" + "SELECT " +  cols + " FROM " + schemaName + "." + tableName + ") t1";
+				query = "SELECT t2.* FROM (" + subQuery + " order by " + sortCols + ") t2";
 			}
-			
-			generateSourceChunks(connection, schemaName, tableName, sortKey, primaryKey, filter, filterType, cols);
-
+			generateSourceChunks(connection, schemaName, tableName, sortKey, primaryKey, filter, filterType, sortCols);
 			break;
 		}
 		
@@ -209,14 +231,30 @@ public class FetchMetadata {
 		
 		logger.info("\n" + getDbType() + ": SQL Query without chunk: " + getSql());
 	}
-	
+
+	private String replaceColumnWithHash(String targetColumns) {
+
+		if(targetColumns!=null && !targetColumns.isEmpty()) {
+			String cols[] = targetColumns.split(",");
+			if (cols != null && cols.length > 0) {
+				for (int i = 0; i < cols.length; i++) {
+					if (cols[i].contains("#")) {
+						String replaceString = "\"" + cols[i] + "\"";
+						targetColumns=	targetColumns.replace(cols[i], replaceString);
+					}
+				}
+			}
+		}
+		return targetColumns;
+	}
+
 	/**
 	 * 
 	 * @return
 	 */
-	private String getSourceColumns() {
+	private String getSourceColumns(boolean isSortColumn) {
 		
-		return getColumns(getTableMetadataMap(), getTableMetadataMap(), false);
+		return getColumns(getTableMetadataMap(), getTableMetadataMap(), false, isSortColumn);
 	}
 	
 	/**
@@ -224,9 +262,9 @@ public class FetchMetadata {
 	 * @param sourceTableMetadataMap
 	 * @return
 	 */
-	private String getTargetColumns(Map<String, TableColumnMetadata> sourceTableMetadataMap) {
+	private String getTargetColumns(Map<String, TableColumnMetadata> sourceTableMetadataMap, boolean isSortColumn) {
 		
-		return getColumns(sourceTableMetadataMap, getTableMetadataMap(), true);
+		return getColumns(sourceTableMetadataMap, getTableMetadataMap(), true,isSortColumn);
 	}
 
 	/**
@@ -237,7 +275,7 @@ public class FetchMetadata {
 	 * @return
 	 */
 	private String getColumns(Map<String, TableColumnMetadata> sourceTableMetadataMap,
-			Map<String, TableColumnMetadata> targetTableMetadataMap, boolean isTarget) {
+			Map<String, TableColumnMetadata> targetTableMetadataMap, boolean isTarget, boolean isSortColumn) {
 		
 		StringBuilder cols = new StringBuilder();
 		List<String> colNames = new ArrayList<String>(sourceTableMetadataMap.keySet());
@@ -246,13 +284,21 @@ public class FetchMetadata {
 		
 			colName = isTarget ? colName.toLowerCase() : colName.toUpperCase();
 			
-			String colAs = targetTableMetadataMap.get(colName).getColumnAs();
-			
-			cols.append(colAs + ",");
-			
-			columns.add(colName);
+			String colAs = targetTableMetadataMap.get(colName) !=null ? targetTableMetadataMap.get(colName).getColumnAs():"";
+			String columnType = targetTableMetadataMap.get(colName)!=null ?targetTableMetadataMap.get(colName).getColumnType():"";
+			int colSize = targetTableMetadataMap.get(colName)!=null ? targetTableMetadataMap.get(colName).getColSize():0;
+             /** seperating the sorting columns from select column to avoid sql issues for CLOB/BLOB
+             * 1. Created two set of columns
+			  * 2. Excluing from the columns for sorting
+             * */
+			if(isSortColumn && (binaryColumnType(columnType) || varcharLargeSize(columnType, colSize))) {
+				columns.add(colName);
+			}else {
+				sortColumns.add(colName);
+				columns.add(colName);
+				cols.append(colAs + ",");
+			}
 		}
-		
 		if (!cols.toString().isEmpty()) {
 
 			cols.deleteCharAt(cols.length() - 1);
@@ -269,49 +315,53 @@ public class FetchMetadata {
 	 * @param primaryKeyMap
 	 * @param sourceSortKey
 	 * @param sourcePrimaryKey
+	 * @param sourceHasNoUniqueKey
 	 * @param sortKey
 	 * @param primaryKey
 	 * @param uniqueKeyCol
 	 * @throws Exception
 	 */
 	private void fetchPrimaryColumns(Connection connection, String schemaName, String tableName,
-			Map<Integer, String> primaryKeyMap, String sourceSortKey, String sourcePrimaryKey, StringBuilder sortKey,
+			Map<Integer, String> primaryKeyMap, String sourceSortKey, String sourcePrimaryKey, boolean sourceHasNoUniqueKey, StringBuilder sortKey,
 			StringBuilder primaryKey, StringBuilder uniqueKeyCol) throws Exception {
 		
-		ResultSet rs = null;
-		
-		try {
-
-			rs = connection.getMetaData().getPrimaryKeys(null, schemaName, tableName);
-
-			while (rs.next()) {
-
-				String colName = rs.getString("COLUMN_NAME");
-				Integer pkPosition = rs.getInt("KEY_SEQ");
-				primaryKeyMap.put(pkPosition, colName);
-			}
+		if(!sourceHasNoUniqueKey) {
 			
-			if (sourceSortKey != null && sourceSortKey.trim().length() > 0) {
+			ResultSet rs = null;
+			
+			try {
 
-				sortKey.append(sourceSortKey.toLowerCase());
-				primaryKey.append(sourcePrimaryKey.toLowerCase());
+				rs = connection.getMetaData().getPrimaryKeys(null, schemaName, tableName);
 
-			} else if (primaryKeyMap != null && primaryKeyMap.size() > 0) {
+				while (rs.next()) {
 
-				sortKey.append(StringUtils.join(primaryKeyMap.values(),","));
-				primaryKey.append(primaryKeyMap.get(1));
+					String colName = rs.getString("COLUMN_NAME");
+					Integer pkPosition = rs.getInt("KEY_SEQ");
+					primaryKeyMap.put(pkPosition, colName);
+				}
+				
+				if (sourceSortKey != null && sourceSortKey.trim().length() > 0) {
 
-				this.setSortKey(sortKey.toString());
-				this.setPrimaryKey(primaryKey.toString()); 
+					sortKey.append(sourceSortKey.toLowerCase());
+					primaryKey.append(sourcePrimaryKey.toLowerCase());
+
+				} else if (primaryKeyMap != null && primaryKeyMap.size() > 0) {
+
+					sortKey.append(StringUtils.join(primaryKeyMap.values(),","));
+					primaryKey.append(primaryKeyMap.get(1));
+
+					this.setSortKey(sortKey.toString());
+					this.setPrimaryKey(primaryKey.toString()); 
+				}
+
+			} catch (Exception e) {
+
+				logger.error(getDbType(), e);
+
+			} finally {
+
+				new JdbcUtil().closeResultSet(rs);
 			}
-
-		} catch (Exception e) {
-
-			logger.error(getDbType(), e);
-
-		} finally {
-
-			new JdbcUtil().closeResultSet(rs);
 		}
 
 		if (sortKey.toString().isEmpty()) {
@@ -328,7 +378,7 @@ public class FetchMetadata {
 
 			for (int i = 0; i < primaryKeyColsTempArray.length; i++) {
 
-				primaryKeyColsTemp = "concat(" + primaryKeyColsTemp;
+				primaryKeyColsTemp = "concat(" + convertDateToTimeStamp(primaryKeyColsTemp);
 			}
 
 			uniqueKeyCol.append(primaryKeyColsTemp + " AS key1 ,");
@@ -354,7 +404,23 @@ public class FetchMetadata {
 			}
 		}
 	}
-	
+
+	public String convertDateToTimeStamp(String colName) {
+
+		String colNameTmp = colName;
+		if (colNameTmp != null) {
+			String cols[] = colNameTmp.replace(")", "").split(",");
+			for (int i = 0; i < cols.length; i++) {
+				if (tableMetadataMap != null && tableMetadataMap.get(cols[i]) != null) {
+					String colType = tableMetadataMap.get(cols[i]).getColumnType();
+					if (colType != null && (colType.contains("DATE") || colType.contains("date") || colType.contains("TIMESTAMP") || colType.contains("timestamp"))) {
+						colName=colName.replace(cols[i], "TO_CHAR(" + cols[i] + ", \'YYYY-MM-DD HH24:MI:SS\')");
+					}
+				}
+			}
+		}
+		return colName;
+	}
 	/**
 	 * 
 	 * @param sourceDBType
@@ -387,10 +453,10 @@ public class FetchMetadata {
 
 				if(column(columnList, columnName, ignoreColumns)) continue;
 				
-				if (binaryColumnType(columnType) || varcharLargeSize(columnType, colSize)) { 
+				if (binaryColumnType(columnType) || varcharLargeSize(columnType, colSize)) {/*
 					
-					/** In case if source db is Oracle, it will check length for binary column types. 
-					 *  If source db is SQLServer, it will check MD5 hash string for binary column types.*/
+					*//** In case if source db is Oracle, it will check length for binary column types.
+					 *  If source db is SQLServer, it will check MD5 hash string for binary column types.*//*
 					if("ORACLE".equals(getDbType())) {
 						
 						if(varcharLargeSize(columnType, colSize)) {   
@@ -415,10 +481,9 @@ public class FetchMetadata {
 						col = "MD5(COALESCE (" + columnName + ",'NULL')) as " + columnName;
 						
 					} else {
-						
-						continue;
-					}
-					
+					}*/
+					col = columnName;
+					//col = "LENGTH(" + columnName + ") as " + columnName;
 				} else {
 					
 					col = columnName;
@@ -473,6 +538,7 @@ public class FetchMetadata {
 				tableColumnMetadata.setColSize(colSize);
 				tableColumnMetadata.setDecimalFormat(decimalFormat);
 				tableColumnMetadata.setColumnAs(col); 
+				tableColumnMetadata.setMaxTextSize(getMaxTextSize());
 
 				tableMetadataMap.put(columnName, tableColumnMetadata);
 			}
@@ -528,17 +594,17 @@ public class FetchMetadata {
 			.append(".").append(tableName);
 			
 		} else {
-			
+
 			sql.append("SELECT min(").append(primaryKey).append(") AS startRange, max(").append(primaryKey)
-			.append(") AS endRange,count(*) AS chunkSize, nt FROM (SELECT ").append(primaryKey).append(" ,ntile(")
-			.append(ntileSize).append(") OVER (ORDER BY ").append(primaryKey).append(" ) nt FROM ").append(schemaName)
-			.append(".").append(tableName);
-	
-			if(filter != null && !filter.isEmpty()) {
+					.append(") AS endRange,count(*) AS chunkSize, nt FROM (SELECT ").append(primaryKey).append(" ,ntile(")
+					.append(ntileSize).append(") OVER (ORDER BY ").append(primaryKey).append(" ) nt FROM ").append(schemaName)
+					.append(".").append(tableName);
+		}
+			/*if(filter != null && !filter.isEmpty()) {
 				
 				sql.append(" WHERE ").append(filter);
-			}
-		}
+			}*/
+
 		
 		if("ORACLE".equals(getDbType())) {
 			
@@ -554,36 +620,76 @@ public class FetchMetadata {
 		Statement stmt = connection.createStatement();
 
 		ResultSet rs = stmt.executeQuery(sql.toString());
-
+        int count=0;
 		while (rs.next()) {
-			
-			long startRange = rs.getLong("startRange");
-			long endRange = rs.getLong("endRange");
+
+			int columnType= rs.getMetaData().getColumnType(1);
+
+			long startRange=0;
+			long endRange=0;
+			if(!isNoNumericColumnType(columnType)){
+				 startRange = rs.getLong("startRange");
+				 endRange = rs.getLong("endRange");
+			}
 			long chunkSize = rs.getLong("chunkSize");
 
 			StringBuilder condition = new StringBuilder();
-			
-			condition.append("where ");
+            boolean whereapplied=false;
+			boolean filterapplied=false;
 
+			if(!isNoNumericColumnType(columnType)) {
+				condition.append("where ");
+				whereapplied=true;
+			}
+
+			if (filter != null && !filter.isEmpty() && !"Sample".equals(filterType)) {
+			 if(!whereapplied) {
+				 condition.append("where ");
+				 whereapplied=true;
+			 }
+				condition.append(filter);
+				filterapplied=true;
+			}
 			if(isHasNoUniqueKey()) {
-				
-				condition.append("key1").append(" >= ").append(startRange).append(" and ").append("key1")
-				.append(" <= ").append(endRange).append(" order by 1");
-				
+
+				if (isNoNumericColumnType(columnType) ){
+					condition.append(" order by 1");
+				} else {
+
+					if(filterapplied)
+					condition.append(" and ");
+                    if(count==0) {
+						condition.append("key1").append(" >= ").append(startRange).append(" and ").append("key1")
+								.append(" <= ").append(endRange).append(" order by 1");
+					}
+					else{
+						condition.append("key1").append(" > ").append(startRange).append(" and ").append("key1")
+								.append(" <= ").append(endRange).append(" order by 1");
+
+					}
+				}
 			} else {
 
-				if(filter != null && !filter.isEmpty() && !"Sample".equals(filterType)) {
-					
-					condition.append(filter).append(" and ");
+				if (isNoNumericColumnType(columnType) ){
+					condition.append(" order by ").append(sortKey);
+				} else {
+
+					if(filterapplied)
+						condition.append(" and ");
+					if(count==0) {
+						condition.append(primaryKey).append(" >=").append(startRange).append(" and ").append(primaryKey)
+								.append(" <= ").append(endRange).append(" order by ").append(sortKey);
+					}else{
+						condition.append(primaryKey).append(" > ").append(startRange).append(" and ").append(primaryKey)
+								.append(" <= ").append(endRange).append(" order by ").append(sortKey);
+					}
 				}
-				
-				condition.append(primaryKey).append(" >= ").append(startRange).append(" and ").append(primaryKey)
-						.append(" <= ").append(endRange).append(" order by ").append(sortKey);
 			}
 
 			logger.debug("Chunk Range, Min: " + startRange + ", Max: " + endRange + ", Size: " + chunkSize); 
 			
 			chunks.add(condition.toString());
+			count++;
 		}
 		
 		JdbcUtil jdbcUtil = new JdbcUtil();
@@ -610,6 +716,7 @@ public class FetchMetadata {
 
 		StringBuilder sql = new StringBuilder();
 
+
 		sql.append("SELECT count(*) as totalrec FROM ").append(schemaName).append(".").append(tableName);
 		
 		if(filter != null && filter.trim().length() > 0) {
@@ -618,7 +725,6 @@ public class FetchMetadata {
 		}
 
 		Statement stmt = connection.createStatement();
-
 		ResultSet rs = stmt.executeQuery(sql.toString());
 
 		if (rs.next()) {
@@ -641,8 +747,6 @@ public class FetchMetadata {
 	 * @param schemaName
 	 * @param tableName
 	 * @param rowCount
-	 * @param pkCols
-	 * @param pKey
 	 * @param filter
 	 * @throws SQLException
 	 */
@@ -682,7 +786,10 @@ public class FetchMetadata {
 				|| columnType.contains("blob") || columnType.contains("bytea") || columnType.contains("CLOB")
 				|| columnType.contains("clob") || columnType.contains("TEXT") || columnType.contains("text"));
 	}
-	
+
+	private boolean isNoNumericColumnType(int columnType) {
+		return (columnType==1 || columnType==12 || columnType==91||columnType==92|| columnType==93 );
+	}
 	/**
 	 * 
 	 * @param columnType
@@ -691,7 +798,7 @@ public class FetchMetadata {
 	 */
 	private boolean varcharLargeSize(String columnType, int colSize) {
 	
-		return ( (columnType.contains("VARCHAR") || columnType.contains("varchar")) && colSize > 500);
+		return ( (columnType.contains("VARCHAR") || columnType.contains("varchar")) && colSize > getMaxTextSize());
 	}
 
 	/**
@@ -846,5 +953,19 @@ public class FetchMetadata {
 	 */
 	public void setHasNoUniqueKey(boolean hasNoUniqueKey) {
 		this.hasNoUniqueKey = hasNoUniqueKey;
+	}
+
+	/**
+	 * @return the maxTextSize
+	 */
+	public int getMaxTextSize() {
+		return maxTextSize;
+	}
+
+	/**
+	 * @param maxTextSize the maxTextSize to set
+	 */
+	public void setMaxTextSize(int maxTextSize) {
+		this.maxTextSize = maxTextSize;
 	}
 }

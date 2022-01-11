@@ -1,3 +1,12 @@
+/**
+ * Startup classs for this application
+ *
+ *
+ * @author      Harnath Valeti
+ * @author      Madhu Athinarapu
+ * @version     1.0
+ * @since       1.0
+ */
 package com.datacompare;
 import java.util.Arrays;
 import java.util.Collections;
@@ -27,8 +36,6 @@ public class Application implements ApplicationRunner {
 	
     public static void main( String[] args ) {
     	SpringApplication app = new SpringApplication(Application.class);
-//    	app.setDefaultProperties(Collections
-//    	          .singletonMap("server.port", "80"));
     	        app.run(args);
     	SpringApplication.run(Application.class, args);
     }
@@ -43,43 +50,31 @@ public class Application implements ApplicationRunner {
         if(!args.getOptionNames().isEmpty()) {
         	
         	try {
-                
-                String sourceArgs = StringUtils.substringBetween(Arrays.toString(args.getSourceArgs()), "[--", "]");
-                
+
+				int subStringlength=4;
+				if(args.getSourceArgs() !=null && args.getSourceArgs().length>0)
+					subStringlength=Arrays.toString(args.getSourceArgs()).length();
+                String sourceArgs = StringUtils.substring(Arrays.toString(args.getSourceArgs()), 3, (subStringlength-1));
                 String[] sargs = sourceArgs.split(", --");
-                
                 Map<String, String> arguments = new HashMap<String, String>();
-                
                 for (int i = 0; i < sargs.length; i++) {
-                	
         			String[] keyVal = sargs[i].split("=", 2);
-        			
         			arguments.put(keyVal[0], keyVal[1]);
         		}
-                
-                AppProperties appProperties = new AppProperties(); 
-                
+                AppProperties appProperties = new AppProperties();
         		String connectionType = arguments.get("connectionType");
         		connectionType = (connectionType != null && !connectionType.isEmpty()) ? connectionType : "All";
         		appProperties.setConnectionType(connectionType);
-        		
         		String reportType = arguments.get("reportType");
         		reportType = (reportType != null && !reportType.isEmpty()) ? reportType : "Detail";
         		appProperties.setReportType(reportType);
-
-        		appProperties.setSourceDBType(arguments.get("sourceDBType").toUpperCase()); 
-        		
+        		appProperties.setSourceDBType(arguments.get("sourceDBType").toUpperCase());
         		if("All".equals(appProperties.getConnectionType())) {
-        			
         			setDatabaseProperties(arguments, appProperties);
-        			
         		} else if("JDBC".equals(appProperties.getConnectionType())) {
-            		
         			setJdbcDbProperties(arguments, appProperties);
         		}
-
         		setSchemaTableProperties(arguments, appProperties);
-        		
         		setOtherProperties(arguments, appProperties); 
         		
         		//Filter
@@ -116,6 +111,7 @@ public class Application implements ApplicationRunner {
 		appProperties.setSourceDBName(arguments.get("sourceDBName"));
 		String sourceDBService = arguments.get("sourceDBService");
 		sourceDBService = (sourceDBService != null && sourceDBService.trim().length() > 0) ? sourceDBService : "Service";
+		appProperties.setSourceSSLRequire((FormatUtil.getIntValue(arguments.get("sourceSSLRequire"), 0, 0) == 1) ? true : false);
 		appProperties.setSourceDBService(sourceDBService);
 		appProperties.setSourceUserName(arguments.get("sourceUsername"));
 		appProperties.setSourceUserPassword(arguments.get("sourcePassword"));
@@ -175,6 +171,7 @@ public class Application implements ApplicationRunner {
 		//Other Details
 		appProperties.setFetchSize(FormatUtil.getIntValue(arguments.get("chunkSize"), 10000, 1000000)); 
 		appProperties.setMaxDecimals(FormatUtil.getIntValue(arguments.get("maxDecimals"), 5, 10));
+		appProperties.setMaxTextSize(FormatUtil.getIntValue(arguments.get("maxTextSize"), 500, 5000));
 		appProperties.setMaxNoofThreads(FormatUtil.getIntValue(arguments.get("noofParrallelChunks"), 1, 10)); 
 		appProperties.setCompareOnlyDate((FormatUtil.getIntValue(arguments.get("compareOnlyDate"), 0, 0) == 1) ? true : false);
 		appProperties.setDisplayCompleteData((FormatUtil.getIntValue(arguments.get("displayCompleteData"), 0, 0) == 1) ? true : false);

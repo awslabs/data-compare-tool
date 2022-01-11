@@ -1,3 +1,13 @@
+/**
+ * Model class for database table meta data.
+ *
+ *
+ * @author      Harnath Valeti
+ * @author      Madhu Athinarapu
+ * @version     1.0
+ * @since       1.0
+ */
+
 package com.datacompare.model;
 
 public class TableColumnMetadata {
@@ -7,6 +17,8 @@ public class TableColumnMetadata {
 	private boolean isNullable;
 
 	private int noOfDecimals;
+	
+	private int maxTextSize;
 
 	private int colSize;
 
@@ -72,24 +84,18 @@ public class TableColumnMetadata {
 		this.columnAs = columnAs;
 	}
 
+	public int getMaxTextSize() {
+		return maxTextSize;
+	}
+
+	public void setMaxTextSize(int maxTextSize) {
+		this.maxTextSize = maxTextSize;
+	}
+
 	@Override
 	public String toString() {
-		StringBuilder builder = new StringBuilder();
-		builder.append("TableColumnMetadata [columnName=");
-		builder.append(columnName);
-		builder.append(", isNullable=");
-		builder.append(isNullable);
-		builder.append(", noOfDecimals=");
-		builder.append(noOfDecimals);
-		builder.append(", colSize=");
-		builder.append(colSize);
-		builder.append(", columnType=");
-		builder.append(columnType);
-		builder.append(", decimalFormat=");
-		builder.append(decimalFormat);
-		builder.append(", columnAs=");
-		builder.append(columnAs);
-		builder.append("]");
-		return builder.toString();
+		return "TableColumnMetadata [columnName=" + columnName + ", isNullable=" + isNullable + ", noOfDecimals="
+				+ noOfDecimals + ", maxTextSize=" + maxTextSize + ", colSize=" + colSize + ", columnType=" + columnType
+				+ ", decimalFormat=" + decimalFormat + ", columnAs=" + columnAs + "]";
 	}
 }
