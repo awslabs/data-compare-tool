@@ -1,3 +1,14 @@
+/**
+ * Controller class to handle all the web application flows
+ *
+ *
+ * @author      Harnath Valeti
+ * @author      Madhu Athinarapu
+ * @version     1.0
+ * @since       1.0
+ */
+
+
 package com.datacompare.controller;
 
 import java.io.File;
@@ -46,6 +57,7 @@ public class CompareController {
 			appProperties.setMaxDecimals(5); 
 			appProperties.setMaxNoofThreads(1);
 			appProperties.setFetchSize(10000); 
+			appProperties.setMaxTextSize(500); 
 			
 			model.addAttribute("datacompare", appProperties);
 			
@@ -83,8 +95,6 @@ public class CompareController {
 		
 			return "redirect:/result";
 		}
-		
-		System.out.println("Properties: "+ appProperties);
 		
 		toolRunning = Boolean.TRUE;
 		reportFileName = "XXX";
