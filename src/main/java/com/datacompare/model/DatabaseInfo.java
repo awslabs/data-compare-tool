@@ -1,3 +1,14 @@
+
+/**
+ * Model class for database information.
+ *
+ *
+ * @author      Harnath Valeti
+ * @author      Madhu Athinarapu
+ * @version     1.0
+ * @since       1.0
+ */
+
 package com.datacompare.model;
 
 public class DatabaseInfo {
@@ -14,7 +25,7 @@ public class DatabaseInfo {
 	private final String	password;
 	private final dbType	type;
 	private final boolean   destination;
-	private final boolean sslRequire;
+	private final boolean   sslRequire;
 	
 	/**
 	 * 
@@ -86,6 +97,9 @@ public class DatabaseInfo {
 		return destination;
 	}
 
+	public boolean isSslRequire() {
+		return sslRequire;
+	}
 	/**
 	 * 
 	 * @return
@@ -120,21 +134,30 @@ public class DatabaseInfo {
 		String url = "";
 		
 		switch (type) {
-		
+
 			case POSTGRESQL:
 				url = "jdbc:postgresql://" + hostName + ":" + port + "/" + database + "?tcpKeepAlive=true";
 				break;
 			case POSTGRESQL_SSL:
-				url = "jdbc:postgresql://" + hostName + ":" + port + "/" + database + "?sslmode=require&tcpKeepAlive=true"; 
- 				break;
+				url = "jdbc:postgresql://" + hostName + ":" + port + "/" + database + "?sslmode=require&tcpKeepAlive=true";
+				break;
 			case ORACLE:
-				url = "jdbc:oracle:thin:@" + hostName + ":" + port + ":" + database;
+				if (sslRequire)
+					url = "jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=tcps)(HOST=" + hostName + ")(PORT=" + port + "))(CONNECT_DATA=(SERVICE_NAME=" + database + ")))";
+				else
+					url = "jdbc:oracle:thin:@" + hostName + ":" + port + ":" + database;
 				break;
 			case ORACLE_SID:
-				url = "jdbc:oracle:thin:@" + hostName + ":" + port + ":" + database;
+				if (sslRequire)
+					url = "jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=tcps)(HOST=" + hostName + ")(PORT=" + port + "))(CONNECT_DATA=(SERVICE_NAME=" + database + ")))";
+				else
+					url = "jdbc:oracle:thin:@" + hostName + ":" + port + ":" + database;
 				break;
 			case ORACLE_Service:
-				url = "jdbc:oracle:thin:@" + hostName + ":" + port + "/" + database;
+				if (sslRequire)
+					url = "jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=tcps)(HOST=" + hostName + ")(PORT=" + port + "))(CONNECT_DATA=(SERVICE_NAME=" + database + ")))";
+				else
+					url = "jdbc:oracle:thin:@" + hostName + ":" + port + "/" + database;
 				break;
 			case SQLSERVER:
 				url = "jdbc:sqlserver://" + hostName + ":" + port + ";databaseName=" + database;

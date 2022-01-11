@@ -226,11 +226,11 @@
     					<table style="border: 0px;" id="srcTbl1Id">
     						<tr id="srcRow0Id" style="display: none;">
     							<td><strong>JDBC Url</strong><sup>*</sup></td>
-    							<td colspan="5"><input type="text" th:field="*{sourceJdbcUrl}" id="srcJdbcUrlId" placeholder="jdbc:oracle:thin:@{host}[:{port}]/{database}"/></td>
+    							<td colspan="6"><input type="text" th:field="*{sourceJdbcUrl}" id="srcJdbcUrlId" placeholder="jdbc:oracle:thin:@tcps:{host}[:{port}]/{database}"/></td>
     						</tr>
     						<tr id="srcRow1Id">
     							<td><strong>Host</strong><sup>*</sup></td>
-    							<td colspan="5"><input type="text" th:field="*{sourceIP}" id="srcIpId" required="required"/></td>
+    							<td colspan="6"><input type="text" th:field="*{sourceIP}" id="srcIpId" required="required"/></td>
     						</tr>
     						<tr id="srcRow2Id">
     							<td><strong>Port</strong><sup>*</sup></td>
@@ -245,14 +245,16 @@
 			    						<option th:value="SID" th:text="SID"/>
 									</select>
     							</td>
-    							<td>&nbsp;</td>
+								<td><strong>SSL Mode</strong></td>
+								<td><input type="checkbox" name="sourceSSLRequire" th:field="*{sourceSSLRequire}" /></td>
     						</tr>
     						<tr id="srcRow3Id">
     							<td><strong>Username</strong><sup>*</sup></td>
     							<td><input type="text" th:field="*{sourceUserName}" id="srcUserNameId" required="required"/></td>
     							<td><strong>Password</strong><sup>*</sup></td>
     							<td><input type="password" th:field="*{sourceUserPassword}" id="srcUserPasswordId" required="required"/></td>
-    							<td colspan="2">&nbsp;</td>
+    							<td colspan="3">&nbsp;</td>
+
     						</tr>
     					</table>	
     				</td>
@@ -323,7 +325,8 @@
     						<tr id="othRow1Id">
     							<td><strong>Max Decimal Size for Comparison</strong><sup>*</sup></td>
     							<td><input type="number" min="0" max="10" th:field="*{maxDecimals}" required="required"/></td>
-    							<td colspan="2">&nbsp;</td>
+    							<td><strong>Max Text Size for Comparison</strong><sup>*</sup></td>
+    							<td><input type="number" min="0" max="5000" th:field="*{maxTextSize}" required="required"/></td> 
     						</tr>
     						<tr id="othRow2Id">
     							<td><strong>Compare Only Date</strong></td> 

@@ -1,9 +1,17 @@
+/**
+ * Service class to compare the database table data between Source( Oracle) and Traget Database( like Postgres)
+ *
+ *
+ * @author      Harnath Valeti
+ * @author      Madhu Athinarapu
+ * @version     1.0
+ * @since       1.0
+ */
+
+
 package com.datacompare.service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -167,18 +175,42 @@ public class CompareData implements Runnable {
 
 					String content = entry.getValue();
 					String dataToCompareContent = dataToCompare.get(key);
-					
+
+					//if it is mismatch
 					if (!(content != null && dataToCompareContent != null && content.equals(dataToCompareContent))) {
+                     // if target has the data
+						if(dataToCompare.containsValue(content))
+						{
+							int sourceCount = Collections.frequency(data.values(), content);
+							int targetCount = Collections.frequency(dataToCompare.values(), content);
 
-						String failedContent = (content != null) ? content : "";
-						
-						this.result = "Failed";
+							if(sourceCount>targetCount){
 
-						//failTuple.add(failedContent);
+								 if(Collections.frequency(failedEntry.values(), content)<(sourceCount-targetCount)){
 
-						this.failedRowNumber = this.tempRowNumber;
+									 String failedContent = (content != null) ? content : "";
 
-						failedEntry.put(key, failedContent);
+									 this.result = "Failed";
+
+									 //failTuple.add(failedContent);
+
+									 this.failedRowNumber = this.tempRowNumber;
+
+									 failedEntry.put(key, failedContent);
+								 }
+							}
+						}
+						else {
+							String failedContent = (content != null) ? content : "";
+
+							this.result = "Failed";
+
+							//failTuple.add(failedContent);
+
+							this.failedRowNumber = this.tempRowNumber;
+
+							failedEntry.put(key, failedContent);
+						}
 					}
 				}
 			} catch (Exception e) {
