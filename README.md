@@ -51,7 +51,7 @@ b) Web mode: It can be used n number of times by supplying the required inputs f
 
 Get the binary distribution package of data compare tool and execute the binary version using below command.
 
-`java -jar datacompare-0.0.1.jar`
+`java -cp "<Data compare jar folder path >/datacompare-tool-1.0.0.jar:<Oracle Driver Folder path>/ojdbc7-12.1.0.2.jar:< oracle driver folder path>/*" -Dloader.main="com.datacompare.Application" org.springframework.boot.loader.PropertiesLauncher`
 
 Once 'Started Application' is seen launch the tool from web browser with URL: http://<<ipaddress>>:8080/
 
@@ -61,11 +61,11 @@ By default it runs on 8080 port, so make sure this port is open in case if it bl
 
 To run on a different port e.g:- 9000 use this argument with required port -Dserver.port=xxxx
 
-`java -jar -Dserver.port=9000 datacompare-0.0.1.jar`
+`java -cp "<Data compare jar folder path >/datacompare-tool-1.0.0.jar:<Oracle Driver Folder path>/ojdbc7-12.1.0.2.jar:< oracle driver folder path>/*" -Dloader.main="com.datacompare.Application" org.springframework.boot.loader.PropertiesLauncher  -Dserver.port=9000`
 
 To write the log data to a file instead of displaying in command.
 
-`java -jar datacompare-0.0.1.jar > CompareData.log`
+`java -cp "<Data compare jar folder path >/datacompare-tool-1.0.0.jar:<Oracle Driver Folder path>/ojdbc7-12.1.0.2.jar:< oracle driver folder path>/*" -Dloader.main="com.datacompare.Application" org.springframework.boot.loader.PropertiesLauncher > CompareData.log`
 
 Fields to understand after launching the application.
 
@@ -128,8 +128,11 @@ Get the binary distribution package of data compare tool and execute the binary 
 Example:
 
 ```
-java -jar datacompare-0.0.1.jar --sourceDBType=XXX --sourceHost=XXX --sourcePort=XXX --sourceUsername=XXX --sourcePassword=XXX --sourceDBService=XXX --sourceDBName=XXX --targetHost=XXX --targetPort=XXX --targetUsername=XXX --targetPassword=XXX --targetDBName=XXX --targetSSLRequire=X --schemaName=XXX --tableName=XXX --chunkSize=XXX --noofParrallelChunks=X --compareOnlyDate=X --maxDecimals=X --displayCompleteData=X --jobName=XXX --outputFolderPath=XXX ,--sqlFilter=XXX
+java -cp "<Data compare jar folder path >/datacompare-tool-1.0.0.jar:<Oracle Driver Folder path>/ojdbc7-12.1.0.2.jar:< oracle driver folder path>/*" -Dloader.main="com.datacompare.Application" org.springframework.boot.loader.PropertiesLauncher --sourceDBType=XXX --sourceHost=XXX --sourcePort=XXX --sourceUsername=XXX --sourcePassword=XXX --sourceDBService=XXX --sourceDBName=XXX --targetHost=XXX --targetPort=XXX --targetUsername=XXX --targetPassword=XXX --targetDBName=XXX --targetSSLRequire=X --schemaName=XXX --tableName=XXX --chunkSize=XXX --noofParrallelChunks=X --compareOnlyDate=X --maxDecimals=X --displayCompleteData=X --jobName=XXX --outputFolderPath=XXX ,--sqlFilter=XXX
 ```
+Eg: java -cp  "/Users/amsudan/Desktop/Projects/DataValidation/awslab/DBJarFix/data-compare-tool/target/datacompare-tool-1.0.0.jar:/Users/amsudan/Desktop/lib/ojdbc7-12.1.0.2.jar:/Users/amsudan/Desktop/lib/*"   -Dloader.main="com.datacompare.Application" org.springframework.boot.loader.PropertiesLauncher --sourceDBType=ORACLE --sourceHost="XXXX" --sourcePort=1521 --sourceUsername="XXXX" --sourcePassword="XXXXX"  --sourceDBName="bcmsemdbpaf" --targetHost="XXXX" --targetPort=5432 --targetUsername="XXXX" --targetDBName=demo --targetPassword="XXXX"  --schemaName="XXXX" --tableName="XXXXX" --chunkSize=10000 --noofParrallelChunks=5 --maxtextsizeforComparison=4000 --displayCompleteData=1
+
+
 
 Required arguments:
 
