@@ -130,8 +130,9 @@ Example:
 ```
 java -cp "<Data compare jar folder path >/datacompare-tool-1.0.0.jar:<Oracle Driver Folder path>/ojdbc7-12.1.0.2.jar:< oracle driver folder path>/*" -Dloader.main="com.datacompare.Application" org.springframework.boot.loader.PropertiesLauncher --sourceDBType=XXX --sourceHost=XXX --sourcePort=XXX --sourceUsername=XXX --sourcePassword=XXX --sourceDBService=XXX --sourceDBName=XXX --targetHost=XXX --targetPort=XXX --targetUsername=XXX --targetPassword=XXX --targetDBName=XXX --targetSSLRequire=X --schemaName=XXX --tableName=XXX --chunkSize=XXX --noofParrallelChunks=X --compareOnlyDate=X --maxDecimals=X --displayCompleteData=X --jobName=XXX --outputFolderPath=XXX ,--sqlFilter=XXX
 ```
-Eg: java -cp  "/Users/amsudan/Desktop/Projects/DataValidation/awslab/DBJarFix/data-compare-tool/target/datacompare-tool-1.0.0.jar:/Users/amsudan/Desktop/lib/ojdbc7-12.1.0.2.jar:/Users/amsudan/Desktop/lib/*"   -Dloader.main="com.datacompare.Application" org.springframework.boot.loader.PropertiesLauncher --sourceDBType=ORACLE --sourceHost="XXXX" --sourcePort=1521 --sourceUsername="XXXX" --sourcePassword="XXXXX"  --sourceDBName="bcmsemdbpaf" --targetHost="XXXX" --targetPort=5432 --targetUsername="XXXX" --targetDBName=demo --targetPassword="XXXX"  --schemaName="XXXX" --tableName="XXXXX" --chunkSize=10000 --noofParrallelChunks=5 --maxtextsizeforComparison=4000 --displayCompleteData=1
-
+```
+ java -cp  "/Users/amsudan/Desktop/Projects/DataValidation/awslab/DBJarFix/data-compare-tool/target/datacompare-tool-1.0.0.jar:/Users/amsudan/Desktop/lib/ojdbc7-12.1.0.2.jar:/Users/amsudan/Desktop/lib/*"   -Dloader.main="com.datacompare.Application" org.springframework.boot.loader.PropertiesLauncher --sourceDBType=ORACLE --sourceHost="XXXX" --sourcePort=1521 --sourceUsername="XXXX" --sourcePassword="XXXXX"  --sourceDBName="bcmsemdbpaf" --targetHost="XXXX" --targetPort=5432 --targetUsername="XXXX" --targetDBName=demo --targetPassword="XXXX"  --schemaName="XXXX" --tableName="XXXXX" --chunkSize=10000 --noofParrallelChunks=5 --maxtextsizeforComparison=4000 --displayCompleteData=1
+```
 
 
 Required arguments:
@@ -155,14 +156,29 @@ Optional arguments:
 --sourceDBService: If source is ORACLE then specific whether it should connect with Service/SID. Default is Service.
 --targetSSLRequire: If target is secured using SSL then set the value. Possible values 0 - False, 1 - True. Default value is 0.
 --tableName : Table name(s) single or comma separated. e.g:- "aaa,bbb,ccc"
---ignoreColumns : Column name(s)(single or comma separated) if these column(s) to be ignored from comparison. Present for data types like clob, blob & lob has no support for comparison. e.g:- "id, name, org_type"
+--ignoreColumns : Column name(s)(single or comma separated) if these column(s) to be ignored from comparison.
 --maxDecimals : Compare that many no of precision values after decimal point. Default value is 5, max value is 10.
 --compareOnlyDate : Compares only date and ignores time if value set. Possible values 0 - False, 1 - True. Default value is 0.
 --displayCompleteData : Ff detail report is required for mismatch data by default it will provide unique key values. Possible values 0 - False, 1 - True. Default value is 0.
 --jobName : The report will be named with this Job name. The date and time will be append to this Job Name. Default it will give 'data_comparison_result' as Job name.
 --outputFolderPath : Path to write the report files in this folder. Default it will write to the folder from where the tool is executed.
 --sqlFilter : Filter the data from fetch for comparison
+--maxTextSize : this parameter is used to set the column's varchar length max is 4000. In 11g upto varcahr(4000) is supported and beyond that datatype will be LOB(CLOB,BLOB).
 ```
+ 
+Java heap size parameters:
+
+ ```
+ -Xms : It is used for setting the initial and minimum heap size.
+ -Xmx : It is used for setting the maximum heap size. 
+ ```
+
+Example:
+
+ ```
+java -Xms10m -Xmx1024m -cp  "/Users/amsudan/Desktop/Projects/DataValidation/awslab/DBJarFix/data-compare-tool/target/datacompare-tool-1.0.0.jar:/Users/amsudan/Desktop/lib/ojdbc7-12.1.0.2.jar:/Users/amsudan/Desktop/lib/*"   -Dloader.main="com.datacompare.Application" org.springframework.boot.loader.PropertiesLauncher --sourceDBType=ORACLE --sourceHost="XXXX" --sourcePort=1521 --sourceUsername="XXXX" --sourcePassword="XXXXX"  --sourceDBName="dbname" --targetHost="XXXX" --targetPort=5432 --targetUsername="XXXX" --targetDBName=dbmae --targetPassword="XXXX"  --schemaName="XXXX" --tableName="XXXXX" --chunkSize=10000 --noofParrallelChunks=5 --maxTextSize=4000 --displayCompleteData=1
+```
+ 
 
 ## Output
 
