@@ -10,7 +10,28 @@
 
 package com.datacompare.model;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
+
 public class AppProperties {
+	@Autowired
+	private Environment env;
+
+	private boolean isSourceDB;
+	private String region;
+	private String srcDBSecretManagerEndPoint;
+	private String srcDBSecretName;
+	private String tgtDBSecretManagerEndPoint;
+	private String tgtDBSecretName;
+
+	public boolean isSourceDB() {
+		return isSourceDB;
+	}
+
+	public void setSourceDB(boolean sourceDB) {
+		isSourceDB = sourceDB;
+	}
 
 	private int fetchSize;
 
@@ -79,6 +100,14 @@ public class AppProperties {
 	private String reportType;
 
 	private boolean sourceSSLRequire;
+
+	//@Value("${jdbc.truststore.path}")
+	private String trustStorePath;
+	//@Value("${jdbc.truststore.password}")
+	public String trsutStorePassword;
+
+
+
 
 	/**
 	 * @return the fetchSize
@@ -540,6 +569,22 @@ public class AppProperties {
 		this.sourceSSLRequire = sourceSSLRequire;
 	}
 
+	public String getTrustStorePath() {
+		return trustStorePath;
+	}
+
+	public void setTrustStorePath(String trustStorePath) {
+		this.trustStorePath = trustStorePath;
+	}
+
+	public String getTrsutStorePassword() {
+		return trsutStorePassword;
+	}
+
+	public void setTrsutStorePassword(String trsutStorePassword) {
+		this.trsutStorePassword = trsutStorePassword;
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
@@ -607,5 +652,47 @@ public class AppProperties {
 		builder.append(reportType);
 		builder.append("]");
 		return builder.toString();
+	}
+
+
+
+	public String getRegion() {
+		return region;
+	}
+
+	public void setRegion(String region) {
+		this.region = region;
+	}
+
+	public void setSrcDBSecretManagerEndPoint(String srcDBSecretManagerEndPoint) {
+		this.srcDBSecretManagerEndPoint = srcDBSecretManagerEndPoint;
+	}
+
+	public String getSrcDBSecretManagerEndPoint() {
+		return srcDBSecretManagerEndPoint;
+	}
+
+	public void setSrcDBSecretName(String srcDBSecretName) {
+		this.srcDBSecretName = srcDBSecretName;
+	}
+
+	public String getSrcDBSecretName() {
+		return srcDBSecretName;
+	}
+
+	public void setTgtDBSecretManagerEndPoint(String tgtDBSecretManagerEndPoint) {
+		this.tgtDBSecretManagerEndPoint = tgtDBSecretManagerEndPoint;
+	}
+
+	public String getTgtDBSecretManagerEndPoint() {
+		return tgtDBSecretManagerEndPoint;
+	}
+
+	public void setTgtDBSecretName(String tgtDBSecretName) {
+		this.tgtDBSecretName = tgtDBSecretName;
+	}
+
+	public String getTgtDBSecretName() {
+		return tgtDBSecretName;
 	}
 }
