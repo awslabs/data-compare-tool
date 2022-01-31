@@ -128,10 +128,10 @@ Get the binary distribution package of data compare tool and execute the binary 
 Example:
 
 ```
-java -cp "<Data compare jar folder path >/datacompare-tool-1.0.0.jar:<Oracle Driver Folder path>/ojdbc7-12.1.0.2.jar:< oracle driver folder path>/*" -Dloader.main="com.datacompare.Application" org.springframework.boot.loader.PropertiesLauncher --sourceDBType=XXX --sourceHost=XXX --sourcePort=XXX --sourceUsername=XXX --sourcePassword=XXX --sourceDBService=XXX --sourceDBName=XXX --targetHost=XXX --targetPort=XXX --targetUsername=XXX --targetPassword=XXX --targetDBName=XXX --targetSSLRequire=X --schemaName=XXX --tableName=XXX --chunkSize=XXX --noofParrallelChunks=X --compareOnlyDate=X --maxDecimals=X --displayCompleteData=X --jobName=XXX --outputFolderPath=XXX ,--sqlFilter=XXX
+java -cp "<Data compare jar folder path >/datacompare-tool-1.0.0.jar:<Oracle Driver Folder path>/ojdbc7-12.1.0.2.jar:< oracle driver folder path>/*" -Dloader.main="com.datacompare.Application" org.springframework.boot.loader.PropertiesLauncher --sourceDBType=XXX --sourceHost=XXX --sourcePort=XXX --sourceUsername=XXX --sourcePassword=XXX --sourceDBService=XXX --sourceDBName=XXX --targetHost=XXX --targetPort=XXX --targetUsername=XXX --targetPassword=XXX --targetDBName=XXX --targetSSLRequire=X --schemaName=XXX --tableName=XXX --chunkSize=XXX --noofParallelChunks=X --compareOnlyDate=X --maxDecimals=X --displayCompleteData=X --jobName=XXX --outputFolderPath=XXX ,--sqlFilter=XXX
 ```
 ```
- java -cp  "/Users/amsudan/Desktop/Projects/DataValidation/awslab/DBJarFix/data-compare-tool/target/datacompare-tool-1.0.0.jar:/Users/amsudan/Desktop/lib/ojdbc7-12.1.0.2.jar:/Users/amsudan/Desktop/lib/*"   -Dloader.main="com.datacompare.Application" org.springframework.boot.loader.PropertiesLauncher --sourceDBType=ORACLE --sourceHost="XXXX" --sourcePort=1521 --sourceUsername="XXXX" --sourcePassword="XXXXX"  --sourceDBName="bcmsemdbpaf" --targetHost="XXXX" --targetPort=5432 --targetUsername="XXXX" --targetDBName=demo --targetPassword="XXXX"  --schemaName="XXXX" --tableName="XXXXX" --chunkSize=10000 --noofParrallelChunks=5 --maxtextsizeforComparison=4000 --displayCompleteData=1
+ java -cp  "/Users/amsudan/Desktop/Projects/DataValidation/awslab/DBJarFix/data-compare-tool/target/datacompare-tool-1.0.0.jar:/Users/amsudan/Desktop/lib/ojdbc7-12.1.0.2.jar:/Users/amsudan/Desktop/lib/*"   -Dloader.main="com.datacompare.Application" org.springframework.boot.loader.PropertiesLauncher --sourceDBType=ORACLE --sourceHost="XXXX" --sourcePort=1521 --sourceUsername="XXXX" --sourcePassword="XXXXX"  --sourceDBName="bcmsemdbpaf" --targetHost="XXXX" --targetPort=5432 --targetUsername="XXXX" --targetDBName=demo --targetPassword="XXXX"  --schemaName="XXXX" --tableName="XXXXX" --chunkSize=10000 --noofParallelChunks=5 --maxtextsizeforComparison=4000 --displayCompleteData=1
 ```
 
 
@@ -146,7 +146,7 @@ Required arguments:
 --sourceDBName | --targetDBName : Database name to be used to connect. SID/Service name in case if source db is ORACLE, Database name in case if source db is SQLSERVER. Database name for target db.
 --schemaName : Database schema(s) single or comma separated. e.g:- "xxx,yyy,zzz"
 --chunkSize : No of rows to fetch from a table for comparison. Default value is 10000, max value is 1000000
---noofParrallelChunks : No of parallel chunks to fetch for comparison. Default value is 1, max value is 10.
+--noofParallelChunks : No of parallel chunks to fetch for comparison. Default value is 1, max value is 10.
 ```
 
 
@@ -176,7 +176,7 @@ Java heap size parameters:
 Example:
 
  ```
-java -Xms10m -Xmx1024m -cp  "/Users/amsudan/Desktop/Projects/DataValidation/awslab/DBJarFix/data-compare-tool/target/datacompare-tool-1.0.0.jar:/Users/amsudan/Desktop/lib/ojdbc7-12.1.0.2.jar:/Users/amsudan/Desktop/lib/*"   -Dloader.main="com.datacompare.Application" org.springframework.boot.loader.PropertiesLauncher --sourceDBType=ORACLE --sourceHost="XXXX" --sourcePort=1521 --sourceUsername="XXXX" --sourcePassword="XXXXX"  --sourceDBName="dbname" --targetHost="XXXX" --targetPort=5432 --targetUsername="XXXX" --targetDBName=dbmae --targetPassword="XXXX"  --schemaName="XXXX" --tableName="XXXXX" --chunkSize=10000 --noofParrallelChunks=5 --maxTextSize=4000 --displayCompleteData=1
+java -Xms10m -Xmx1024m -cp  "/Users/amsudan/Desktop/Projects/DataValidation/awslab/DBJarFix/data-compare-tool/target/datacompare-tool-1.0.0.jar:/Users/amsudan/Desktop/lib/ojdbc7-12.1.0.2.jar:/Users/amsudan/Desktop/lib/*"   -Dloader.main="com.datacompare.Application" org.springframework.boot.loader.PropertiesLauncher --sourceDBType=ORACLE --sourceHost="XXXX" --sourcePort=1521 --sourceUsername="XXXX" --sourcePassword="XXXXX"  --sourceDBName="dbname" --targetHost="XXXX" --targetPort=5432 --targetUsername="XXXX" --targetDBName=dbmae --targetPassword="XXXX"  --schemaName="XXXX" --tableName="XXXXX" --chunkSize=10000 --noofParallelChunks=5 --maxTextSize=4000 --displayCompleteData=1
 ```
  
 
