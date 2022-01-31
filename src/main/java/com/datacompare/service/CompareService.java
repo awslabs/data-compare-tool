@@ -238,12 +238,12 @@ public class CompareService {
 			DatabaseInfo sourceDb = new DatabaseInfo(appProperties.getSourceIP(), appProperties.getSourcePort(),
 					appProperties.getSourceDBName(), appProperties.getSourceDBService(),
 					appProperties.getSourceUserName(), appProperties.getSourceUserPassword(), appProperties.isSourceSSLRequire(),
-					dbType.valueOf(appProperties.getSourceDBType().toUpperCase()), false);
+					dbType.valueOf(appProperties.getSourceDBType().toUpperCase()),false,appProperties.getTrustStorePath(),appProperties.getTrsutStorePassword());
 			
 			DatabaseInfo targetDb = new DatabaseInfo(appProperties.getTargetIP(), appProperties.getTargetPort(),
 					appProperties.getTargetDBName(), null, appProperties.getTargetUserName(),
 					appProperties.getTargetUserPassword(), appProperties.isTargetSSLRequire(), dbType.POSTGRESQL,
-					true);
+					true, appProperties.getTrustStorePath(),  appProperties.getTrsutStorePassword());
 
   			sourceConn = getConnection(sourceDb);
   			logger.info("Source DB Connection Details: " + sourceConn);
@@ -356,7 +356,7 @@ public class CompareService {
 
 		if (dto.getFilename() != null && dto.getFilename().trim().endsWith(".html")) {
 
-			data.append("<tr><td><b>Report</b></td><td>").append("<a href='/result/view/").append(dto.getFilename())
+			data.append("<tr><td><b>Report</b></td><td>").append("<a href='").append(dto.getFilename())
 					.append("'>View Details</a></td></tr>");
 		}
 
@@ -438,7 +438,7 @@ public class CompareService {
 	 */
 	public Connection getConnection(DatabaseInfo db) throws Exception {
 
-		return getConnection(db.getURL(), db.getDriverClass(), db.getUserName(), db.getPassword(),db.getType().name(),db.isSslRequire());
+		return getConnection(db.getURL(), db.getDriverClass(), db.getUserName(), db.getPassword(),db.getType().name(),db.isSslRequire(),db.getTrustStorePath(),db.getTrsutStorePassword());
 	}
 	
 	/**
@@ -450,7 +450,7 @@ public class CompareService {
 	 * @return
 	 * @throws Exception
 	 */
-	public Connection getConnection(String url, String driverClass, String user, String password, String dbType,boolean isSslRequire) throws Exception {
+	public Connection getConnection(String url, String driverClass, String user, String password, String dbType,boolean isSslRequire,String trustStorePath, String trsutStorePassword) throws Exception {
 		
 		try {
 			
@@ -467,7 +467,7 @@ public class CompareService {
 		props.setProperty("password", password);
 		if (isSslRequire) {
 			//props.setProperty("oracle.net.ssl_cipher_suites", "(TLS_ SA_WITH_AES_128_CBC_SHA, TLS_ SA_WITH_AES_256_CBC_SHA, SSL_ SA_WITH_3DES_EDE_CBC_SHA ,SSL_ SA_WITH_ C4_128_SHA,SSL_ SA_WITH_ C4_128_MD5 ,SSL_ SA_WITH_DES_CBC_SHA ,SSL_DH_anon_WITH_3DES_EDE_CBC_SHA,SSL_DH_anon_WITH_ C4_128_MD5,SSL_DH_anon_WITH_DES_CBC_SHA,SSL_ SA_EXPO T_WITH_ C4_40_MD5 ,SSL_ SA_EXPO T_WITH_DES40_CBC_SHA ,TLS_ SA_WITH_AES_128_CBC_SHA,TLS_ SA_WITH_AES_256_CBC_SHA)");
-			setSslProperties(props);
+			setSslProperties(props,trustStorePath, trsutStorePassword);
 		}
 		logger.info("\n" + url);
 		Connection conn = DriverManager.getConnection(url, props);
@@ -507,22 +507,13 @@ public class CompareService {
 	/**
 	 * Method for configuring SSL connection properties.
 	 */
-	public void setSslProperties(Properties props) {
-	//	props.setProperty("oracle.net.authentication_services", "(TCPS)");
+	public void setSslProperties(Properties props,String trustStorePath,String trsutStorePassword) {
 
-		//props.setProperty("javax.net.ssl.trustStore", "/Users/amsudan/Library/Java/JavaVirtualMachines/corretto-1.8.0_302/Contents/Home/jre/lib/security/mystore");
-		//props.setProperty("javax.net.ssl.trustStorePassword", "changeit");
+		props.setProperty("javax.net.ssl.trustStore",
+				trustStorePath);
+		props.setProperty("javax.net.ssl.trustStoreType","JKS");
+		props.setProperty("javax.net.ssl.trustStorePassword",trsutStorePassword);
 
-
-		//props.setProperty("javax.net.ssl.trustStoreType", "JKS");
-		//props.setProperty("javax.net.ssl.trustStore", "/Users/amsudan/Library/Java/JavaVirtualMachines/corretto-1.8.0_302/Contents/Home/jre/lib/security/keystore.jks");
-		//props.setProperty("javax.net.ssl.trustStorePassword", "changeit");
-		//props.setProperty("javax.net.ssl.keyStoreType", "JKS");
-		//props.setProperty("javax.net.ssl.keyStore", "/Users/amsudan/Library/Java/JavaVirtualMachines/corretto-1.8.0_302/Contents/Home/jre/lib/security/keystore.jks");
-		//props.setProperty("javax.net.ssl.keyStorePassword", "changeit");
-		props.setProperty("javax.net.ssl.trustStore", "/Users/amsudan/Library/Java/JavaVirtualMachines/corretto-1.8.0_302/Contents/Home/jre/lib/security/cwallet.sso");
-		props.setProperty("javax.net.ssl.trustStoreType","SSO");
-		props.setProperty("javax.net.ssl.trustStorePassword","Oracle123");
 	}
 	/**
 	 * 

@@ -8,14 +8,18 @@
  * @since       1.0
  */
 package com.datacompare;
+import java.sql.Timestamp;
+import java.text.DateFormat;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.datacompare.util.AWSUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
@@ -24,6 +28,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import com.datacompare.model.AppProperties;
 import com.datacompare.service.CompareService;
 import com.datacompare.util.FormatUtil;
+import org.springframework.core.env.Environment;
 
 /**
  * Application Start!
@@ -33,8 +38,14 @@ import com.datacompare.util.FormatUtil;
 public class Application implements ApplicationRunner {
 	
 	private Logger logger = LoggerFactory.getLogger(Application.class);
-	
+
+	@Autowired
+	private Environment env;
+
     public static void main( String[] args ) {
+		Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+		String timeStampStr=timestamp.toString();
+		System.setProperty("logtimestamp", timeStampStr);
     	SpringApplication app = new SpringApplication(Application.class);
     	        app.run(args);
     	SpringApplication.run(Application.class, args);
@@ -69,22 +80,26 @@ public class Application implements ApplicationRunner {
         		reportType = (reportType != null && !reportType.isEmpty()) ? reportType : "Detail";
         		appProperties.setReportType(reportType);
         		appProperties.setSourceDBType(arguments.get("sourceDBType").toUpperCase());
+				appProperties.setRegion(arguments.get("secMgrRegion"));
+				appProperties.setSrcDBSecretManagerEndPoint(arguments.get("srcDBSecretMgrEndPoint"));
+				appProperties.setSrcDBSecretName(arguments.get("srcDBSecretName"));
+				appProperties.setTgtDBSecretManagerEndPoint(arguments.get("tgtDBSecretMgrEndPoint"));
+				appProperties.setTgtDBSecretName(arguments.get("tgtDBSecretName"));
+				logger.info("Properties: "+ appProperties);
         		if("All".equals(appProperties.getConnectionType())) {
         			setDatabaseProperties(arguments, appProperties);
         		} else if("JDBC".equals(appProperties.getConnectionType())) {
         			setJdbcDbProperties(arguments, appProperties);
         		}
         		setSchemaTableProperties(arguments, appProperties);
-        		setOtherProperties(arguments, appProperties); 
-        		
+        		setOtherProperties(arguments, appProperties);
         		//Filter
         		String filterType = arguments.get("filterType");
         		filterType = (filterType != null && !filterType.isEmpty()) ? filterType : "Sql";
         		appProperties.setFilterType(filterType);
-        		appProperties.setFilter(arguments.get("filter")); 
-        		
-        		logger.info("Properties: "+ appProperties);
-        		
+        		appProperties.setFilter(arguments.get("filter"));
+				appProperties.setTrustStorePath(env.getProperty("jdbc.truststore.password"));
+				appProperties.setTrsutStorePassword(env.getProperty("jdbc.truststore.password"));
         		CompareService compareService = new CompareService();
         		compareService.startService(appProperties); 
  				
@@ -107,23 +122,35 @@ public class Application implements ApplicationRunner {
     	
         //Source DB Details
 		appProperties.setSourceIP(arguments.get("sourceHost"));
+		if(arguments.get("sourcePort")!=null && arguments.get("sourcePort").length()>0)
 		appProperties.setSourcePort(Integer.parseInt(arguments.get("sourcePort")));
 		appProperties.setSourceDBName(arguments.get("sourceDBName"));
+		appProperties.setSourceUserPassword(arguments.get("sourcePassword"));
+		appProperties.setSourceUserName(arguments.get("sourceUsername"));
 		String sourceDBService = arguments.get("sourceDBService");
 		sourceDBService = (sourceDBService != null && sourceDBService.trim().length() > 0) ? sourceDBService : "Service";
 		appProperties.setSourceSSLRequire((FormatUtil.getIntValue(arguments.get("sourceSSLRequire"), 0, 0) == 1) ? true : false);
 		appProperties.setSourceDBService(sourceDBService);
-		appProperties.setSourceUserName(arguments.get("sourceUsername"));
-		appProperties.setSourceUserPassword(arguments.get("sourcePassword"));
-		
+
 		//Target DB Details
 		appProperties.setTargetIP(arguments.get("targetHost"));
+		if(arguments.get("targetPort")!=null && arguments.get("targetPort").length()>0)
 		appProperties.setTargetPort(Integer.parseInt(arguments.get("targetPort")));
 		appProperties.setTargetDBName(arguments.get("targetDBName"));
 		appProperties.setTargetSSLRequire((FormatUtil.getIntValue(arguments.get("targetSSLRequire"), 0, 0) == 1) ? true : false);
 		appProperties.setTargetUserName(arguments.get("targetUsername"));
 		appProperties.setTargetUserPassword(arguments.get("targetPassword"));
-    }
+		if(appProperties.getSrcDBSecretName()!=null && appProperties.getSrcDBSecretManagerEndPoint()!=null && appProperties.getRegion()!=null)
+		{
+			appProperties.setSourceDB(true);
+			appProperties = new AWSUtil().getSecrets(appProperties);
+		}
+		if(appProperties.getTgtDBSecretName()!=null && appProperties.getTgtDBSecretManagerEndPoint()!=null && appProperties.getRegion()!=null)
+		{
+			appProperties.setSourceDB(false);
+			appProperties = new AWSUtil().getSecrets(appProperties);
+		}
+	}
     
     /**
      * This will set JDBC details, user and password.
@@ -172,7 +199,7 @@ public class Application implements ApplicationRunner {
 		appProperties.setFetchSize(FormatUtil.getIntValue(arguments.get("chunkSize"), 10000, 1000000)); 
 		appProperties.setMaxDecimals(FormatUtil.getIntValue(arguments.get("maxDecimals"), 5, 10));
 		appProperties.setMaxTextSize(FormatUtil.getIntValue(arguments.get("maxTextSize"), 500, 5000));
-		appProperties.setMaxNoofThreads(FormatUtil.getIntValue(arguments.get("noofParrallelChunks"), 1, 10)); 
+		appProperties.setMaxNoofThreads(FormatUtil.getIntValue(arguments.get("noofParallelChunks"), 1, 10));
 		appProperties.setCompareOnlyDate((FormatUtil.getIntValue(arguments.get("compareOnlyDate"), 0, 0) == 1) ? true : false);
 		appProperties.setDisplayCompleteData((FormatUtil.getIntValue(arguments.get("displayCompleteData"), 0, 0) == 1) ? true : false);
 		
