@@ -26,6 +26,9 @@ public class DatabaseInfo {
 	private final dbType	type;
 	private final boolean   destination;
 	private final boolean   sslRequire;
+	private final String	trustStorePath;
+	private final String	trsutStorePassword;
+
 	
 	/**
 	 * 
@@ -39,7 +42,7 @@ public class DatabaseInfo {
 	 * @param type
 	 * @param destination
 	 */
-	public DatabaseInfo(String hostName, int port, String database, String service, String userName, String password, boolean sslRequire, dbType type, boolean destination) {
+	public DatabaseInfo(String hostName, int port, String database, String service, String userName, String password, boolean sslRequire, dbType type, boolean destination,String trustStorePath, String trsutStorePassword) {
 		
 		this.hostName = hostName;
 		this.port = port;
@@ -48,6 +51,8 @@ public class DatabaseInfo {
 		this.userName = userName;
 		this.password = password;
 		this.sslRequire = sslRequire;
+		this.trustStorePath=trustStorePath;
+		this.trsutStorePassword=trsutStorePassword;
 		
 		if(type.name().equals("ORACLE") && this.service != null && ("Service".equals(this.service) || "SID".equals(this.service))) {
 			
@@ -99,6 +104,15 @@ public class DatabaseInfo {
 
 	public boolean isSslRequire() {
 		return sslRequire;
+	}
+
+
+	public String getTrustStorePath() {
+		return trustStorePath;
+	}
+
+	public String getTrsutStorePassword() {
+		return trsutStorePassword;
 	}
 	/**
 	 * 
