@@ -45,7 +45,6 @@ public class Application implements ApplicationRunner {
     public static void main( String[] args ) {
 		Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 		String timeStampStr=timestamp.toString();
-		System.out.println("in set");
 		System.setProperty("logtimestamp", timeStampStr);
     	SpringApplication app = new SpringApplication(Application.class);
     	        app.run(args);
@@ -86,14 +85,14 @@ public class Application implements ApplicationRunner {
 				appProperties.setSrcDBSecretName(arguments.get("srcDBSecretName"));
 				appProperties.setTgtDBSecretManagerEndPoint(arguments.get("tgtDBSecretMgrEndPoint"));
 				appProperties.setTgtDBSecretName(arguments.get("tgtDBSecretName"));
+				logger.info("Properties: "+ appProperties);
         		if("All".equals(appProperties.getConnectionType())) {
         			setDatabaseProperties(arguments, appProperties);
         		} else if("JDBC".equals(appProperties.getConnectionType())) {
         			setJdbcDbProperties(arguments, appProperties);
         		}
         		setSchemaTableProperties(arguments, appProperties);
-        		setOtherProperties(arguments, appProperties); 
-        		
+        		setOtherProperties(arguments, appProperties);
         		//Filter
         		String filterType = arguments.get("filterType");
         		filterType = (filterType != null && !filterType.isEmpty()) ? filterType : "Sql";
@@ -101,10 +100,6 @@ public class Application implements ApplicationRunner {
         		appProperties.setFilter(arguments.get("filter"));
 				appProperties.setTrustStorePath(env.getProperty("jdbc.truststore.password"));
 				appProperties.setTrsutStorePassword(env.getProperty("jdbc.truststore.password"));
-
-
-        		logger.info("Properties: "+ appProperties);
-        		
         		CompareService compareService = new CompareService();
         		compareService.startService(appProperties); 
  				
@@ -145,16 +140,13 @@ public class Application implements ApplicationRunner {
 		appProperties.setTargetSSLRequire((FormatUtil.getIntValue(arguments.get("targetSSLRequire"), 0, 0) == 1) ? true : false);
 		appProperties.setTargetUserName(arguments.get("targetUsername"));
 		appProperties.setTargetUserPassword(arguments.get("targetPassword"));
-		System.out.println("Before AWS call"+appProperties.getSrcDBSecretName()+appProperties.getSrcDBSecretManagerEndPoint()+appProperties.getRegion());
 		if(appProperties.getSrcDBSecretName()!=null && appProperties.getSrcDBSecretManagerEndPoint()!=null && appProperties.getRegion()!=null)
 		{
-			System.out.println(" in AWS src call");
 			appProperties.setSourceDB(true);
 			appProperties = new AWSUtil().getSecrets(appProperties);
 		}
 		if(appProperties.getTgtDBSecretName()!=null && appProperties.getTgtDBSecretManagerEndPoint()!=null && appProperties.getRegion()!=null)
 		{
-			System.out.println(" in AWS tgt call");
 			appProperties.setSourceDB(false);
 			appProperties = new AWSUtil().getSecrets(appProperties);
 		}
