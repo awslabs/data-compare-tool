@@ -34,6 +34,7 @@ The data compare tool helps in validating the migrated data. Source will be eith
 -  Compare partial data using SQL Filter.
 -  Option to set SSL Mode for target database.
 -  Compares Clob and Blob data types also.
+-  Supports Secrets in AWS Secret Manager to manage the database credentials and server details
 
 ## High Level Design
 
@@ -83,6 +84,7 @@ Fields to understand after launching the application.
 -  Provide Output folder path to write the report files in this folder. Default it will write to the folder from where the tool is executed.
 -  Provide Job Name, the report will be named with this Job name. The date and time will be append to this Job Name. Default it will give 'data_comparison_result' as Job name.
 -  Provide SQL Filter, this value will be used to filter the data from fetch for comparison.
+-  Provide AWS Secret Manager details for source and traget database
 
 
 ## Creating an executable jar
@@ -146,7 +148,7 @@ Required arguments:
 --sourceDBName | --targetDBName : Database name to be used to connect. SID/Service name in case if source db is ORACLE, Database name in case if source db is SQLSERVER. Database name for target db.
 --schemaName : Database schema(s) single or comma separated. e.g:- "xxx,yyy,zzz"
 --chunkSize : No of rows to fetch from a table for comparison. Default value is 10000, max value is 1000000
---noofParallelChunks : No of parallel chunks to fetch for comparison. Default value is 1, max value is 10.
+--noofParallelChunks : No of parallel chunks to fetch for comparison. Default value is 1, max value is 10. 
 ```
 
 
@@ -164,6 +166,13 @@ Optional arguments:
 --outputFolderPath : Path to write the report files in this folder. Default it will write to the folder from where the tool is executed.
 --sqlFilter : Filter the data from fetch for comparison
 --maxTextSize : this parameter is used to set the column's varchar length max is 4000. In 11g upto varcahr(4000) is supported and beyond that datatype will be LOB(CLOB,BLOB).
+--secMgrRegion : AWS region name where the secrets are defined eg:us-east-1
+--srcDBSecretMgrEndPoint : Secret Manager endpoint for source database eg: secretsmanager.us-east-1.amazonaws.com
+--srcDBSecretName : Source Database Secret Name defined in Secret Manager eg: OracleDB
+--tgtDBSecretMgrEndPoint :Secret Manager endpoint for target database eg: secretsmanager.us-east-1.amazonaws.com
+--tgtDBSecretName : Secret Manager endpoint for target database eg: PostgresDB
+
+Note: Secrets defined in AWS Secret Manager is optional and it will override the database properties defined using sourceDBType, sourceHost, sourcePort etc..
 ```
  
 Java heap size parameters:
@@ -179,6 +188,12 @@ Example:
 java -Xms10m -Xmx1024m -cp  "/Users/amsudan/Desktop/Projects/DataValidation/awslab/DBJarFix/data-compare-tool/target/datacompare-tool-1.0.0.jar:/Users/amsudan/Desktop/lib/ojdbc7-12.1.0.2.jar:/Users/amsudan/Desktop/lib/*"   -Dloader.main="com.datacompare.Application" org.springframework.boot.loader.PropertiesLauncher --sourceDBType=ORACLE --sourceHost="XXXX" --sourcePort=1521 --sourceUsername="XXXX" --sourcePassword="XXXXX"  --sourceDBName="dbname" --targetHost="XXXX" --targetPort=5432 --targetUsername="XXXX" --targetDBName=dbmae --targetPassword="XXXX"  --schemaName="XXXX" --tableName="XXXXX" --chunkSize=10000 --noofParallelChunks=5 --maxTextSize=4000 --displayCompleteData=1
 ```
  
+ CLI arguments with AWS Secret Manager:
+
+ java -cp "<Data compare jar folder path >/datacompare-tool-1.0.0.jar:<Oracle Driver Folder path>/datacompare-tool-1.0.0.jar:< oracle driver folder path>/ojdbc7-12.1.0.2.jar:< oracle driver folder path>/*"   -Dloader.main="com.datacompare.Application" org.springframework.boot.loader.PropertiesLauncher --sourceDBType=ORACLE  --secMgrRegion="region" --srcDBSecretMgrEndPoint="secretsmanager.region.amazonaws.com" --srcDBSecretName="source-dms-secrets" --tgtDBSecretMgrEndPoint="secretsmanager.region.amazonaws.com" --tgtDBSecretName="target-dms-secrets" --schemaName="schename" --tableName="tablename" --chunkSize=5 --noofParallelChunks=4 --maxTextSize=4000 --displayCompleteData=1
+
+
+ java -cp “home/ec2-user/lib/datacompare-tool-1.0.0.jar:/home/ec2-user/lib/ojdbc7-12.1.0.2.jar:/home/ec2-user/lib/*”   -Dloader.main=“com.datacompare.Application” org.springframework.boot.loader.PropertiesLauncher --sourceDBType=ORACLE  --secMgrRegion=“us-east-1” --srcDBSecretMgrEndPoint=“secretsmanager.us-east-1.amazonaws.com” --srcDBSecretName=“OracleDB” --tgtDBSecretMgrEndPoint=“secretsmanager.us-east-1.amazonaws.com” --tgtDBSecretName=“PGDB” --schemaName=“OPS\$BRDB” --tableName=“BRDB_RX_UNDO_TRANSACTIONS” --chunkSize=10000 --noofParrallelChunks=5 --maxtextsizeforComparison=4000 --displayCompleteData=1
 
 ## Output
 
