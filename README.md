@@ -196,7 +196,7 @@ java -Xms10m -Xmx1024m -cp  "/Users/amsudan/Desktop/Projects/DataValidation/awsl
 ```
 
  ```
- java -cp “home/ec2-user/lib/datacompare-tool-1.0.0.jar:/home/ec2-user/lib/ojdbc7-12.1.0.2.jar:/home/ec2-user/lib/*”   -Dloader.main=“com.datacompare.Application” org.springframework.boot.loader.PropertiesLauncher --sourceDBType=ORACLE  --secMgrRegion=“us-east-1” --srcDBSecretMgrEndPoint=“secretsmanager.us-east-1.amazonaws.com” --srcDBSecretName=“OracleDB” --tgtDBSecretMgrEndPoint=“secretsmanager.us-east-1.amazonaws.com” --tgtDBSecretName=“PGDB” --schemaName=“xxx-schema” --tableName=“xxx-table” --chunkSize=10000 --noofParrallelChunks=5 --maxtextsizeforComparison=4000 --displayCompleteData=1
+ java -cp “home/ec2-user/lib/datacompare-tool-1.0.0.jar:/home/ec2-user/lib/ojdbc7-12.1.0.2.jar:/home/ec2-user/lib/*”   -Dloader.main=“com.datacompare.Application” org.springframework.boot.loader.PropertiesLauncher --sourceDBType=ORACLE  --secMgrRegion=“us-east-1” --srcDBSecretMgrEndPoint=“secretsmanager.us-east-1.amazonaws.com” --srcDBSecretName=“OracleDB” --tgtDBSecretMgrEndPoint=“secretsmanager.us-east-1.amazonaws.com” --tgtDBSecretName=“PGDB” --schemaName=“xxx-schema” --tableName=“xxx-table” --chunkSize=10000 --noofParallelChunks=5 --maxTextSize=4000 --displayCompleteData=1
 
  ```
 ## Output
