@@ -166,11 +166,11 @@ Optional arguments:
 --outputFolderPath : Path to write the report files in this folder. Default it will write to the folder from where the tool is executed.
 --sqlFilter : Filter the data from fetch for comparison
 --maxTextSize : this parameter is used to set the column's varchar length max is 4000. In 11g upto varcahr(4000) is supported and beyond that datatype will be LOB(CLOB,BLOB).
---secMgrRegion : AWS region name where the secrets are defined
---srcDBSecretMgrEndPoint : Secret Manager endpoint for source database 
---srcDBSecretName : Source Database Secret Name defined in Secret Manager
---tgtDBSecretMgrEndPoint :Secret Manager endpoint for target database
---tgtDBSecretName : Secret Manager endpoint for target database
+--secMgrRegion : AWS region name where the secrets are defined eg:us-east-1
+--srcDBSecretMgrEndPoint : Secret Manager endpoint for source database eg: secretsmanager.us-east-1.amazonaws.com
+--srcDBSecretName : Source Database Secret Name defined in Secret Manager eg: OracleDB
+--tgtDBSecretMgrEndPoint :Secret Manager endpoint for target database eg: secretsmanager.us-east-1.amazonaws.com
+--tgtDBSecretName : Secret Manager endpoint for target database eg: PostgresDB
 
 Note: Secrets defined in AWS Secret Manager is optional and it will override the database properties defined using sourceDBType, sourceHost, sourcePort etc..
 ```
