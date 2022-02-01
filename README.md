@@ -190,11 +190,15 @@ java -Xms10m -Xmx1024m -cp  "/Users/amsudan/Desktop/Projects/DataValidation/awsl
  
  CLI arguments with AWS Secret Manager:
 
+```
  java -cp "<Data compare jar folder path >/datacompare-tool-1.0.0.jar:<Oracle Driver Folder path>/datacompare-tool-1.0.0.jar:< oracle driver folder path>/ojdbc7-12.1.0.2.jar:< oracle driver folder path>/*"   -Dloader.main="com.datacompare.Application" org.springframework.boot.loader.PropertiesLauncher --sourceDBType=ORACLE  --secMgrRegion="region" --srcDBSecretMgrEndPoint="secretsmanager.region.amazonaws.com" --srcDBSecretName="source-dms-secrets" --tgtDBSecretMgrEndPoint="secretsmanager.region.amazonaws.com" --tgtDBSecretName="target-dms-secrets" --schemaName="schename" --tableName="tablename" --chunkSize=5 --noofParallelChunks=4 --maxTextSize=4000 --displayCompleteData=1
 
+```
 
- java -cp “home/ec2-user/lib/datacompare-tool-1.0.0.jar:/home/ec2-user/lib/ojdbc7-12.1.0.2.jar:/home/ec2-user/lib/*”   -Dloader.main=“com.datacompare.Application” org.springframework.boot.loader.PropertiesLauncher --sourceDBType=ORACLE  --secMgrRegion=“us-east-1” --srcDBSecretMgrEndPoint=“secretsmanager.us-east-1.amazonaws.com” --srcDBSecretName=“OracleDB” --tgtDBSecretMgrEndPoint=“secretsmanager.us-east-1.amazonaws.com” --tgtDBSecretName=“PGDB” --schemaName=“OPS\$BRDB” --tableName=“BRDB_RX_UNDO_TRANSACTIONS” --chunkSize=10000 --noofParrallelChunks=5 --maxtextsizeforComparison=4000 --displayCompleteData=1
+ ```
+ java -cp “home/ec2-user/lib/datacompare-tool-1.0.0.jar:/home/ec2-user/lib/ojdbc7-12.1.0.2.jar:/home/ec2-user/lib/*”   -Dloader.main=“com.datacompare.Application” org.springframework.boot.loader.PropertiesLauncher --sourceDBType=ORACLE  --secMgrRegion=“us-east-1” --srcDBSecretMgrEndPoint=“secretsmanager.us-east-1.amazonaws.com” --srcDBSecretName=“OracleDB” --tgtDBSecretMgrEndPoint=“secretsmanager.us-east-1.amazonaws.com” --tgtDBSecretName=“PGDB” --schemaName=“xxx-schema” --tableName=“xxx-table” --chunkSize=10000 --noofParrallelChunks=5 --maxtextsizeforComparison=4000 --displayCompleteData=1
 
+ ```
 ## Output
 
 
