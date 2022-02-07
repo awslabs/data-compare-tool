@@ -1,21 +1,15 @@
 package com.datacompare.util;
 
 import com.amazonaws.client.builder.AwsClientBuilder;
-import com.amazonaws.regions.Regions;
+
 import com.amazonaws.services.secretsmanager.AWSSecretsManager;
 import com.amazonaws.services.secretsmanager.AWSSecretsManagerClientBuilder;
 import com.amazonaws.services.secretsmanager.model.*;
 import com.datacompare.model.AppProperties;
-import com.datacompare.model.DatabaseInfo;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sun.tools.javac.util.ByteBuffer;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-
 import java.io.IOException;
 
 public class AWSUtil {
@@ -42,7 +36,6 @@ public class AWSUtil {
         AWSSecretsManager client  =  clientBuilder.build();
         ObjectMapper objectMapper  =  new  ObjectMapper();
         JsonNode secretsJson  =  null;
-        ByteBuffer binarySecretData;
         GetSecretValueRequest getSecretValueRequest  =  new  GetSecretValueRequest().withSecretId(secretName);
         GetSecretValueResult getSecretValueResponse  =  null;
         try  {
