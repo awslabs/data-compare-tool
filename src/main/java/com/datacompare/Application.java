@@ -57,7 +57,7 @@ public class Application implements ApplicationRunner {
     	logger.debug("Command-line arguments: {}", Arrays.toString(args.getSourceArgs()));
         logger.debug("Non Option Args: {}", args.getNonOptionArgs());
         logger.info("Option Names: {}", args.getOptionNames());
-        
+
         if(!args.getOptionNames().isEmpty()) {
         	
         	try {
@@ -93,6 +93,7 @@ public class Application implements ApplicationRunner {
         		}
         		setSchemaTableProperties(arguments, appProperties);
         		setOtherProperties(arguments, appProperties);
+				setPrimaryKeys(appProperties);
         		//Filter
         		String filterType = arguments.get("filterType");
         		filterType = (filterType != null && !filterType.isEmpty()) ? filterType : "Sql";
@@ -110,9 +111,30 @@ public class Application implements ApplicationRunner {
         	//Exit the process normally.
         	System.exit(0); 
         }
-    }    
-    
-    /**
+    }
+
+	private void setPrimaryKeys(AppProperties appProperties) {
+		if (appProperties != null) {
+			String keyDetails = appProperties.getPrimaryKeys();
+			if (keyDetails != null) {
+				HashMap<String, String> map = new HashMap<String, String>();
+				String[] tableKeys = keyDetails.split(";");
+				if (tableKeys != null && tableKeys.length > 0) {
+					for (int i = 0; i < tableKeys.length; i++) {
+						String tableKey = tableKeys[0];
+						String[] pKeys = tableKey.split(":");
+						if (pKeys != null && pKeys.length > 0) {
+							map.put(pKeys[0], pKeys[1]);
+						}
+					}
+				}
+				if (!map.isEmpty()) {
+					appProperties.setPrimaryKeyMap(map);
+				}
+			}
+		}
+	}
+	/**
      * This will set individual database details like host, port, database, user and password
      * 
      * @param arguments
@@ -183,7 +205,8 @@ public class Application implements ApplicationRunner {
 		appProperties.setSchemaName(arguments.get("schemaName"));
 		appProperties.setTableName(arguments.get("tableName"));
 		appProperties.setIgnoreTables((FormatUtil.getIntValue(arguments.get("ignoreTables"), 0, 0) == 1) ? true : false);
-		appProperties.setColumns(arguments.get("columns")); 
+		appProperties.setColumns(arguments.get("columns"));
+		appProperties.setPrimaryKeys(arguments.get("primaryKey"));
 		appProperties.setIgnoreColumns((FormatUtil.getIntValue(arguments.get("ignoreColumns"), 0, 0) == 1) ? true : false);
     }
     
@@ -202,7 +225,7 @@ public class Application implements ApplicationRunner {
 		appProperties.setMaxNoofThreads(FormatUtil.getIntValue(arguments.get("noofParallelChunks"), 1, 10));
 		appProperties.setCompareOnlyDate((FormatUtil.getIntValue(arguments.get("compareOnlyDate"), 0, 0) == 1) ? true : false);
 		appProperties.setDisplayCompleteData((FormatUtil.getIntValue(arguments.get("displayCompleteData"), 0, 0) == 1) ? true : false);
-		
+
 		String jobName = arguments.get("jobName");
 		jobName = (jobName != null && !jobName.isEmpty()) ? jobName : "data_comparison_result";
 		appProperties.setJobName(jobName);
