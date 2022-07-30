@@ -14,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 
+import java.util.HashMap;
+
 public class AppProperties {
 	@Autowired
 	private Environment env;
@@ -24,6 +26,25 @@ public class AppProperties {
 	private String srcDBSecretName;
 	private String tgtDBSecretManagerEndPoint;
 	private String tgtDBSecretName;
+	private String primaryKeys;
+
+	public HashMap<String, String> getPrimaryKeyMap() {
+		return primaryKeyMap;
+	}
+
+	public void setPrimaryKeyMap(HashMap<String, String> primaryKeyMap) {
+		this.primaryKeyMap = primaryKeyMap;
+	}
+
+	private HashMap<String, String> primaryKeyMap;
+
+	public String getPrimaryKeys() {
+		return primaryKeys;
+	}
+
+	public void setPrimaryKeys(String primaryKeys) {
+		this.primaryKeys = primaryKeys;
+	}
 
 	public boolean isSourceDB() {
 		return isSourceDB;
