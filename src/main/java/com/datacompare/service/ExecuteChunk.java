@@ -11,6 +11,7 @@
 package com.datacompare.service;
 
 import java.sql.Connection;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -58,6 +59,7 @@ public class ExecuteChunk implements Runnable {
 	
 	private AppProperties appProperties;
 
+	private boolean hasNoUniqueKey;
 	/**
 	 * 
 	 * @param sourceDBType
@@ -408,6 +410,14 @@ public class ExecuteChunk implements Runnable {
 		this.appProperties = appProperties;
 	}
 
+	public boolean isHasNoUniqueKey() {
+		return hasNoUniqueKey;
+	}
+
+	public void setHasNoUniqueKey(boolean hasNoUniqueKey) {
+		this.hasNoUniqueKey = hasNoUniqueKey;
+	}
+
 	@Override
 	public void run() {
 		
@@ -415,54 +425,40 @@ public class ExecuteChunk implements Runnable {
 
 			new MemoryUtil().displayMemoryInfo();
 			
-			Thread.currentThread().setName("Executing Chunk No " + getChunkNo()+1); 
-			
+			Thread.currentThread().setName("Executing Chunk No " + getChunkNo()+1);
 			FetchData fetchSourceData = new FetchData(getSourceDBType(), null, getSourceSql(), getSourceChunk(),
 					getSourceConnection(), getSourceTableMetadata(), null, getAppProperties());
 			fetchSourceData.setTimeTaken(getSourceTimeTaken());
-			
 			FetchData fetchTargetData = new FetchData(getTargetDBType(), getSourceDBType(), getTargetSql(),
 					getTargetChunk(), getTargetConnection(), getTargetTableMetadata(), getSourceTableMetadata(),
 					getAppProperties());
-			fetchTargetData.setTimeTaken(getTargetTimeTaken()); 
-			
+			fetchTargetData.setTimeTaken(getTargetTimeTaken());
 			ExecutorService executor = Executors.newFixedThreadPool(2);
-			
 			executor.execute(fetchSourceData); 
 			executor.execute(fetchTargetData);
-			
 			executor.shutdown();
-			
 			while (!executor.isTerminated()) {
 	        }
-			
 			Long srcCnt = Long.valueOf(fetchSourceData.getHashMap().size());
 			getSourceCount().add(srcCnt);
-			
 			Long tarCnt = Long.valueOf(fetchTargetData.getHashMap().size());
 			getTargetCount().add(tarCnt);
-
 			CompareData compareData = new CompareData(fetchSourceData.getHashMap(), fetchTargetData.getHashMap(),
-					getChunkNo(), getNumberOfChunks());
+					getChunkNo(), getNumberOfChunks(),isHasNoUniqueKey());
 			
 			executor = Executors.newFixedThreadPool(1);
-			
-			executor.execute(compareData); 
-			
+			executor.execute(compareData);
 			executor.shutdown();
-
 			while (!executor.isTerminated()) {
 	        }
-
 			String result = compareData.getResult();
 			
 			if(!"Completed".equals(result)) {
 				setResult(result);
 			}
-
 			List<String> failTuple = compareData.getFailTuple();
-			getFailTuple().addAll(failTuple); 
-			
+			getFailTuple().addAll(failTuple);
+
 			Map<String, String> sourceData = compareData.getSourceData();
 			getSourceData().putAll(sourceData);
 			
