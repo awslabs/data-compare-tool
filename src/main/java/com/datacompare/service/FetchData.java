@@ -345,8 +345,17 @@ public class FetchData implements Runnable {
                         valSize = valSize + val.getBytes().length;
                         keySize = keySize + key.getBytes().length;
                     }
+                    //TODO------
 
-                    getHashMap().put(key.trim(), val);
+                    if(getHashMap().containsKey(key.trim()))
+                    {
+                     int dupNumber=   getDuplicateNumber(getHashMap(),key.trim());
+                        String dupKey=key.trim()+"DUP"+dupNumber;
+                        getHashMap().put(dupKey, val);
+                    }
+                    else {
+                        getHashMap().put(key.trim(), val);
+                    }
 
                 } catch (Exception e) {
 
@@ -392,6 +401,19 @@ public class FetchData implements Runnable {
             jdbcUtil.closeStatement(stmt);
         }
     }
+
+    private int getDuplicateNumber(Map<String, String> hashMap, String key) {
+        int cnt=1;
+        for (Map.Entry<String, String> entry : hashMap.entrySet()) {
+            String dupKey=key.trim()+"DUP"+cnt;
+            if(!hashMap.containsKey(dupKey)){
+                return cnt;
+            }
+            cnt++;
+        }
+        return cnt;
+    }
+
     /**
      * @return MD5 hash to compare the large objects
      */
