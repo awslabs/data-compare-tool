@@ -138,7 +138,7 @@ public class FetchMetadata {
 		fetchPrimaryColumns(connection, schemaName, tableName, primaryKeyMap, sourceSortKey, sourcePrimaryKey,
 				sourceHasNoUniqueKey, sortKey, primaryKey, uniqueKeyCol,appProperties);
 		prepareQuery(connection, schemaName, tableName, sortKey.toString(), primaryKey.toString(),
-				uniqueKeyCol.toString(), appProperties.getFilter(), appProperties.getFilterType(), rowCount, sourceTableMetadataMap, additionalrows);
+				uniqueKeyCol.toString(), appProperties.getFilter(), appProperties.getFilterType(), rowCount, sourceTableMetadataMap, additionalrows,appProperties);
 	}
 	
 	/**
@@ -176,7 +176,7 @@ public class FetchMetadata {
 	 */
 	private void prepareQuery(Connection connection, String schemaName, String tableName, String sortKey,
 			String primaryKey, String uniqueKeyCol, String filter, String filterType, long rowCount,
-			Map<String, TableColumnMetadata> sourceTableMetadataMap, long additionalrows) throws SQLException {
+			Map<String, TableColumnMetadata> sourceTableMetadataMap, long additionalrows, AppProperties appProperties) throws SQLException {
 		
 		String query = null;
 		String sortCols = null;
@@ -216,7 +216,7 @@ public class FetchMetadata {
 				
 				query = "SELECT * FROM (" + subQuery +  ")";
 			}
-			generateSourceChunks(connection, schemaName, tableName, sortKey, primaryKey, filter, filterType, sortCols,rowCount,additionalrows);
+			generateSourceChunks(connection, schemaName, tableName, sortKey, primaryKey, filter, filterType, sortCols,rowCount,additionalrows,appProperties);
 			break;
 
 		case "SQLSERVER":
@@ -229,7 +229,7 @@ public class FetchMetadata {
 				String subQuery = "SELECT " + uniqueKeyCol + cols + " FROM (" + "SELECT " +  cols + " FROM " + schemaName + "." + tableName + ") t1";
 				query = "SELECT t2.* FROM (" + subQuery + " order by " + sortCols + ") t2";
 			}
-			generateSourceChunks(connection, schemaName, tableName, sortKey, primaryKey, filter, filterType, sortCols,rowCount,additionalrows);
+			generateSourceChunks(connection, schemaName, tableName, sortKey, primaryKey, filter, filterType, sortCols,rowCount,additionalrows,appProperties);
 			break;
 		}
 		
@@ -330,10 +330,10 @@ public class FetchMetadata {
 	private void fetchPrimaryColumns(Connection connection, String schemaName, String tableName,
 			Map<Integer, String> primaryKeyMap, String sourceSortKey, String sourcePrimaryKey, boolean sourceHasNoUniqueKey, StringBuilder sortKey,
 			StringBuilder primaryKey, StringBuilder uniqueKeyCol,AppProperties appProperties) throws Exception {
-		if(!sourceHasNoUniqueKey) {
-			
+		if (!sourceHasNoUniqueKey) {
+
 			ResultSet rs = null;
-			
+
 			try {
 
 				rs = connection.getMetaData().getPrimaryKeys(null, schemaName, tableName);
@@ -344,7 +344,7 @@ public class FetchMetadata {
 					Integer pkPosition = rs.getInt("KEY_SEQ");
 					primaryKeyMap.put(pkPosition, colName);
 				}
-				
+
 				if (sourceSortKey != null && sourceSortKey.trim().length() > 0) {
 
 					sortKey.append(sourceSortKey.toLowerCase());
@@ -352,11 +352,11 @@ public class FetchMetadata {
 
 				} else if (primaryKeyMap != null && primaryKeyMap.size() > 0) {
 
-					sortKey.append(StringUtils.join(primaryKeyMap.values(),","));
+					sortKey.append(StringUtils.join(primaryKeyMap.values(), ","));
 					primaryKey.append(primaryKeyMap.get(1));
 
 					this.setSortKey(sortKey.toString());
-					this.setPrimaryKey(primaryKey.toString()); 
+					this.setPrimaryKey(primaryKey.toString());
 				}
 
 			} catch (Exception e) {
@@ -370,7 +370,7 @@ public class FetchMetadata {
 		}
 		if (sortKey.toString().isEmpty()) {
 
-			setHasNoUniqueKey(true); 
+			setHasNoUniqueKey(true);
 			//throw new Exception(getDbType() + " Database Table " + schemaName + "." + tableName + " PRIMARY Key not found.");
 		}
 
@@ -387,33 +387,31 @@ public class FetchMetadata {
 
 			uniqueKeyCol.append(primaryKeyColsTemp + " AS key1 ,");
 
-		} else if(!primaryKey.toString().isEmpty()) {
+		} else if (!primaryKey.toString().isEmpty()) {
 
 			uniqueKeyCol.append(primaryKey + " AS key1 ,");
-			
-		} else if(isHasNoUniqueKey()) {
-			String pkeys =null;
-			if(appProperties.getPrimaryKeyMap()!=null && !appProperties.getPrimaryKeyMap().isEmpty() && appProperties.getPrimaryKeyMap().get(tableName.toUpperCase())!=null) {
-				pkeys = appProperties.getPrimaryKeyMap().get(tableName.toUpperCase());
-			}
-			if("ORACLE".equals(getDbType())) {
-				if(pkeys!=null && pkeys.length()>0){
-					uniqueKeyCol.append( pkeys + " as key1,");
+
+		} else if (isHasNoUniqueKey()) {
+			String pkeys = null;
+			pkeys = getSuppliedPrimaryKey(appProperties, tableName);
+			if ("ORACLE".equals(getDbType())) {
+				if (pkeys != null && pkeys.length() > 0) {
+					uniqueKeyCol.append(pkeys + " as key1,");
 					//setHasNoUniqueKey(false);
-				}else {
+				} else {
 					uniqueKeyCol.append("ROWNUM AS key1,");
 				}
-				
-			} else if("POSTGRESQL".equals(getDbType())) {
-				if(pkeys!=null && pkeys.length()>0){
-					uniqueKeyCol.append( pkeys + " as key1,");
+
+			} else if ("POSTGRESQL".equals(getDbType())) {
+				if (pkeys != null && pkeys.length() > 0) {
+					uniqueKeyCol.append(pkeys + " as key1,");
 					//setHasNoUniqueKey(false);
-				}else {
+				} else {
 					uniqueKeyCol.append("row_number() over() as key1,");
 				}
 
-				
-			} else if("SQLSERVER".equals(getDbType())) {
+
+			} else if ("SQLSERVER".equals(getDbType())) {
 
 				if (pkeys != null && pkeys.length() > 0) {
 					uniqueKeyCol.append(pkeys + " as key1,");
@@ -424,6 +422,27 @@ public class FetchMetadata {
 			}
 		}
 	}
+
+	private String getSuppliedPrimaryKey(AppProperties appProperties, String tableName) {
+		String pkeys =null;
+		if(appProperties.getPrimaryKeyMap()!=null
+				&& !appProperties.getPrimaryKeyMap().isEmpty()
+				&& appProperties.getPrimaryKeyMap().get(tableName.toUpperCase())!=null) {
+			pkeys = appProperties.getPrimaryKeyMap().get(tableName.toUpperCase());
+		}
+		return pkeys;
+	}
+
+	private String getIdFromPrimaryKey(String suppliedPrimaryKey) {
+		String id =null;
+		if(suppliedPrimaryKey!=null && suppliedPrimaryKey.trim().length()>0){
+			String cols[]=suppliedPrimaryKey.split(",");
+			if(cols!=null &&cols.length>0 && cols[0].length()>0){
+				id=cols[0].substring(7,(cols[0].length()));
+			}
+	}
+		return id;
+}
 
 	public String convertDateToTimeStamp(String colName) {
 
@@ -591,12 +610,14 @@ public class FetchMetadata {
 	 * @throws SQLException
 	 */
 	private void generateSourceChunks(Connection connection, String schemaName, String tableName, String sortKey,
-			String primaryKey, String filter, String filterType, String cols,long rowCount,long additionalRows) throws SQLException {
+			String primaryKey, String filter, String filterType, String cols,long rowCount,long additionalRows,AppProperties appProperties) throws SQLException {
 
 		logger.info("Started preparing chunks");
 
 		chunks.clear();
-		
+
+		String suppliedPKey=getSuppliedPrimaryKey(appProperties,tableName);
+		String pKey = getIdFromPrimaryKey(suppliedPKey);
 		Long totalRecords = getTotalRecords(connection, schemaName, tableName, filter); 
 
 		setSourceRowCount(totalRecords);
@@ -609,10 +630,16 @@ public class FetchMetadata {
 		StringBuilder sql = new StringBuilder();
 		
 		if(isHasNoUniqueKey()) {
-			
-			sql.append("SELECT min(ROWNUM) AS startRange, max(ROWNUM) AS endRange,count(*) AS chunkSize, nt FROM (SELECT ROWNUM")
-			.append(" ,ntile(").append(ntileSize).append(") OVER (ORDER BY ").append(cols).append(" ) nt FROM ").append(schemaName)
-			.append(".").append(tableName);
+           if(pKey!=null) {
+			   sql.append("SELECT min(").append(pKey).append(") AS startRange, max(").append(pKey)
+					   .append(") AS endRange,count(*) AS chunkSize, nt FROM (SELECT ").append(pKey).append(" ,ntile(").append(ntileSize).append(") OVER (ORDER BY ").append(cols).append(" ) nt FROM ").append(schemaName)
+					   .append(".").append(tableName);
+		   }
+		   else{
+			   sql.append("SELECT min(ROWNUM) AS startRange, max(ROWNUM) AS endRange,count(*) AS chunkSize, nt FROM (SELECT ROWNUM")
+					   .append(" ,ntile(").append(ntileSize).append(") OVER (ORDER BY ").append(cols).append(" ) nt FROM ").append(schemaName)
+					   .append(".").append(tableName);
+		   }
 			
 		} else {
 
@@ -684,12 +711,24 @@ public class FetchMetadata {
 						endRange=endRange+additionalRows;
 					}
                     if(count==0) {
-						condition.append("key1").append(" >= ").append(startRange).append(" and ").append("key1")
-								.append(" <= ").append(endRange).append(" order by 1");
+
+						if(suppliedPKey!=null) {
+							condition.append(pKey).append(" >= ").append(startRange).append(" and ").append(pKey)
+									.append(" <= ").append(endRange).append(" order by 1");
+						}
+						else{
+							condition.append("key1").append(" >= ").append(startRange).append(" and ").append("key1")
+									.append(" <= ").append(endRange).append(" order by 1");
+						}
 					}
 					else{
-						condition.append("key1").append(" > ").append(startRange).append(" and ").append("key1")
-								.append(" <= ").append(endRange).append(" order by 1");
+						if(suppliedPKey!=null) {
+							condition.append(pKey).append(" > ").append(startRange).append(" and ").append(pKey)
+									.append(" <= ").append(endRange).append(" order by 1");
+						}else {
+							condition.append("key1").append(" > ").append(startRange).append(" and ").append("key1")
+									.append(" <= ").append(endRange).append(" order by 1");
+						}
 
 					}
 				}
@@ -930,17 +969,15 @@ public class FetchMetadata {
 			throw new SQLException("There is no records in Postgresql for " + schemaName + "." + tableName);
 		}*/
 
-		if (totalRecords == 0) {
+	/*	if (totalRecords == 0) {
 
 			throw new SQLException("There are no records in Postgresql for " + schemaName + "." + tableName);
-		}
+		}*/
 
     	setTargetRowCount(totalRecords);
 		//setRowCount(0);
 
 		logger.info("Completed preparing chunks for Postgresql "+totalRecords);
-
-
 	}
 
 	/**
