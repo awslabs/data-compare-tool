@@ -107,7 +107,7 @@ public class CompareService {
 				.append("<table><thead><tr><th>S.NO</th><th>TABLE</th><th>DETAILS</th><th>EXECUTION</th></tr></thead><tbody>");
   	            
 				List<String> columnList = getColumnList(appProperties.getColumns());
-				
+
 				if (appProperties.getTableName() != null && !appProperties.getTableName().isEmpty()
 						&& !appProperties.isIgnoreTables()) {
   					
@@ -173,7 +173,7 @@ public class CompareService {
 	  		jdbcUtil.closeConnection(getTargetConn());
 		}
 	}
-	
+
 	/**
 	 * 
 	 * @param executedTableName
@@ -556,7 +556,7 @@ public class CompareService {
 		String sourceDBType = appProperties.getSourceDBType().toUpperCase();
 		int maxNoofThreads = appProperties.getMaxNoofThreads();
 		boolean displayCompleteData = appProperties.isDisplayCompleteData();
-
+		long additionalrows =0;
 		CompareResult dto = new CompareResult();
 		
 		long start = System.currentTimeMillis();
@@ -569,18 +569,29 @@ public class CompareService {
 		
 		try {
 			
-			checkIfTableExistsInPg(schemaName.toLowerCase(), tableName.toLowerCase(), "POSTGRESQL", targetConn); 
-			
+			checkIfTableExistsInPg(schemaName.toLowerCase(), tableName.toLowerCase(), "POSTGRESQL", targetConn);
+            long rowCount=0;
+			long sourceRowCount= new FetchMetadata().getTotalRecords(sourceConn,schemaName.toUpperCase(), tableName.toUpperCase(),null);
+			long targetRowCount= new FetchMetadata().getTotalRecords(targetConn,schemaName.toUpperCase(), tableName.toUpperCase(),null);
+            if(sourceRowCount>targetRowCount)
+               rowCount=sourceRowCount;
+			else {
+				rowCount = targetRowCount;
+				additionalrows = targetRowCount-sourceRowCount;
+			}
 			FetchMetadata fetchSourceMetadata = new FetchMetadata(sourceDBType, null, sourceConn,
-					schemaName.toUpperCase(), tableName.toUpperCase(), 0, null, null, false, null, columnList, appProperties);
-			
+					schemaName.toUpperCase(), tableName.toUpperCase(), rowCount, null, null, false, null, columnList, appProperties,true,additionalrows);
+
 			FetchMetadata fetchTargetMetadata = new FetchMetadata("POSTGRESQL", sourceDBType, targetConn,
-					schemaName.toLowerCase(), tableName.toLowerCase(), fetchSourceMetadata.getRowCount(),
+					schemaName.toLowerCase(), tableName.toLowerCase(), rowCount,
 					fetchSourceMetadata.getSortKey(), fetchSourceMetadata.getPrimaryKey(),
 					fetchSourceMetadata.isHasNoUniqueKey(),
-					fetchSourceMetadata.getTableMetadataMap(), columnList, appProperties);
-			
+					fetchSourceMetadata.getTableMetadataMap(), columnList, appProperties,false,additionalrows);
+		  	        fetchTargetMetadata.setTargetRowCount(targetRowCount);
+			        fetchSourceMetadata.setTargetRowCount(targetRowCount);
+
  			List<String> sourceChunks = fetchSourceMetadata.getChunks();
+			List<String> targetChunks = fetchTargetMetadata.getChunks();
 			
 			info.append("Schema: ");
 			info.append(schemaName);
@@ -592,6 +603,7 @@ public class CompareService {
 			logger.info(info.toString());
 
 			int numChunks = sourceChunks.size();
+
 			int i;
 			
 			info = new StringBuilder();
@@ -602,7 +614,7 @@ public class CompareService {
 			logger.info(info.toString());
 			
 			Map<String, String> mismatchSourceData = new ConcurrentHashMap<String, String>();
-			Map<String, String> mismatchTargetData = new ConcurrentHashMap<String, String>(); 
+			Map<String, String> mismatchTargetData = new ConcurrentHashMap<String, String>();
 			List<String> failTuple = Collections.synchronizedList(new ArrayList<String>());
 			String result = "Completed";
 			List<Long> sourceCountList = Collections.synchronizedList(new ArrayList<Long>());
@@ -627,9 +639,10 @@ public class CompareService {
 				executeChunk.setFailTuple(failTuple); 
 				executeChunk.setResult(result); 
 				executeChunk.setSourceCount(sourceCountList);
-				executeChunk.setTargetCount(targetCountList); 
+				executeChunk.setTargetCount(targetCountList);
 				executeChunk.setSourceTimeTaken(sourceTimeTaken);
-				executeChunk.setTargetTimeTaken(targetTimeTaken); 
+				executeChunk.setTargetTimeTaken(targetTimeTaken);
+				executeChunk.setHasNoUniqueKey(fetchSourceMetadata.isHasNoUniqueKey());
 				
 				executor.execute(executeChunk); 
 			}
@@ -670,7 +683,7 @@ public class CompareService {
 			dto.setTableName(tableName);
 			
 			writeDataToFile(fetchSourceMetadata, mismatchSourceData, fetchTargetMetadata, mismatchTargetData, dto,
-					schemaName, displayCompleteData);
+					schemaName, displayCompleteData,targetRowCount);
 			
 		} catch (Exception ex) {
 			
@@ -821,7 +834,7 @@ public class CompareService {
 	 * @return
 	 */
 	private CompareResult compareBasicData(AppProperties appProperties, Connection sourceConn, Connection targetConn,
-			String schemaName, String tableName) {
+			String schemaName, String tableName ){
 		
 		String sourceDBType = appProperties.getSourceDBType().toUpperCase();
 
@@ -840,10 +853,10 @@ public class CompareService {
 			checkIfTableExistsInPg(schemaName.toLowerCase(), tableName.toLowerCase(), "POSTGRESQL", targetConn); 
 			
 			FetchMetadata fetchSourceMetadata = new FetchMetadata(sourceDBType, null, sourceConn,
-					schemaName.toUpperCase(), tableName.toUpperCase(), 0, null, null, false, null, null, appProperties);
+					schemaName.toUpperCase(), tableName.toUpperCase(), 0, null, null, false, null, null, appProperties,true,0);
 
 			FetchMetadata fetchTargetMetadata = new FetchMetadata("POSTGRESQL", null, targetConn,
-					schemaName.toLowerCase(), tableName.toLowerCase(), 0, null, null, false, null, null, appProperties);
+					schemaName.toLowerCase(), tableName.toLowerCase(), 0, null, null, false, null, null, appProperties,false,0);
 			
 			info = new StringBuilder();
 			
@@ -855,10 +868,10 @@ public class CompareService {
 			
 			logger.info(info.toString());
 			
-			long sourceTotalRowCount = fetchSourceMetadata.getRowCount();
+			long sourceTotalRowCount = fetchSourceMetadata.getSourceRowCount();
 			result.setRowCountSource(sourceTotalRowCount);
 			
-			long targetTotalRowCount = fetchTargetMetadata.getRowCount();
+			long targetTotalRowCount = fetchTargetMetadata.getTargetRowCount();
 			result.setRowCountTarget(targetTotalRowCount);
 
 			result.setTableName(tableName);
@@ -927,22 +940,21 @@ public class CompareService {
 	 */
 	public void writeDataToFile(FetchMetadata fetchSourceMetadata, Map<String, String> mismatchSourceData,
 			FetchMetadata fetchTargetMetadata, Map<String, String> mismatchTargetData, CompareResult dto,
-			String schemaName, boolean displayCompleteData) {
+			String schemaName, boolean displayCompleteData,long targetCount) {
 		
 		StringBuilder info = new StringBuilder();
 		
 		info.append("\nSource Table size = ");
-		info.append(mismatchSourceData.size());
+		info.append(fetchSourceMetadata.getSourceRowCount());
 		info.append("\nTarget Table size = ");
-		info.append(mismatchTargetData.size());
+		//info.append(targetRowCount);
+		info.append(targetCount);
 		info.append("\n");
 		
 		logger.info(info.toString());
 
-		if (mismatchSourceData.size() != 0) {
-			
+		if((mismatchSourceData.size() != 0 ) || (mismatchTargetData.size()!=0)){
 			info = new StringBuilder();
-			
 			info.append(schemaName.toLowerCase());
 			info.append("_");
 			info.append(dto.getTableName().toLowerCase());

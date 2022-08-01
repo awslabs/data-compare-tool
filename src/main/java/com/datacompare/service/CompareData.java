@@ -33,7 +33,15 @@ public class CompareData implements Runnable {
 	private long failedRowNumber = 0;
 
 	private List<String> failTuple = new ArrayList<String>();
-	
+
+	private long additionalDuplicateRowsNumber = 0;
+
+	private Map<String,String> additionalDuplicateRows ;
+
+	private Map<String,String> missingInTarget ;
+
+	private Map<String,String> additionalInTarget ;
+
 	private int numberOfChunks;
 
 	private String result;
@@ -45,6 +53,15 @@ public class CompareData implements Runnable {
 	private long tempRowNumber = 0;
 	
 	private static final String DEFAULT_RESULT = "Completed";
+	private boolean hasNoUniqueKey;
+
+	public boolean isHasNoUniqueKey() {
+		return hasNoUniqueKey;
+	}
+
+	public void setHasNoUniqueKey(boolean hasNoUniqueKey) {
+		this.hasNoUniqueKey = hasNoUniqueKey;
+	}
 
 	/**
 	 * 
@@ -53,7 +70,7 @@ public class CompareData implements Runnable {
 	 * @param chunkNo
 	 * @param numberOfChunks
 	 */
-	public CompareData(Map<String, String> source, Map<String, String> target, int chunkNo, int numberOfChunks) {
+	public CompareData(Map<String, String> source, Map<String, String> target, int chunkNo, int numberOfChunks,boolean hasNoUniqueKey) {
 
 		this.sourceData = source;
 		this.targetData = target;
@@ -62,6 +79,7 @@ public class CompareData implements Runnable {
 		this.failedRowNumber = 0;
 		this.tempRowNumber = 0;
 		this.result = DEFAULT_RESULT;
+		this.hasNoUniqueKey=hasNoUniqueKey;
 		
 		Thread.currentThread().setName("CompareData for ChunkNo " + chunkNo+1); 
 	}
@@ -106,6 +124,26 @@ public class CompareData implements Runnable {
 		this.targetData = targetData;
 	}
 
+
+	public Map<String, String> getAdditionalInTarget() {
+		return additionalInTarget;
+	}
+
+	public void setAdditionalInTarget(Map<String, String> additionalInTarget) {
+		this.additionalInTarget = additionalInTarget;
+	}
+
+	public Map<String, String> getMissingInTarget() {
+		return missingInTarget;
+	}
+
+	public void setMissingInTarget(Map<String, String> missingInTarget) {
+		this.missingInTarget = missingInTarget;
+	}
+
+	public void setAdditionalDuplicateRows(Map<String, String> additionalDuplicateRows) {
+		this.additionalDuplicateRows = additionalDuplicateRows;
+	}
 	public void run() {
 
 		Thread.currentThread().setName("CompareData for ChunkNo " + chunkNo+1); 
@@ -117,10 +155,10 @@ public class CompareData implements Runnable {
 
 		List<String> tempSourceFailTuple = new ArrayList<String>();
 		List<String> tempTargetFailTuple = new ArrayList<String>();
-		
-		compare(sourceData, targetData, tempSourceFailTuple, tempSource);
 
-		compare(targetData, sourceData, tempTargetFailTuple, tempTarget);
+		compare(sourceData, targetData, tempSourceFailTuple, tempSource,hasNoUniqueKey);
+
+		compareTaget(targetData, sourceData, tempTargetFailTuple, tempTarget ,hasNoUniqueKey);
 
 		//this.failTuple.addAll(tempSourceFailTuple);
 		//this.failTuple.addAll(tempTargetFailTuple);
@@ -161,61 +199,125 @@ public class CompareData implements Runnable {
 	 * @param failedEntry
 	 */
 	private void compare(Map<String, String> data, Map<String, String> dataToCompare, List<String> failTuple,
-			Map<String, String> failedEntry) {
+			Map<String, String> failedEntry,boolean hasNoUniqueKey) {
 
 		for (Map.Entry<String, String> entry : data.entrySet()) {
 
-			this.tempRowNumber++;
-
-			String key = entry.getKey();
-
-			try {
-
-				if (key != null) {
-
-					String content = entry.getValue();
-					String dataToCompareContent = dataToCompare.get(key);
-
-					//if it is mismatch
-					if (!(content != null && dataToCompareContent != null && content.equals(dataToCompareContent))) {
-                     // if target has the data
-						if(dataToCompare.containsValue(content))
-						{
-							int sourceCount = Collections.frequency(data.values(), content);
-							int targetCount = Collections.frequency(dataToCompare.values(), content);
-
-							if(sourceCount>targetCount){
-
-								 if(Collections.frequency(failedEntry.values(), content)<(sourceCount-targetCount)){
-
-									 String failedContent = (content != null) ? content : "";
-
-									 this.result = "Failed";
-
-									 //failTuple.add(failedContent);
-
-									 this.failedRowNumber = this.tempRowNumber;
-
-									 failedEntry.put(key, failedContent);
-								 }
+		boolean newRecord=false;
+		this.tempRowNumber++;
+		String key = entry.getKey();
+		try {
+			if(!hasNoUniqueKey){
+			if (key != null && !failedEntry.containsKey(key)) {
+				String content = entry.getValue();
+				String dataToCompareContent = dataToCompare.get(key);
+				int sourceCount = Collections.frequency(data.values(), content);
+				int targetCount = Collections.frequency(dataToCompare.values(), content);
+				//if it is mismatch
+						if(sourceCount>targetCount ){
+							//if(Collections.frequency(failedEntry.values(), content)<(sourceCount-targetCount)){
+								for(int cnt=0; cnt<(sourceCount-targetCount) ; cnt++) {
+									String failedContent = (content != null) ? content : "";
+									this.result = "Failed";
+									//failTuple.add(failedContent);
+									this.failedRowNumber = this.tempRowNumber;
+									if (failedEntry.containsKey(key) && newRecord) {
+									 	key = key + "-DUP"+cnt;
+									}
+									failedEntry.put(key, failedContent);
+									newRecord=true;
+								}
+							newRecord=false;
 							}
 						}
-						else {
+					}
+			if(hasNoUniqueKey){
+				String content = entry.getValue();
+				String dataToCompareContent = dataToCompare.get(key);
+				if (key != null && !failedEntry.containsValue(content)) {
+					int sourceCount = Collections.frequency(data.values(), content);
+					int targetCount = Collections.frequency(dataToCompare.values(), content);
+					//if it is mismatch
+					if(sourceCount>targetCount ){
+						//if(Collections.frequency(failedEntry.values(), content)<(sourceCount-targetCount)){
+						for(int cnt=0; cnt<(sourceCount-targetCount) ; cnt++) {
 							String failedContent = (content != null) ? content : "";
-
 							this.result = "Failed";
-
 							//failTuple.add(failedContent);
-
 							this.failedRowNumber = this.tempRowNumber;
-
+							if (failedEntry.containsKey(key) && newRecord) {
+								key = key + "-DUP"+cnt;
+							}
 							failedEntry.put(key, failedContent);
+							newRecord=true;
+						}
+						newRecord=false;
+					}
+				}
+			}
+
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+		}
+	}
+}
+
+	/**
+	 *
+	 * @param data
+	 * @param dataToCompare
+	 * @param failTuple
+	 * @param failedEntry
+	 */
+	private void compareTaget(Map<String, String> data, Map<String, String> dataToCompare, List<String> failTuple,
+						 Map<String, String> failedEntry,boolean hasNoUniqueKey) {
+
+		for (Map.Entry<String, String> entry : data.entrySet()) {
+			this.tempRowNumber++;
+			boolean newRecord=false;
+			String key = entry.getKey();
+			String content = entry.getValue();
+			try {
+				if(!hasNoUniqueKey) {
+					if (key != null && !failedEntry.containsKey(key) ) {
+						String dataToCompareContent = dataToCompare.get(key);
+						int sourceCount = Collections.frequency(data.values(), content);
+						int targetCount = Collections.frequency(dataToCompare.values(), content);
+						for (int cnt = 0; cnt < (sourceCount - targetCount); cnt++) {
+							String failedContent = (content != null) ? content : "";
+							this.result = "Failed";
+							//failTuple.add(failedContent);
+							this.failedRowNumber = this.tempRowNumber;
+							if (failedEntry.containsKey(key) && newRecord) {
+								//key=key+"-DUP"+cnt;
+							}
+							failedEntry.put(key, failedContent);
+							newRecord = true;
+						}
+					}
+				}
+					else if(hasNoUniqueKey){
+					if (key != null && !failedEntry.containsValue(content) ) {
+						String dataToCompareContent = dataToCompare.get(key);
+						int sourceCount = Collections.frequency(data.values(), content);
+						int targetCount = Collections.frequency(dataToCompare.values(), content);
+						for(int cnt=0; cnt<(sourceCount-targetCount) ; cnt++) {
+							String failedContent = (content != null) ? content : "";
+							this.result = "Failed";
+							//failTuple.add(failedContent);
+							this.failedRowNumber = this.tempRowNumber;
+							if(failedEntry.containsKey(key) && newRecord ){
+								key=key+"-DUP"+cnt;
+							}
+							failedEntry.put(key, failedContent);
+							newRecord=true;
 						}
 					}
 				}
 			} catch (Exception e) {
 				logger.error(e.getMessage(), e);
 			}
+			newRecord=false;
 		}
 	}
 }
