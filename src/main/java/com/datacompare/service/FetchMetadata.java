@@ -437,8 +437,13 @@ public class FetchMetadata {
 		String id =null;
 		if(suppliedPrimaryKey!=null && suppliedPrimaryKey.trim().length()>0){
 			String cols[]=suppliedPrimaryKey.split(",");
-			if(cols!=null &&cols.length>0 && cols[0].length()>0){
-				id=cols[0].substring(7,(cols[0].length()));
+			if(cols!=null &&cols.length>0 && cols[0].length()>0) {
+				String keyPart = cols[0];
+
+				String multipleKeys[] = keyPart.split("\\(");
+				if (multipleKeys != null && multipleKeys.length > 0 && multipleKeys[multipleKeys.length - 1].length() > 0) {
+					id = multipleKeys[multipleKeys.length - 1];
+				}
 			}
 	}
 		return id;
@@ -761,7 +766,7 @@ public class FetchMetadata {
 		jdbcUtil.closeResultSet(rs);
 		jdbcUtil.closeStatement(stmt); 
 
-		logger.info("Completed preparing chunks"+totalRecords);
+		logger.info("Completed preparing chunks "+totalRecords);
 	}
 
 
@@ -1180,4 +1185,11 @@ public class FetchMetadata {
 	public void setMaxTextSize(int maxTextSize) {
 		this.maxTextSize = maxTextSize;
 	}
+	public boolean isPrimeryKeySupplied(AppProperties appProperties, String tableName){
+		if(getSuppliedPrimaryKey(appProperties, tableName)!=null)
+			return true;
+		else
+			return false;
+	}
+
 }
