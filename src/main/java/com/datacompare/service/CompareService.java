@@ -637,6 +637,8 @@ public class CompareService {
 			logger.info(info.toString());
 			long sourceCount = getCount(sourceCountList);
 			long targetCount = getCount(targetCountList);
+			finalValidation(mismatchSourceData,mismatchTargetData,fetchSourceMetadata.isHasNoUniqueKey());
+			finalValidation(mismatchTargetData,mismatchSourceData,fetchSourceMetadata.isHasNoUniqueKey());
 //			long sourceTotalRowCount = fetchSourceMetadata.getRowCount();
 //			dto.setRowCountSource(sourceTotalRowCount);
 			dto.setRowCountSource(sourceCount);
@@ -667,7 +669,62 @@ public class CompareService {
 		logger.info(info.toString());
 		return dto;
 	}
-	
+
+	private void finalValidation(Map<String, String> data, Map<String, String> targetCountList, boolean hasNoUniqueKey) {
+
+
+			for (Map.Entry<String, String> entry : data.entrySet()) {
+
+				boolean newRecord=false;
+				String key = entry.getKey();
+				try {
+					if(!hasNoUniqueKey){
+						if (key != null && targetCountList.containsKey(key)) {
+							String content = entry.getValue();
+							String dataToCompareContent = targetCountList.get(key);
+							int sourceCount = Collections.frequency(data.values(), content);
+							int targetCount = Collections.frequency(targetCountList.values(), content);
+							//if it is mismatch
+							if(sourceCount>0 && targetCount>0 ){
+								//if(Collections.frequency(failedEntry.values(), content)<(sourceCount-targetCount)){
+								data.remove(key);
+								String removeKey=getKeyForValue( targetCountList,content);
+								if(removeKey!=null)
+									targetCountList.remove(removeKey);
+							}
+						}
+					}
+					if(hasNoUniqueKey){
+						String content = entry.getValue();
+						String dataToCompareContent = targetCountList.get(key);
+							int sourceCount = Collections.frequency(data.values(), content);
+							int targetCount = Collections.frequency(targetCountList.values(), content);
+							//if it is mismatch
+							if(sourceCount>0 && targetCount>0 ){
+							//if(Collections.frequency(failedEntry.values(), content)<(sourceCount-targetCount)){
+								data.remove(key);
+								String removeKey=getKeyForValue( targetCountList,content);
+								if(removeKey!=null)
+								targetCountList.remove(removeKey);
+								}
+								}
+				} catch (Exception e) {
+					logger.error(e.getMessage(), e);
+				}
+			}
+		}
+
+	private String getKeyForValue(Map<String, String> targetCountList, String content) {
+		for (Map.Entry<String, String> entry : targetCountList.entrySet()) {
+
+			boolean newRecord = false;
+			String key = entry.getKey();
+			String value = entry.getValue();
+			if (value.equalsIgnoreCase(content))
+				return key;
+		}
+        return null;
+	}
 	/**
 	 * 
 	 * @param targetChunk
