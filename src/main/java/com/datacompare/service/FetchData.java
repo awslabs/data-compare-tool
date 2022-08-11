@@ -1,6 +1,6 @@
+
 /**
- * Service class to Fatch the data from the databse using JDBC resultset. C.
- * This runs a thread for multiple databases( source and target)
+ * Service class to Fatch the metadata of the database tables for multiple databases( source and target)
  *
  *
  * @author      Harnath Valeti
@@ -8,663 +8,1188 @@
  * @version     1.0
  * @since       1.0
  */
+
 package com.datacompare.service;
+
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
+import org.apache.commons.lang3.EnumUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.datacompare.model.AppProperties;
 import com.datacompare.model.DatabaseInfo;
 import com.datacompare.model.TableColumnMetadata;
-import com.datacompare.util.DateUtil;
 import com.datacompare.util.JdbcUtil;
-import com.datacompare.util.MemoryUtil;
-import org.apache.commons.lang3.EnumUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.postgresql.largeobject.LargeObject;
-import org.postgresql.largeobject.LargeObjectManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.util.DigestUtils;
-
-import java.io.*;
-import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
-import java.sql.*;
-import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.zip.GZIPInputStream;
-
-public class FetchData implements Runnable {
-
-    /**
-     *
-     */
-    public Logger logger = LoggerFactory.getLogger("FetchDataLog");
-
-    private String PIPE_SEPARATOR = " || ";
-
-    private String chunk = null;
-    private String dbType = null;
-    private String sourceDBType = null;
-    private String sortKey = null;
-    private String sql = null;
 
-    private Connection connection = null;
-
-    private int fetchSize;
-    private long rowCount;
-    private boolean compareOnlyDate;
-
-    private Map<String, String> hashMap = null;
-    private Map<String, TableColumnMetadata> tableMetadataMap = null;
-    private Map<String, TableColumnMetadata> sourceTableMetadataMap = null;
-
-    private List<Long> timeTaken;
-
-    /**
-     * @param dbType
-     * @param sourceDBType
-     * @param sql
-     * @param chunk
-     * @param connection
-     * @param tableMetadata
-     * @param sourceTableMetadata
-     * @param appProperties
-     * @throws Exception
-     */
-    public FetchData(String dbType, String sourceDBType, String sql, String chunk, Connection connection,
-                     Map<String, TableColumnMetadata> tableMetadata, Map<String, TableColumnMetadata> sourceTableMetadata,
-                     AppProperties appProperties) throws Exception {
-
-        if (!EnumUtils.isValidEnum(DatabaseInfo.dbType.class, dbType))
-            throw new Exception(dbType + " not supported.");
-
-        setConnection(connection);
-        setDbType(dbType);
-        setSourceDBType(sourceDBType);
-        setSql(sql);
-        setChunk(chunk);
-        setFetchSize(appProperties.getFetchSize());
-        setCompareOnlyDate(appProperties.isCompareOnlyDate());
-        setTableMetadataMap(tableMetadata);
-        setSourceTableMetadataMap(sourceTableMetadata);
-        setHashMap(new ConcurrentHashMap<String, String>());
-
-        Thread.currentThread().setName(getDbType() + " " + getChunk());
-
-        //logger.info("\n" + getDbType() + ": SQL Query without chunk: " + getSql());
-    }
-
-    @Override
-    public void run() {
-
-        Thread.currentThread().setName(getDbType() + " " + chunk);
-
-        StringBuilder info = new StringBuilder();
-
-        info.append("Started executing chunk for DB: ");
-        info.append(getDbType());
-        info.append(" ");
-        info.append(getSql());
-        info.append(" ");
-        info.append(getChunk());
-
-        logger.info(info.toString());
-
-        Statement stmt = null;
-        ResultSet rs = null;
-
-        try {
-
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-            SimpleDateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
-            getHashMap().clear();
-
-            stmt = getConnection().createStatement();
-            long start = System.currentTimeMillis();
-            long keySize = 0;
-            long valSize = 0;
-
-            String query = getSql() + " " + getChunk();
-
-            //logger.debug(query);
-
-            rs = stmt.executeQuery(query);
-
-            rs.setFetchSize(getFetchSize());
-
-            while (rs.next()) {
-
-                try {
-
-                    String key = rs.getString("key1");
-                    StringBuilder value = new StringBuilder();
-
-                    List<String> colNames = new ArrayList<String>(
-                            getSourceTableMetadataMap() != null && !getSourceTableMetadataMap().isEmpty()
-                                    ? getSourceTableMetadataMap().keySet() : getTableMetadataMap().keySet());
-
-                    for (String colName : colNames) {
-
-                        colName = "POSTGRESQL".equals(getDbType()) ? colName.toLowerCase() : colName.toUpperCase();
-
-                        TableColumnMetadata metadata = getTableMetadataMap().get(colName);
-                        TableColumnMetadata sourceMetadata = null;
-                        String columnType = metadata.getColumnType();
-                        String columnName=metadata.getColumnName();
-                        int noOfDecimals = metadata.getNoOfDecimals();
-                        int sourceNoOfDecimals = 0;
-
-                        if ("POSTGRESQL".equals(getDbType())) {
-
-                            sourceMetadata = getSourceTableMetadataMap().get(metadata.getColumnName().toUpperCase());
-
-                            if (sourceMetadata != null) {
-
-                                sourceNoOfDecimals = sourceMetadata.getNoOfDecimals();
-                            }
-                            // To handle the column names with #
-                            if(columnName.contains("#")) {
-                                if(!columnName.contains("#\"")) {
-                                //    columnName = "\"" + columnName + "\"";
-                                }
-                            }
-                        }
-                        if (columnType.contains("int") || columnType.contains("INT")) {
-
-                            long rValue = rs.getLong(columnName);
-                            value.append(PIPE_SEPARATOR);
-                            value.append(rValue);
-
-                        } else if (columnType.contains("boolean") || columnType.contains("BOOLEAN")) {
-
-                            boolean bValue = rs.getBoolean(columnName);
-                            value.append(PIPE_SEPARATOR);
-                            value.append(bValue);
-
-                        } else if (columnType.compareTo("DECIMAL") == 0 || columnType.compareTo("NUMBER") == 0
-                                || columnType.compareTo("numeric") == 0) {
-
-                            noOfDecimals = (sourceNoOfDecimals > 0) ? sourceNoOfDecimals : noOfDecimals;
-
-                            if (noOfDecimals > 0) {
-
-                                String decimalFormat = (sourceMetadata != null) ? sourceMetadata.getDecimalFormat()
-                                        : metadata.getDecimalFormat();
-
-                                DecimalFormat df2 = new DecimalFormat(decimalFormat);
-                                df2.setGroupingUsed(false);
-                                double doub = 0;
-
-                                if (getDbType().equals("ORACLE") && columnType.compareTo("NUMBER") == 0) {
-
-                                    doub = rs.getDouble(columnName);
-
-                                } else {
-
-                                    BigDecimal bValue = rs.getBigDecimal(columnName);
-                                    doub = (bValue != null) ? bValue.doubleValue() : 0;
-                                }
-
-                                value.append(PIPE_SEPARATOR);
-                                value.append(df2.format(doub));
-
-                            } else {
-
-                                if (getDbType().equals("ORACLE") && columnType.compareTo("NUMBER") == 0) {
-
-                                    long lValue = rs.getLong(columnName);
-                                    value.append(PIPE_SEPARATOR);
-                                    value.append(Long.valueOf(lValue).toString());
-
-                                } else {
-
-                                    String dValue = rs.getString(columnName);
-                                    String nValue = (dValue != null && !dValue.equals("null")
-                                            && dValue.trim().length() > 0) ? dValue : "0";
-                                    value.append(PIPE_SEPARATOR);
-                                    value.append(nValue);
-                                }
-                            }
-
-                        } else if (columnType.contains("float") || columnType.contains("FLOAT") || columnType.compareTo("DOUBLE") == 0) {
-
-                            noOfDecimals = (sourceNoOfDecimals > 0) ? sourceNoOfDecimals : noOfDecimals;
-
-                            if (noOfDecimals > 0) {
-
-                                String decimalFormat = (sourceMetadata != null) ? sourceMetadata.getDecimalFormat()
-                                        : metadata.getDecimalFormat();
-
-                                DecimalFormat df2 = new DecimalFormat(decimalFormat);
-                                df2.setGroupingUsed(false);
-                                double doub = rs.getDouble(columnName);
-                                value.append(PIPE_SEPARATOR);
-                                value.append(df2.format(doub));
-
-                            } else {
-
-                                String dValue = rs.getString(columnName);
-                                String fValue = (dValue != null && !dValue.equals("null") && dValue.trim().length() > 0)
-                                        ? dValue
-                                        : "0";
-                                value.append(PIPE_SEPARATOR);
-                                value.append(fValue);
-                            }
-
-                        } else if (columnType.contains("char") || columnType.contains("CHAR")) {
-
-                            String cValue = rs.getString(columnName);
-                            String cVal = (cValue != null && !cValue.equals("null") && cValue.trim().length() > 0)
-                                    ? cValue
-                                    : "";
-                            value.append(PIPE_SEPARATOR);
-                            value.append(cVal);
-
-                        } else if (columnType.contains("timestamp") || columnType.contains("TIMESTAMP")) {
-
-                            try {
-
-                                Timestamp timestamp = rs.getTimestamp(columnName);
-
-                                String dtStr = (timestamp != null) ? ((isCompareOnlyDate())
-                                        ? dateFormat.format(timestamp) : dateTimeFormat.format(timestamp)) : "";
-
-                                value.append(PIPE_SEPARATOR);
-                                value.append(dtStr);
-
-                            } catch (Exception e) {
-
-                                logger.error(getDbType(), e);
-                                value.append(PIPE_SEPARATOR);
-                                value.append("");
-                            }
-
-                        } else if (columnType.contains("DATE") || columnType.contains("date")) {
-
-                            try {
-
-                                java.sql.Timestamp date = rs.getTimestamp(columnName);
-
-                                String dtStr = (date != null) ? ((isCompareOnlyDate())
-                                        ? dateFormat.format(date) : dateTimeFormat.format(date)) : "";
-
-                                value.append(PIPE_SEPARATOR);
-                                value.append(dtStr);
-
-                            } catch (Exception e) {
-
-                                logger.error(getDbType(), e);
-
-                                value.append(PIPE_SEPARATOR);
-                                value.append("");
-                            }
-
-                        } else if (
-                                   columnType.equalsIgnoreCase("TEXT")
-                                           || columnType.equalsIgnoreCase("BYTEA")
-                                           || columnType.equalsIgnoreCase("BLOB")){
-
-                            // Binary data as MD5 hash value
-                            byte blobVal[] = rs.getBytes(columnName);
-                            String hValue = (blobVal != null && !blobVal.equals("null") && blobVal.length > 0)
-                                    ? getHash(blobVal)
-                                    : "";
-                            value.append(PIPE_SEPARATOR);
-                            value.append(hValue);
-
-                        } else if (columnType.equalsIgnoreCase("CLOB")) {
-                            // Clob data
-							Clob clob  = rs.getClob(columnName);
-                            String cValue = (clob != null && !clob.equals("null"))
-                                    ? getHash(clob.getSubString(1,(int)clob.length()).getBytes())
-                                    : "";
-                            value.append(PIPE_SEPARATOR);
-                            value.append(cValue);
-
-                        } else {
-
-                            String oValue = rs.getString(columnName);
-                            String oVal = (oValue != null && !oValue.equals("null") && oValue.trim().length() > 0)
-                                    ? oValue
-                                    : "";
-                            value.append(PIPE_SEPARATOR);
-                            value.append(oVal);
-                        }
-                    }
-
-                    value.append(PIPE_SEPARATOR);
-
-                    String val = StringUtils.normalizeSpace(value.toString()).trim();
-
-                    if (val != null && val.trim().length() > 0) {
-
-                        valSize = valSize + val.getBytes().length;
-                        keySize = keySize + key.getBytes().length;
-                    }
-                    //TODO------
-
-                    if(getHashMap().containsKey(key.trim()))
-                    {
-                     int dupNumber=   getDuplicateNumber(getHashMap(),key.trim());
-                        String dupKey=key.trim()+"DUP"+dupNumber;
-                        getHashMap().put(dupKey, val);
-                    }
-                    else {
-                        getHashMap().put(key.trim(), val);
-                    }
-
-                } catch (Exception e) {
-
-                    logger.error(getDbType(), e);
-                }
-            }
-
-            logger.debug(getDbType() + " Map Size in bytes " + (keySize + valSize) + " ,Value Size in Bytes "
-                    + valSize + " , Key Size in Bytes " + keySize);
-            new MemoryUtil().displayMemoryInfo();
-
-            long end = System.currentTimeMillis();
-
-            long diffInSeconds = (end - start) / 1000;
-
-            getTimeTaken().add(Long.valueOf(diffInSeconds));
-
-            String timeTaken = new DateUtil().timeDiffFormatted(diffInSeconds);
-
-            info = new StringBuilder();
-
-            info.append(getDbType());
-            info.append(" CHUNK: ");
-            //info.append(getSql());
-            //info.append(" ");
-            info.append(getChunk());
-            info.append("\n");
-            info.append("Time Taken to fetch this chunk = ");
-            info.append(timeTaken);
-
-            logger.info(info.toString());
-
-        } catch (SQLException ex) {
-
-            ex.printStackTrace();
-            logger.error(getDbType(), ex);
-
-        } finally {
-
-            JdbcUtil jdbcUtil = new JdbcUtil();
-
-            jdbcUtil.closeResultSet(rs);
-            jdbcUtil.closeStatement(stmt);
-        }
-    }
-
-    private int getDuplicateNumber(Map<String, String> hashMap, String key) {
-        int cnt=1;
-        for (Map.Entry<String, String> entry : hashMap.entrySet()) {
-            String dupKey=key.trim()+"DUP"+cnt;
-            if(!hashMap.containsKey(dupKey)){
-                return cnt;
-            }
-            cnt++;
-        }
-        return cnt;
-    }
-
-    /**
-     * @return MD5 hash to compare the large objects
-     */
-    public String getHash(byte[] data) {
-        String hashString = null;
-        byte[] md5Hex = DigestUtils.md5Digest(data);
-        if (md5Hex != null && md5Hex.length > 0)
-            hashString = new String(md5Hex);
-        return hashString;
-    }
-    /**
-     * @return the chunk
-     */
-    public String getChunk() {
-        return chunk;
-    }
-
-    /**
-     * @return the connection
-     */
-    public Connection getConnection() {
-        return connection;
-    }
-
-    /**
-     * @return
-     */
-    public String getDbType() {
-        return dbType;
-    }
-
-    /**
-     * @return the sourceDBType
-     */
-    public String getSourceDBType() {
-        return sourceDBType;
-    }
-
-    /**
-     * @return the fetchSize
-     */
-    public int getFetchSize() {
-        return fetchSize;
-    }
-
-    /**
-     * @return
-     */
-    public Map<String, String> getHashMap() {
-        return hashMap;
-    }
-
-    /**
-     * @return
-     */
-    public long getRowCount() {
-        return rowCount;
-    }
-
-    /**
-     * @return the compareOnlyDate
-     */
-    public boolean isCompareOnlyDate() {
-        return compareOnlyDate;
-    }
-
-    /**
-     * @return
-     */
-    public String getSortKey() {
-        return sortKey;
-    }
-
-    /**
-     * @return the sql
-     */
-    public String getSql() {
-        return sql;
-    }
-
-    /**
-     * @return the tableMetadataMap
-     */
-    public Map<String, TableColumnMetadata> getTableMetadataMap() {
-        return tableMetadataMap;
-    }
-
-    /**
-     * @return the sourceTableMetadataMap
-     */
-    public Map<String, TableColumnMetadata> getSourceTableMetadataMap() {
-        return sourceTableMetadataMap;
-    }
-
-    /**
-     * @param chunk
-     */
-    public void setChunk(String chunk) {
-        this.chunk = chunk;
-    }
-
-    /**
-     * @param connection the connection to set
-     */
-    public void setConnection(Connection connection) {
-        this.connection = connection;
-    }
-
-    /**
-     * @param dbType
-     */
-    public void setDbType(String dbType) {
-        this.dbType = dbType;
-    }
-
-    /**
-     * @param sourceDBType the sourceDBType to set
-     */
-    public void setSourceDBType(String sourceDBType) {
-        this.sourceDBType = sourceDBType;
-    }
-
-    /**
-     * @param fetchSize the fetchSize to set
-     */
-    public void setFetchSize(int fetchSize) {
-        this.fetchSize = fetchSize;
-    }
-
-    /**
-     * @param hashMap the hashMap to set
-     */
-    public void setHashMap(Map<String, String> hashMap) {
-        this.hashMap = hashMap;
-    }
-
-    /**
-     * @param rowCount
-     */
-    public void setRowCount(long rowCount) {
-        this.rowCount = rowCount;
-    }
-
-    /**
-     * @param compareOnlyDate the compareOnlyDate to set
-     */
-    public void setCompareOnlyDate(boolean compareOnlyDate) {
-        this.compareOnlyDate = compareOnlyDate;
-    }
-
-    /**
-     * @param sortKey
-     */
-    public void setSortKey(String sortKey) {
-        this.sortKey = sortKey;
-    }
-
-    /**
-     * @param sql the sql to set
-     */
-    public void setSql(String sql) {
-        this.sql = sql;
-    }
-
-    /**
-     * @param tableMetadataMap the tableMetadataMap to set
-     */
-    public void setTableMetadataMap(Map<String, TableColumnMetadata> tableMetadataMap) {
-        this.tableMetadataMap = tableMetadataMap;
-    }
-
-    /**
-     * @param sourceTableMetadataMap the sourceTableMetadataMap to set
-     */
-    public void setSourceTableMetadataMap(Map<String, TableColumnMetadata> sourceTableMetadataMap) {
-        this.sourceTableMetadataMap = sourceTableMetadataMap;
-    }
-
-    /**
-     * @return the timeTaken
-     */
-    public List<Long> getTimeTaken() {
-        return timeTaken;
-    }
-
-    /**
-     * @param timeTaken the timeTaken to set
-     */
-    public void setTimeTaken(List<Long> timeTaken) {
-        this.timeTaken = timeTaken;
-    }
-
-    /*********************************************************************************************
-     * From CLOB to String
-     * @return string representation of clob
-     *********************************************************************************************/
-    private String clobToString(java.sql.Clob data) {
-        final StringBuilder sb = new StringBuilder();
-        try {
-            final Reader reader = data.getCharacterStream();
-            final BufferedReader br = new BufferedReader(reader);
-            int b;
-            while (-1 != (b = br.read())) {
-                sb.append((char) b);
-            }
-            br.close();
-        } catch (SQLException e) {
-            logger.error("SQL. Could not convert CLOB to string", e);
-            return e.toString();
-        } catch (IOException e) {
-            logger.error("IO. Could not convert CLOB to string", e);
-            return e.toString();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return sb.toString();
-    }
-
-    /*********************************************************************************************
-     * From Blob to String for POSTGRESQL Only
-     * @return string representation of LOB
-     *********************************************************************************************/
-    private String blobToString(long oid) {
-        String blobString = null;
-        LargeObject obj =null;
-        try {
-            getConnection().setAutoCommit(false);
-            String temp;
-            LargeObjectManager lobj = ((org.postgresql.PGConnection) getConnection())
-                    .getLargeObjectAPI();
-            obj = lobj.open(oid, LargeObjectManager.READ);
-            // Read the data
-            byte[] buf = new byte[obj.size()];
-            obj.read(buf, 0, obj.size());
-            blobString= new String(buf);
-
-        } catch (SQLException e) {
-            logger.error("SQL. Could not convert Blob to string", e);
-            return e.toString();
-        }  catch (Exception e) {
-            e.printStackTrace();
-        }finally{
-            try {
-                getConnection().commit();
-                obj.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-
-        return blobString;
-    }
-   }
+public class FetchMetadata {
+
+	/** */
+	public Logger logger = LoggerFactory.getLogger("FetchMetadataLog");
+
+	private List<String> chunks = new ArrayList<String>();
+
+	public List<String> sortColumns = new ArrayList<String>();
+
+	public List<String> columns = new ArrayList<String>();
+
+	private String dbType = null;
+
+	private int fetchSize;
+
+	private int maxDecimals;
+	
+	private int maxTextSize;
+	
+	private long sourceRowCount;
+
+	private long targetRowCount;
+	
+	private boolean hasNoUniqueKey; 
+	
+	private String sortKey;
+	
+	private String primaryKey;
+
+	private String sql = null;
+
+	private Map<String, TableColumnMetadata> tableMetadataMap = new LinkedHashMap<String, TableColumnMetadata>();
+
+	/**
+	 * Function reading the table meta data checking the each columns value
+	 * 
+	 * @param dbType
+	 * @param sourceDBType
+	 * @param connection
+	 * @param schemaName
+	 * @param tableName
+	 * @param rowCount
+	 * @param sourceSortKey
+	 * @param sourcePrimaryKey
+	 * @param sourceTableMetadataMap
+	 * @param columnList
+	 * @param appProperties
+	 * @throws Exception
+	 */
+	public FetchMetadata(String dbType, String sourceDBType, Connection connection, String schemaName, String tableName,
+			long rowCount, String sourceSortKey, String sourcePrimaryKey, boolean sourceHasNoUniqueKey,
+			Map<String, TableColumnMetadata> sourceTableMetadataMap, List<String> columnList,
+			AppProperties appProperties, boolean isSurceDB,long additionalrows) throws Exception {
+		
+		if (!EnumUtils.isValidEnum(DatabaseInfo.dbType.class, dbType)) throw new Exception(dbType + " not supported.");
+		
+		if("Detail".equals(appProperties.getReportType())) {
+			
+			fetchDetailData(dbType, sourceDBType, connection, schemaName, tableName, rowCount, sourceSortKey,
+					sourcePrimaryKey, sourceHasNoUniqueKey, sourceTableMetadataMap, columnList, appProperties,additionalrows);
+			
+		} else if("Basic".equals(appProperties.getReportType())) {
+			
+			fetchBasicData(connection, schemaName, tableName, appProperties,isSurceDB);
+		}
+	}
+
+	public FetchMetadata() {
+
+	}
+
+	/**
+	 * 
+	 * @param dbType
+	 * @param sourceDBType
+	 * @param connection
+	 * @param schemaName
+	 * @param tableName
+	 * @param rowCount
+	 * @param sourceSortKey
+	 * @param sourcePrimaryKey
+	 * @param sourceHasNoUniqueKey
+	 * @param sourceTableMetadataMap
+	 * @param columnList
+	 * @param appProperties
+	 * @throws Exception
+	 */
+	private void fetchDetailData(String dbType, String sourceDBType, Connection connection, String schemaName,
+			String tableName, long rowCount, String sourceSortKey, String sourcePrimaryKey, boolean sourceHasNoUniqueKey,
+			Map<String, TableColumnMetadata> sourceTableMetadataMap, List<String> columnList,
+			AppProperties appProperties, long additionalrows) throws Exception {
+		
+		StringBuilder sortKey = new StringBuilder();
+		StringBuilder primaryKey = new StringBuilder();
+		StringBuilder uniqueKeyCol = new StringBuilder();
+
+		setDbType(dbType);
+		setFetchSize(appProperties.getFetchSize());
+		setMaxDecimals(appProperties.getMaxDecimals());
+		setMaxTextSize(appProperties.getMaxTextSize()); 
+
+		Map<Integer, String> primaryKeyMap = new TreeMap<Integer, String>();
+
+		fetchTableColumns(sourceDBType, connection, schemaName, tableName, columnList, appProperties.isIgnoreColumns()); 
+		fetchPrimaryColumns(connection, schemaName, tableName, primaryKeyMap, sourceSortKey, sourcePrimaryKey,
+				sourceHasNoUniqueKey, sortKey, primaryKey, uniqueKeyCol,appProperties);
+		prepareQuery(connection, schemaName, tableName, sortKey.toString(), primaryKey.toString(),
+				uniqueKeyCol.toString(), appProperties.getFilter(), appProperties.getFilterType(), rowCount, sourceTableMetadataMap, additionalrows,appProperties);
+	}
+	
+	/**
+	 * 
+	 * @param connection
+	 * @param schemaName
+	 * @param tableName
+	 * @param appProperties
+	 * @throws SQLException
+	 */
+	private void fetchBasicData(Connection connection, String schemaName, String tableName,
+			AppProperties appProperties,boolean isSourceDb) throws SQLException {
+		
+		Long totalRecords = getTotalRecords(connection, schemaName, tableName, appProperties.getFilter()); 
+
+		if(isSourceDb)
+		setSourceRowCount(totalRecords);
+		else
+			setTargetRowCount(totalRecords);
+	}
+
+	/**
+	 * 
+	 * @param connection
+	 * @param schemaName
+	 * @param tableName
+	 * @param sortKey
+	 * @param primaryKey
+	 * @param uniqueKeyCol
+	 * @param filter
+	 * @param filterType
+	 * @param rowCount
+	 * @param sourceTableMetadataMap
+	 * @throws SQLException
+	 */
+	private void prepareQuery(Connection connection, String schemaName, String tableName, String sortKey,
+			String primaryKey, String uniqueKeyCol, String filter, String filterType, long rowCount,
+			Map<String, TableColumnMetadata> sourceTableMetadataMap, long additionalrows, AppProperties appProperties) throws SQLException {
+		
+		String query = null;
+		String sortCols = null;
+		String cols = null;
+		
+		switch (getDbType()) {
+
+		case "POSTGRESQL":
+
+			sortCols = replaceColumnWithHash(getTargetColumns(sourceTableMetadataMap,true));
+
+			cols = replaceColumnWithHash(getTargetColumns(sourceTableMetadataMap,false));
+			uniqueKeyCol=replaceColumnWithHash(uniqueKeyCol);
+			
+			query = "SELECT " + uniqueKeyCol + cols + " FROM " + schemaName + "." + tableName;
+
+
+			if(isHasNoUniqueKey()) {
+				
+				String subQuery = "SELECT " + uniqueKeyCol + cols + " FROM (" + "SELECT " + cols + " FROM " + schemaName + "." + tableName + " order by " + sortCols + ") t1";
+				
+				query = "SELECT t2.* FROM (" + subQuery + ") t2";
+			}
+			
+			generateChunksPostgresql(connection, schemaName, tableName, filter);
+			break;
+
+		case "ORACLE":
+
+			sortCols = getSourceColumns(true);
+			cols=getSourceColumns(false);
+			query = "SELECT " + uniqueKeyCol + cols + " FROM " + schemaName + "." + tableName;
+			
+			if(isHasNoUniqueKey()) {
+				
+				String subQuery = "SELECT " + uniqueKeyCol + cols + " FROM (" + "SELECT " + cols + " FROM " + schemaName + "." + tableName  + " order by " + sortCols + ")";
+				
+				query = "SELECT * FROM (" + subQuery +  ")";
+			}
+			generateSourceChunks(connection, schemaName, tableName, sortKey, primaryKey, filter, filterType, sortCols,rowCount,additionalrows,appProperties);
+			break;
+
+		case "SQLSERVER":
+
+			cols = getSourceColumns(false);
+			sortCols=getSourceColumns(true);
+			query = "SELECT " + uniqueKeyCol + cols + " FROM " + schemaName + "." + tableName;
+			//TODO
+			if(isHasNoUniqueKey()) {
+				String subQuery = "SELECT " + uniqueKeyCol + cols + " FROM (" + "SELECT " +  cols + " FROM " + schemaName + "." + tableName + ") t1";
+				query = "SELECT t2.* FROM (" + subQuery + " order by " + sortCols + ") t2";
+			}
+			generateSourceChunks(connection, schemaName, tableName, sortKey, primaryKey, filter, filterType, sortCols,rowCount,additionalrows,appProperties);
+			break;
+		}
+		
+		setSql(query); 
+		
+		logger.info("\n" + getDbType() + ": SQL Query without chunk: " + getSql());
+	}
+
+	private String replaceColumnWithHash(String targetColumns) {
+
+		if(targetColumns!=null && !targetColumns.isEmpty()) {
+			String cols[] = targetColumns.split(",");
+			if (cols != null && cols.length > 0) {
+				for (int i = 0; i < cols.length; i++) {
+					if (cols[i].contains("#")) {
+						String replaceString = "\"" + cols[i] + "\"";
+						targetColumns=	targetColumns.replace(cols[i], replaceString);
+					}
+				}
+			}
+		}
+		return targetColumns;
+	}
+
+	/**
+	 * 
+	 * @return
+	 */
+	private String getSourceColumns(boolean isSortColumn) {
+		
+		return getColumns(getTableMetadataMap(), getTableMetadataMap(), false, isSortColumn);
+	}
+	
+	/**
+	 * 
+	 * @param sourceTableMetadataMap
+	 * @return
+	 */
+	private String getTargetColumns(Map<String, TableColumnMetadata> sourceTableMetadataMap, boolean isSortColumn) {
+		
+		return getColumns(sourceTableMetadataMap, getTableMetadataMap(), true,isSortColumn);
+	}
+
+	/**
+	 * 
+	 * @param sourceTableMetadataMap
+	 * @param targetTableMetadataMap
+	 * @param isTarget
+	 * @return
+	 */
+	private String getColumns(Map<String, TableColumnMetadata> sourceTableMetadataMap,
+			Map<String, TableColumnMetadata> targetTableMetadataMap, boolean isTarget, boolean isSortColumn) {
+		
+		StringBuilder cols = new StringBuilder();
+		List<String> colNames = new ArrayList<String>(sourceTableMetadataMap.keySet());
+		
+		for (String colName : colNames) {
+		
+			colName = isTarget ? colName.toLowerCase() : colName.toUpperCase();
+			
+			String colAs = targetTableMetadataMap.get(colName) !=null ? targetTableMetadataMap.get(colName).getColumnAs():"";
+			String columnType = targetTableMetadataMap.get(colName)!=null ?targetTableMetadataMap.get(colName).getColumnType():"";
+			int colSize = targetTableMetadataMap.get(colName)!=null ? targetTableMetadataMap.get(colName).getColSize():0;
+             /** seperating the sorting columns from select column to avoid sql issues for CLOB/BLOB
+             * 1. Created two set of columns
+			  * 2. Excluing from the columns for sorting
+             * */
+			if(isSortColumn && (binaryColumnType(columnType) || varcharLargeSize(columnType, colSize))) {
+				columns.add(colName);
+			}else {
+				sortColumns.add(colName);
+				columns.add(colName);
+				cols.append(colAs + ",");
+			}
+		}
+		if (!cols.toString().isEmpty()) {
+
+			cols.deleteCharAt(cols.length() - 1);
+		}
+		
+		return cols.toString();
+	}
+	
+	/**
+	 * 
+	 * @param connection
+	 * @param schemaName
+	 * @param tableName
+	 * @param primaryKeyMap
+	 * @param sourceSortKey
+	 * @param sourcePrimaryKey
+	 * @param sourceHasNoUniqueKey
+	 * @param sortKey
+	 * @param primaryKey
+	 * @param uniqueKeyCol
+	 * @throws Exception
+	 */
+	private void fetchPrimaryColumns(Connection connection, String schemaName, String tableName,
+			Map<Integer, String> primaryKeyMap, String sourceSortKey, String sourcePrimaryKey, boolean sourceHasNoUniqueKey, StringBuilder sortKey,
+			StringBuilder primaryKey, StringBuilder uniqueKeyCol,AppProperties appProperties) throws Exception {
+		if (!sourceHasNoUniqueKey) {
+
+			ResultSet rs = null;
+
+			try {
+
+				rs = connection.getMetaData().getPrimaryKeys(null, schemaName, tableName);
+
+				while (rs.next()) {
+
+					String colName = rs.getString("COLUMN_NAME");
+					Integer pkPosition = rs.getInt("KEY_SEQ");
+					primaryKeyMap.put(pkPosition, colName);
+				}
+
+				if (sourceSortKey != null && sourceSortKey.trim().length() > 0) {
+
+					sortKey.append(sourceSortKey.toLowerCase());
+					primaryKey.append(sourcePrimaryKey.toLowerCase());
+
+				} else if (primaryKeyMap != null && primaryKeyMap.size() > 0) {
+
+					sortKey.append(StringUtils.join(primaryKeyMap.values(), ","));
+					primaryKey.append(primaryKeyMap.get(1));
+
+					this.setSortKey(sortKey.toString());
+					this.setPrimaryKey(primaryKey.toString());
+				}
+
+			} catch (Exception e) {
+
+				logger.error(getDbType(), e);
+
+			} finally {
+
+				new JdbcUtil().closeResultSet(rs);
+			}
+		}
+		if (sortKey.toString().isEmpty()) {
+
+			setHasNoUniqueKey(true);
+			//throw new Exception(getDbType() + " Database Table " + schemaName + "." + tableName + " PRIMARY Key not found.");
+		}
+
+		if (!sortKey.toString().isEmpty() && sortKey.toString().contains(",")) {
+
+			String primaryKeyColsTemp = sortKey.toString().replaceAll(",", "),").replaceFirst("\\)\\,", ",") + ")";
+
+			String primaryKeyColsTempArray[] = primaryKeyColsTemp.split("\\)\\,");
+
+			for (int i = 0; i < primaryKeyColsTempArray.length; i++) {
+
+				primaryKeyColsTemp = "concat(" + convertDateToTimeStamp(primaryKeyColsTemp);
+			}
+
+			uniqueKeyCol.append(primaryKeyColsTemp + " AS key1 ,");
+
+		} else if (!primaryKey.toString().isEmpty()) {
+
+			uniqueKeyCol.append(primaryKey + " AS key1 ,");
+
+		} else if (isHasNoUniqueKey()) {
+			String pkeys = null;
+			pkeys = getSuppliedPrimaryKey(appProperties, tableName);
+			if ("ORACLE".equals(getDbType())) {
+				if (pkeys != null && pkeys.length() > 0) {
+					uniqueKeyCol.append(pkeys + " as key1,");
+					//setHasNoUniqueKey(false);
+				} else {
+					uniqueKeyCol.append("ROWNUM AS key1,");
+				}
+
+			} else if ("POSTGRESQL".equals(getDbType())) {
+				if (pkeys != null && pkeys.length() > 0) {
+					uniqueKeyCol.append(pkeys + " as key1,");
+					//setHasNoUniqueKey(false);
+				} else {
+					uniqueKeyCol.append("row_number() over() as key1,");
+				}
+
+
+			} else if ("SQLSERVER".equals(getDbType())) {
+
+				if (pkeys != null && pkeys.length() > 0) {
+					uniqueKeyCol.append(pkeys + " as key1,");
+					setHasNoUniqueKey(false);
+				} else {
+					uniqueKeyCol.append("ROWNUM AS key1,");
+				}
+			}
+		}
+	}
+
+	private String getSuppliedPrimaryKey(AppProperties appProperties, String tableName) {
+		String pkeys =null;
+		if(appProperties.getPrimaryKeyMap()!=null
+				&& !appProperties.getPrimaryKeyMap().isEmpty()
+				&& appProperties.getPrimaryKeyMap().get(tableName.toUpperCase())!=null) {
+			pkeys = appProperties.getPrimaryKeyMap().get(tableName.toUpperCase());
+		}
+		return pkeys;
+	}
+
+	private String getIdFromPrimaryKey(String suppliedPrimaryKey) {
+		String id =null;
+		if(suppliedPrimaryKey!=null && suppliedPrimaryKey.trim().length()>0){
+			String cols[]=suppliedPrimaryKey.split(",");
+			if(cols!=null &&cols.length>0 && cols[0].length()>0) {
+				String keyPart = cols[0];
+
+				String multipleKeys[] = keyPart.split("\\(");
+				if (multipleKeys != null && multipleKeys.length > 0 && multipleKeys[multipleKeys.length - 1].length() > 0) {
+					id = multipleKeys[multipleKeys.length - 1];
+				}
+			}
+	}
+		return id;
+}
+
+	public String convertDateToTimeStamp(String colName) {
+
+		String colNameTmp = colName;
+		if (colNameTmp != null) {
+			String cols[] = colNameTmp.replace(")", "").split(",");
+			for (int i = 0; i < cols.length; i++) {
+				if (tableMetadataMap != null && tableMetadataMap.get(cols[i]) != null) {
+					String colType = tableMetadataMap.get(cols[i]).getColumnType();
+					if (colType != null && (colType.contains("DATE") || colType.contains("date") || colType.contains("TIMESTAMP") || colType.contains("timestamp"))) {
+						colName=colName.replace(cols[i], "TO_CHAR(" + cols[i] + ", \'YYYY-MM-DD HH24:MI:SS\')");
+					}
+				}
+			}
+		}
+		return colName;
+	}
+	/**
+	 * 
+	 * @param sourceDBType
+	 * @param connection
+	 * @param schemaName
+	 * @param tableName
+	 * @param columnList
+	 */
+	private void fetchTableColumns(String sourceDBType, Connection connection, String schemaName,
+			String tableName, List<String> columnList, boolean ignoreColumns) {
+		
+		ResultSet rs = null;
+		
+		try {
+
+			rs = connection.getMetaData().getColumns(null, schemaName, tableName, null);
+			rs.setFetchSize(getFetchSize());
+
+			while (rs.next()) {
+				
+				String col = null;
+
+				String columnType = rs.getString("TYPE_NAME");
+
+				String columnName = rs.getString("COLUMN_NAME");
+				
+				String columnSize = rs.getString("COLUMN_SIZE");
+
+				int colSize = (columnSize != null && !columnSize.equals("null")) ? Integer.parseInt(columnSize) : 0;
+
+				if(column(columnList, columnName, ignoreColumns)) continue;
+				
+				if (binaryColumnType(columnType) || varcharLargeSize(columnType, colSize)) {/*
+					
+					*//** In case if source db is Oracle, it will check length for binary column types.
+					 *  If source db is SQLServer, it will check MD5 hash string for binary column types.*//*
+					if("ORACLE".equals(getDbType())) {
+						
+						if(varcharLargeSize(columnType, colSize)) {   
+							
+							col = "LOWER(STANDARD_HASH(NVL(" + columnName
+									+ ",'NULL'), 'MD5')) AS " + columnName;
+						} else {
+							
+							col = "DBMS_LOB.GETLENGTH(" + columnName + ") AS " + columnName;
+						}
+						
+					} else if("POSTGRESQL".equals(getDbType()) && "ORACLE".equals(sourceDBType) && !varcharLargeSize(columnType, colSize)) { 
+						
+						col = "LENGTH(" + columnName + ") as " + columnName;
+						
+					} else if("SQLSERVER".equals(getDbType())) {
+						
+						col = "HashBytes('MD5', COALESCE(" + columnName + ",'NULL')) as " + columnName;
+						
+					} else if("POSTGRESQL".equals(getDbType()) && ("SQLSERVER".equals(sourceDBType) || varcharLargeSize(columnType, colSize))) { 
+						
+						col = "MD5(COALESCE (" + columnName + ",'NULL')) as " + columnName;
+						
+					} else {
+					}*/
+					col = columnName;
+					//col = "LENGTH(" + columnName + ") as " + columnName;
+				} else {
+					
+					col = columnName;
+				}
+
+				boolean isNullable = rs.getString("IS_NULLABLE").toUpperCase().equals("YES");
+
+				String decimalDigits = rs.getString("DECIMAL_DIGITS");
+
+				int noOfDecimals = (decimalDigits != null && !decimalDigits.equals("null"))
+						? Integer.parseInt(decimalDigits)
+						: 0;
+
+				String decimalFormat = "";
+				
+				if (columnType.compareTo("DECIMAL") == 0 || columnType.compareTo("NUMBER") == 0
+						|| columnType.compareTo("numeric") == 0 || columnType.contains("float")
+						|| columnType.contains("FLOAT") || columnType.compareTo("DOUBLE") == 0) {
+
+					for (int i = 0; i < colSize; i++) {
+
+						decimalFormat = decimalFormat + "#";
+					}
+				}
+				
+				if (noOfDecimals > getMaxDecimals() && getMaxDecimals() > 0) {
+					
+					decimalFormat = (decimalFormat.trim().length() > 0) ? decimalFormat + "." : "#.";
+
+					for (int j = 0; j < getMaxDecimals(); j++) {
+
+						decimalFormat = decimalFormat + "0";
+					}
+				} else if (noOfDecimals > 0) {
+					
+					decimalFormat = (decimalFormat.trim().length() > 0) ? decimalFormat + "." : "#.";
+
+					for (int j = 0; j < noOfDecimals; j++) {
+
+						decimalFormat = decimalFormat + "0";
+					}
+				}
+
+				decimalFormat = decimalFormat.replace("#.", "0.");
+
+				TableColumnMetadata tableColumnMetadata = new TableColumnMetadata();
+
+				tableColumnMetadata.setColumnType(columnType);
+				tableColumnMetadata.setColumnName(columnName);
+				tableColumnMetadata.setNullable(isNullable);
+				tableColumnMetadata.setNoOfDecimals(noOfDecimals);
+				tableColumnMetadata.setColSize(colSize);
+				tableColumnMetadata.setDecimalFormat(decimalFormat);
+				tableColumnMetadata.setColumnAs(col); 
+				tableColumnMetadata.setMaxTextSize(getMaxTextSize());
+
+				tableMetadataMap.put(columnName, tableColumnMetadata);
+			}
+
+			if (tableMetadataMap.isEmpty()) {
+
+				throw new Exception(getDbType() + " Database Table " + schemaName + "." + tableName + " has no columns.");
+			}
+
+		} catch (Exception e) {
+
+			logger.error(getDbType(), e);
+
+		} finally {
+
+			new JdbcUtil().closeResultSet(rs);
+		}
+	}
+	
+	/**
+	 * 
+	 * @param connection
+	 * @param schemaName
+	 * @param tableName
+	 * @param sortKey
+	 * @param primaryKey
+	 * @param filter
+	 * @param filterType
+	 * @param cols
+	 * @throws SQLException
+	 */
+	private void generateSourceChunks(Connection connection, String schemaName, String tableName, String sortKey,
+			String primaryKey, String filter, String filterType, String cols,long rowCount,long additionalRows,AppProperties appProperties) throws SQLException {
+
+		logger.info("Started preparing chunks");
+
+		chunks.clear();
+
+		String suppliedPKey=getSuppliedPrimaryKey(appProperties,tableName);
+		String pKey = getIdFromPrimaryKey(suppliedPKey);
+		Long totalRecords = getTotalRecords(connection, schemaName, tableName, filter); 
+
+		setSourceRowCount(totalRecords);
+
+        //consider the  max size from both source and target
+		long ntileSize = rowCount / getFetchSize();
+		
+		ntileSize = (ntileSize <= 0) ? 1 : ntileSize;
+		
+		StringBuilder sql = new StringBuilder();
+		
+		if(isHasNoUniqueKey()) {
+           if(pKey!=null) {
+			   sql.append("SELECT min(").append(pKey).append(") AS startRange, max(").append(pKey)
+					   .append(") AS endRange,count(*) AS chunkSize, nt FROM (SELECT ").append(pKey).append(" ,ntile(").append(ntileSize).append(") OVER (ORDER BY ").append(cols).append(" ) nt FROM ").append(schemaName)
+					   .append(".").append(tableName);
+		   }
+		   else{
+			   sql.append("SELECT min(ROWNUM) AS startRange, max(ROWNUM) AS endRange,count(*) AS chunkSize, nt FROM (SELECT ROWNUM")
+					   .append(" ,ntile(").append(ntileSize).append(") OVER (ORDER BY ").append(cols).append(" ) nt FROM ").append(schemaName)
+					   .append(".").append(tableName);
+		   }
+			
+		} else {
+
+			sql.append("SELECT min(").append(primaryKey).append(") AS startRange, max(").append(primaryKey)
+					.append(") AS endRange,count(*) AS chunkSize, nt FROM (SELECT ").append(primaryKey).append(" ,ntile(")
+					.append(ntileSize).append(") OVER (ORDER BY ").append(primaryKey).append(" ) nt FROM ").append(schemaName)
+					.append(".").append(tableName);
+		}
+			/*if(filter != null && !filter.isEmpty()) {
+				
+				sql.append(" WHERE ").append(filter);
+			}*/
+
+		
+		if("ORACLE".equals(getDbType())) {
+			
+			sql.append(") GROUP BY nt ORDER BY nt");
+			
+		} else {
+			
+			sql.append(") as a GROUP BY nt ORDER BY nt");
+		}
+		
+		logger.info("Fetch Chunks SQL Query: " + sql.toString()); 
+
+		Statement stmt = connection.createStatement();
+
+		ResultSet rs = stmt.executeQuery(sql.toString());
+        int count=0;
+		while (rs.next()) {
+
+			int columnType= rs.getMetaData().getColumnType(1);
+
+			long startRange=0;
+			long endRange=0;
+			if(!isNoNumericColumnType(columnType)){
+				 startRange = rs.getLong("startRange");
+				 endRange = rs.getLong("endRange");
+			}
+			long chunkSize = rs.getLong("chunkSize");
+
+			StringBuilder condition = new StringBuilder();
+            boolean whereapplied=false;
+			boolean filterapplied=false;
+
+			if(!isNoNumericColumnType(columnType)) {
+				condition.append("where ");
+				whereapplied=true;
+			}
+
+			if (filter != null && !filter.isEmpty() && !"Sample".equals(filterType)) {
+			 if(!whereapplied) {
+				 condition.append("where ");
+				 whereapplied=true;
+			 }
+				condition.append(filter);
+				filterapplied=true;
+			}
+			if(isHasNoUniqueKey()) {
+
+				if (isNoNumericColumnType(columnType) ){
+					condition.append(" order by 1");
+				} else {
+
+					if(filterapplied)
+					condition.append(" and ");
+					if(additionalRows>0 && count==(ntileSize-1))
+					{
+						endRange=endRange+additionalRows;
+					}
+                    if(count==0) {
+
+						if(suppliedPKey!=null) {
+							condition.append(pKey).append(" >= ").append(startRange).append(" and ").append(pKey)
+									.append(" <= ").append(endRange).append(" order by 1");
+						}
+						else{
+							condition.append("key1").append(" >= ").append(startRange).append(" and ").append("key1")
+									.append(" <= ").append(endRange).append(" order by 1");
+						}
+					}
+					else{
+						if(suppliedPKey!=null) {
+							condition.append(pKey).append(" >= ").append(startRange).append(" and ").append(pKey)
+									.append(" <= ").append(endRange).append(" order by 1");
+						}else {
+							condition.append("key1").append(" >= ").append(startRange).append(" and ").append("key1")
+									.append(" <= ").append(endRange).append(" order by 1");
+						}
+
+					}
+				}
+			} else {
+
+				if (isNoNumericColumnType(columnType) ){
+					condition.append(" order by ").append(sortKey);
+				} else {
+
+					if(filterapplied)
+						condition.append(" and ");
+					if(count==0) {
+						condition.append(primaryKey).append(" >=").append(startRange).append(" and ").append(primaryKey)
+								.append(" <= ").append(endRange).append(" order by ").append(sortKey);
+					}else{
+						condition.append(primaryKey).append(" > =").append(startRange).append(" and ").append(primaryKey)
+								.append(" <= ").append(endRange).append(" order by ").append(sortKey);
+					}
+				}
+			}
+
+			logger.debug("Chunk Range, Min: " + startRange + ", Max: " + endRange + ", Size: " + chunkSize); 
+			
+			chunks.add(condition.toString());
+			count++;
+		}
+		
+		JdbcUtil jdbcUtil = new JdbcUtil();
+		
+		jdbcUtil.closeResultSet(rs);
+		jdbcUtil.closeStatement(stmt); 
+
+		logger.info("Completed preparing chunks "+totalRecords);
+	}
+
+
+	/**
+	 *
+	 * @param connection
+	 * @param schemaName
+	 * @param tableName
+	 * @param sortKey
+	 * @param primaryKey
+	 * @param filter
+	 * @param filterType
+	 * @param cols
+	 * @throws SQLException
+	 */
+	private void generateTargetChunks(Connection connection, String schemaName, String tableName, String sortKey,
+									  String primaryKey, String filter, String filterType, String cols,long rowCount) throws SQLException {
+
+		logger.info("Started preparing chunks");
+
+		chunks.clear();
+
+		Long totalRecords = getTotalRecords(connection, schemaName, tableName, filter);
+
+		setSourceRowCount(totalRecords);
+
+		//consider the  max size from both source and target
+		long ntileSize = rowCount / getFetchSize();
+
+		ntileSize = (ntileSize <= 0) ? 1 : ntileSize;
+
+		StringBuilder sql = new StringBuilder();
+
+		if(isHasNoUniqueKey()) {
+
+			sql.append("SELECT row_number()  OVER (ORDER BY ").append(cols).append(" ) nt FROM ").append(schemaName)
+					.append(".").append(tableName);
+
+		} else {
+
+			sql.append("SELECT min(").append(primaryKey).append(") AS startRange, max(").append(primaryKey)
+					.append(") AS endRange,count(*) AS chunkSize, nt FROM (SELECT ").append(primaryKey).append(" ,ntile(")
+					.append(ntileSize).append(") OVER (ORDER BY ").append(primaryKey).append(" ) nt FROM ").append(schemaName)
+					.append(".").append(tableName);
+		}
+			/*if(filter != null && !filter.isEmpty()) {
+
+				sql.append(" WHERE ").append(filter);
+			}*/
+
+
+		if("ORACLE".equals(getDbType())) {
+
+			sql.append(") GROUP BY nt ORDER BY nt");
+
+		} else {
+
+			sql.append(") as a GROUP BY nt ORDER BY nt");
+		}
+
+		logger.info("Fetch Chunks SQL Query: " + sql.toString());
+
+		Statement stmt = connection.createStatement();
+
+		ResultSet rs = stmt.executeQuery(sql.toString());
+		int count=0;
+		while (rs.next()) {
+
+			int columnType= rs.getMetaData().getColumnType(1);
+
+			long startRange=0;
+			long endRange=0;
+			if(!isNoNumericColumnType(columnType)){
+				startRange = rs.getLong("startRange");
+				endRange = rs.getLong("endRange");
+			}
+			long chunkSize = rs.getLong("chunkSize");
+
+			StringBuilder condition = new StringBuilder();
+			boolean whereapplied=false;
+			boolean filterapplied=false;
+
+			if(!isNoNumericColumnType(columnType)) {
+				condition.append("where ");
+				whereapplied=true;
+			}
+
+			if (filter != null && !filter.isEmpty() && !"Sample".equals(filterType)) {
+				if(!whereapplied) {
+					condition.append("where ");
+					whereapplied=true;
+				}
+				condition.append(filter);
+				filterapplied=true;
+			}
+			if(isHasNoUniqueKey()) {
+
+				if (isNoNumericColumnType(columnType) ){
+					condition.append(" order by 1");
+				} else {
+
+					if(filterapplied)
+						condition.append(" and ");
+					if(count==0) {
+						condition.append("key1").append(" >= ").append(startRange).append(" and ").append("key1")
+								.append(" <= ").append(endRange).append(" order by 1");
+					}
+					else{
+						condition.append("key1").append(" > ").append(startRange).append(" and ").append("key1")
+								.append(" <= ").append(endRange).append(" order by 1");
+
+					}
+				}
+			} else {
+
+				if (isNoNumericColumnType(columnType) ){
+					condition.append(" order by ").append(sortKey);
+				} else {
+
+					if(filterapplied)
+						condition.append(" and ");
+					if(count==0) {
+						condition.append(primaryKey).append(" >=").append(startRange).append(" and ").append(primaryKey)
+								.append(" <= ").append(endRange).append(" order by ").append(sortKey);
+					}else{
+						condition.append(primaryKey).append(" > ").append(startRange).append(" and ").append(primaryKey)
+								.append(" <= ").append(endRange).append(" order by ").append(sortKey);
+					}
+				}
+			}
+
+			logger.debug("Chunk Range, Min: " + startRange + ", Max: " + endRange + ", Size: " + chunkSize);
+
+			chunks.add(condition.toString());
+			count++;
+		}
+
+		JdbcUtil jdbcUtil = new JdbcUtil();
+
+		jdbcUtil.closeResultSet(rs);
+		jdbcUtil.closeStatement(stmt);
+
+		logger.info("Completed preparing chunks"+totalRecords);
+	}
+	/**
+	 * 
+	 * @param connection
+	 * @param schemaName
+	 * @param tableName
+	 * @param filter
+	 * @return
+	 * @throws SQLException
+	 */
+	public Long getTotalRecords(Connection connection, String schemaName, String tableName,
+			String filter) throws SQLException {
+		
+		Long totalRecords = Long.valueOf(0); 
+
+		StringBuilder sql = new StringBuilder();
+
+
+		sql.append("SELECT count(*) as totalrec FROM ").append(schemaName).append(".").append(tableName);
+		
+		if(filter != null && filter.trim().length() > 0) {
+
+			sql.append(" WHERE ").append(filter);
+		}
+
+		Statement stmt = connection.createStatement();
+		ResultSet rs = stmt.executeQuery(sql.toString());
+
+		if (rs.next()) {
+			
+			totalRecords = rs.getLong("totalrec");
+		}
+
+		JdbcUtil jdbcUtil = new JdbcUtil();
+		
+		jdbcUtil.closeResultSet(rs);
+		jdbcUtil.closeStatement(stmt); 
+		
+		
+		return totalRecords;
+	}
+
+	/**
+	 * 
+	 * @param connection
+	 * @param schemaName
+	 * @param tableName
+	 * @param filter
+	 * @throws SQLException
+	 */
+	private void generateChunksPostgresql(Connection connection, String schemaName, String tableName,
+			String filter) throws SQLException {
+
+		logger.info("Started preparing chunks for Postgresql");
+
+		chunks.clear();
+
+		Long totalRecords = getTotalRecords(connection, schemaName, tableName, filter);
+
+	/*	if (rowCount == 0) {
+
+			throw new SQLException("There is no records in Postgresql for " + schemaName + "." + tableName);
+		}*/
+
+	/*	if (totalRecords == 0) {
+
+			throw new SQLException("There are no records in Postgresql for " + schemaName + "." + tableName);
+		}*/
+
+    	setTargetRowCount(totalRecords);
+		//setRowCount(0);
+
+		logger.info("Completed preparing chunks for Postgresql "+totalRecords);
+	}
+
+	/**
+	 * 
+	 * @param columnType
+	 * @return
+	 */
+	private boolean binaryColumnType(String columnType) {
+
+		return (columnType.contains("LOB") || columnType.contains("lob") || columnType.contains("BLOB")
+				|| columnType.contains("blob") || columnType.contains("bytea") || columnType.contains("CLOB")
+				|| columnType.contains("clob") || columnType.contains("TEXT") || columnType.contains("text"));
+	}
+
+	private boolean isNoNumericColumnType(int columnType) {
+		return (columnType==1 || columnType==12 || columnType==91||columnType==92|| columnType==93 );
+	}
+	/**
+	 * 
+	 * @param columnType
+	 * @param colSize
+	 * @return
+	 */
+	private boolean varcharLargeSize(String columnType, int colSize) {
+	
+		return ( (columnType.contains("VARCHAR") || columnType.contains("varchar")) && colSize > getMaxTextSize());
+	}
+
+	/**
+	 * 
+	 * @param columnsList
+	 * @param column
+	 * @param ignoreColumn
+	 * @return
+	 */
+	private boolean column(List<String> columnsList, String column, boolean ignoreColumn) {
+
+		for (String col : columnsList) {
+			
+			if (col.equalsIgnoreCase(column)) {
+
+				return ignoreColumn;
+			}
+	    }
+		
+	    return (!columnsList.isEmpty()) ? !ignoreColumn : false;	
+	}
+
+	/**
+	 * 
+	 * @return
+	 */
+	public List<String> getChunks() {
+		return chunks;
+	}
+
+	/**
+	 * 
+	 * @return
+	 */
+	public String getDbType() {
+		return dbType;
+	}
+
+	/**
+	 * @return the fetchSize
+	 */
+	public int getFetchSize() {
+		return fetchSize;
+	}
+
+	/**
+	 * @return the maxDecimals
+	 */
+	public int getMaxDecimals() {
+		return maxDecimals;
+	}
+
+	/**
+	 * 
+	 * @return
+	 */
+	public long getSourceRowCount() {
+		return sourceRowCount;
+	}
+	public long getTargetRowCount() {
+		return targetRowCount;
+	}
+
+
+	/**
+	 * 
+	 * @return
+	 */
+	public String getSortKey() {
+		return sortKey;
+	}
+
+	/**
+	 * @return the sql
+	 */
+	public String getSql() {
+		return sql;
+	}
+
+	/**
+	 * 
+	 * @param dbType
+	 */
+	public void setDbType(String dbType) {
+		this.dbType = dbType;
+	}
+
+	/**
+	 * @param fetchSize the fetchSize to set
+	 */
+	public void setFetchSize(int fetchSize) {
+		this.fetchSize = fetchSize;
+	}
+
+	/**
+	 * @param maxDecimals the maxDecimals to set
+	 */
+	public void setMaxDecimals(int maxDecimals) {
+		this.maxDecimals = maxDecimals;
+	}
+
+	/**
+	 * 
+	 * @param rowCount
+	 */
+	public void setSourceRowCount(long rowCount) {
+		this.sourceRowCount = rowCount;
+	}
+	public long setTargetRowCount(long rowCount) {
+		return targetRowCount;
+	}
+
+	/**
+	 * 
+	 * @param sortKey
+	 */
+	public void setSortKey(String sortKey) {
+		this.sortKey = sortKey;
+	}
+
+	/**
+	 * @param sql the sql to set
+	 */
+	public void setSql(String sql) {
+		this.sql = sql;
+	}
+
+	/**
+	 * @return the tableMetadataMap
+	 */
+	public Map<String, TableColumnMetadata> getTableMetadataMap() {
+		return tableMetadataMap;
+	}
+
+	/**
+	 * @param tableMetadataMap the tableMetadataMap to set
+	 */
+	public void setTableMetadataMap(Map<String, TableColumnMetadata> tableMetadataMap) {
+		this.tableMetadataMap = tableMetadataMap;
+	}
+
+	public String getPrimaryKey() {
+		return primaryKey;
+	}
+
+	public void setPrimaryKey(String primaryKey) {
+		this.primaryKey = primaryKey;
+	}
+
+	/**
+	 * @return the hasNoUniqueKey
+	 */
+	public boolean isHasNoUniqueKey() {
+		return hasNoUniqueKey;
+	}
+
+	/**
+	 * @param hasNoUniqueKey the hasNoUniqueKey to set
+	 */
+	public void setHasNoUniqueKey(boolean hasNoUniqueKey) {
+		this.hasNoUniqueKey = hasNoUniqueKey;
+	}
+
+	/**
+	 * @return the maxTextSize
+	 */
+	public int getMaxTextSize() {
+		return maxTextSize;
+	}
+
+	/**
+	 * @param maxTextSize the maxTextSize to set
+	 */
+	public void setMaxTextSize(int maxTextSize) {
+		this.maxTextSize = maxTextSize;
+	}
+	public boolean isPrimeryKeySupplied(AppProperties appProperties, String tableName){
+		if(getSuppliedPrimaryKey(appProperties, tableName)!=null)
+			return true;
+		else
+			return false;
+	}
+
+}
