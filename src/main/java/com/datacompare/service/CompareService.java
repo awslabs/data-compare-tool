@@ -672,7 +672,7 @@ public class CompareService {
 
 	private void finalValidation(Map<String, String> data, Map<String, String> targetCountList, boolean hasNoUniqueKey) {
 
-
+		ArrayList list= new ArrayList();
 			for (Map.Entry<String, String> entry : data.entrySet()) {
 
 				boolean newRecord=false;
@@ -687,7 +687,7 @@ public class CompareService {
 							//if it is mismatch
 							if(sourceCount>0 && targetCount>0 ){
 								//if(Collections.frequency(failedEntry.values(), content)<(sourceCount-targetCount)){
-								data.remove(key);
+								list.add(key);
 								String removeKey=getKeyForValue( targetCountList,content);
 								if(removeKey!=null)
 									targetCountList.remove(removeKey);
@@ -702,7 +702,7 @@ public class CompareService {
 							//if it is mismatch
 							if(sourceCount>0 && targetCount>0 ){
 							//if(Collections.frequency(failedEntry.values(), content)<(sourceCount-targetCount)){
-								data.remove(key);
+								list.add(key);
 								String removeKey=getKeyForValue( targetCountList,content);
 								if(removeKey!=null)
 								targetCountList.remove(removeKey);
@@ -712,7 +712,18 @@ public class CompareService {
 					logger.error(e.getMessage(), e);
 				}
 			}
+			removeData(list,data);
 		}
+
+	private void removeData(ArrayList list, Map<String, String> data) {
+		if(list.size()>0){
+            for(int i=0; i< list.size(); i++)
+			{
+				data.remove(list.get(i));
+			}
+        }
+
+	}
 
 	private String getKeyForValue(Map<String, String> targetCountList, String content) {
 		for (Map.Entry<String, String> entry : targetCountList.entrySet()) {
