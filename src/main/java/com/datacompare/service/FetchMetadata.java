@@ -617,7 +617,7 @@ public class FetchMetadata {
 	private void generateSourceChunks(Connection connection, String schemaName, String tableName, String sortKey,
 			String primaryKey, String filter, String filterType, String cols,long rowCount,long additionalRows,AppProperties appProperties) throws SQLException {
 
-		logger.info("Started preparing chunks");
+		//logger.info("Started preparing chunks");
 
 		chunks.clear();
 
@@ -728,10 +728,10 @@ public class FetchMetadata {
 					}
 					else{
 						if(suppliedPKey!=null) {
-							condition.append(pKey).append(" > ").append(startRange).append(" and ").append(pKey)
+							condition.append(pKey).append(" >= ").append(startRange).append(" and ").append(pKey)
 									.append(" <= ").append(endRange).append(" order by 1");
 						}else {
-							condition.append("key1").append(" > ").append(startRange).append(" and ").append("key1")
+							condition.append("key1").append(" >= ").append(startRange).append(" and ").append("key1")
 									.append(" <= ").append(endRange).append(" order by 1");
 						}
 
@@ -749,7 +749,7 @@ public class FetchMetadata {
 						condition.append(primaryKey).append(" >=").append(startRange).append(" and ").append(primaryKey)
 								.append(" <= ").append(endRange).append(" order by ").append(sortKey);
 					}else{
-						condition.append(primaryKey).append(" > ").append(startRange).append(" and ").append(primaryKey)
+						condition.append(primaryKey).append(" > =").append(startRange).append(" and ").append(primaryKey)
 								.append(" <= ").append(endRange).append(" order by ").append(sortKey);
 					}
 				}
