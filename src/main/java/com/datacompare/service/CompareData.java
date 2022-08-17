@@ -12,6 +12,8 @@
 package com.datacompare.service;
 
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +52,10 @@ public class CompareData implements Runnable {
 
 	private Map<String, String> targetData;
 
+	private Map<String, String> sourceFailedData;
+
+	private Map<String, String> targetFailedData;
+
 	private long tempRowNumber = 0;
 	
 	private static final String DEFAULT_RESULT = "Completed";
@@ -70,7 +76,7 @@ public class CompareData implements Runnable {
 	 * @param chunkNo
 	 * @param numberOfChunks
 	 */
-	public CompareData(Map<String, String> source, Map<String, String> target, int chunkNo, int numberOfChunks,boolean hasNoUniqueKey) {
+	public CompareData(Map<String, String> source, Map<String, String> target, int chunkNo, int numberOfChunks,boolean hasNoUniqueKey,Map<String, String> sourceFailedData, Map<String, String> targetFailedData) {
 
 		this.sourceData = source;
 		this.targetData = target;
@@ -80,6 +86,8 @@ public class CompareData implements Runnable {
 		this.tempRowNumber = 0;
 		this.result = DEFAULT_RESULT;
 		this.hasNoUniqueKey=hasNoUniqueKey;
+		this.sourceFailedData=sourceFailedData;
+		this.targetFailedData=targetFailedData;
 		
 		Thread.currentThread().setName("CompareData for ChunkNo " + chunkNo+1); 
 	}
@@ -156,9 +164,9 @@ public class CompareData implements Runnable {
 		List<String> tempSourceFailTuple = new ArrayList<String>();
 		List<String> tempTargetFailTuple = new ArrayList<String>();
 
-		compare(sourceData, targetData, tempSourceFailTuple, tempSource,hasNoUniqueKey);
+		compare(sourceData, targetData, tempSourceFailTuple, tempSource,hasNoUniqueKey,sourceFailedData,targetFailedData,chunkNo);
 
-		compareTaget(targetData, sourceData, tempTargetFailTuple, tempTarget ,hasNoUniqueKey);
+		compareTaget(targetData, sourceData, tempTargetFailTuple, tempTarget ,hasNoUniqueKey,sourceFailedData,targetFailedData,chunkNo);
 
 		//this.failTuple.addAll(tempSourceFailTuple);
 		//this.failTuple.addAll(tempTargetFailTuple);
@@ -169,6 +177,9 @@ public class CompareData implements Runnable {
 
 		String timeTakenStr = new DateUtil().timeDiffFormatted(timeTaken);
 		timeTakenStr = (timeTakenStr != null) ? timeTakenStr : "";
+
+		//logger.info("Compare data- Missing Rows "+tempSource.size());
+		//logger.info("Compare data- Add. Rows "+tempTarget.size());
 
 		sourceData.clear();
 		targetData.clear();
@@ -199,8 +210,9 @@ public class CompareData implements Runnable {
 	 * @param failedEntry
 	 */
 	private void compare(Map<String, String> data, Map<String, String> dataToCompare, List<String> failTuple,
-			Map<String, String> failedEntry,boolean hasNoUniqueKey) {
-
+			Map<String, String> failedEntry,boolean hasNoUniqueKey,Map<String, String> sourceFailedData, Map<String, String> targetFailedData,int chnCnt) {
+		int cntt=0;
+		//logger.info("Started compare source Chunk:"+chnCnt+"--Failed count-"+targetFailedData.size());
 		for (Map.Entry<String, String> entry : data.entrySet()) {
 
 		boolean newRecord=false;
@@ -224,7 +236,19 @@ public class CompareData implements Runnable {
 									if (failedEntry.containsKey(key) && newRecord) {
 									 	key = key + "-DUP"+cnt;
 									}
+									/*if(targetFailedData.containsValue(failedContent)) {
+										String failedKey=getKeyForValue(targetFailedData,failedContent);
+										targetFailedData.remove(failedKey);
+										//logger.info("Removed ONE RECURD FROM TARGET---"+targetFailedData.size());
+									}else{
+										failedEntry.put(key, failedContent);
+										//logger.info("ADDED ONE RECORD MISSINgT---"+cnt);
+										cntt++;
+										newRecord=true;
+									} */
+
 									failedEntry.put(key, failedContent);
+									cntt++;
 									newRecord=true;
 								}
 							newRecord=false;
@@ -237,6 +261,7 @@ public class CompareData implements Runnable {
 				if (key != null && !failedEntry.containsValue(content)) {
 					int sourceCount = Collections.frequency(data.values(), content);
 					int targetCount = Collections.frequency(dataToCompare.values(), content);
+					//logger.info("Comoare info SRC content: "+content+" TGT content: +"+dataToCompareContent+"+ SRC CNT : "+sourceCount +"TGT CNT :" +targetCount);
 					//if it is mismatch
 					if(sourceCount>targetCount ){
 						//if(Collections.frequency(failedEntry.values(), content)<(sourceCount-targetCount)){
@@ -248,7 +273,21 @@ public class CompareData implements Runnable {
 							if (failedEntry.containsKey(key) && newRecord) {
 								key = key + "-DUP"+cnt;
 							}
+						/*	if(targetFailedData.containsValue(failedContent)) {
+								String failedKey=getKeyForValue(targetFailedData,failedContent);
+								//logger.info("Removed ONE RECURD FROM SOURCE--BF-"+targetFailedData.size());
+							  targetFailedData.remove(failedKey);
+								//logger.info("Removed ONE RECURD FROM SOURCE- AF--"+targetFailedData.size());
+
+							}else{
+								failedEntry.put(key, failedContent);
+								//logger.info("ADDED ONE RECORD ADD---"+cnt);
+							cntt++;
+							newRecord=true;
+							}*/
+
 							failedEntry.put(key, failedContent);
+							cntt++;
 							newRecord=true;
 						}
 						newRecord=false;
@@ -259,7 +298,8 @@ public class CompareData implements Runnable {
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 		}
-	}
+	}   // logger.info("Compare- Missing Rows " +cntt);
+
 }
 
 	/**
@@ -270,54 +310,149 @@ public class CompareData implements Runnable {
 	 * @param failedEntry
 	 */
 	private void compareTaget(Map<String, String> data, Map<String, String> dataToCompare, List<String> failTuple,
-						 Map<String, String> failedEntry,boolean hasNoUniqueKey) {
+						 Map<String, String> failedEntry,boolean hasNoUniqueKey, Map<String, String> sourceFailedData, Map<String, String> targetFailedData,int chnCnt) {
+        int cntt=0;
 
+		//.info("Started compare source Chunk:"+chnCnt+"--Failed count-"+targetFailedData.size());
 		for (Map.Entry<String, String> entry : data.entrySet()) {
 			this.tempRowNumber++;
-			boolean newRecord=false;
-			String key = entry.getKey();
-			String content = entry.getValue();
-			try {
-				if(!hasNoUniqueKey) {
-					if (key != null && !failedEntry.containsKey(key) ) {
-						String dataToCompareContent = dataToCompare.get(key);
-						int sourceCount = Collections.frequency(data.values(), content);
-						int targetCount = Collections.frequency(dataToCompare.values(), content);
-						for (int cnt = 0; cnt < (sourceCount - targetCount); cnt++) {
-							String failedContent = (content != null) ? content : "";
-							this.result = "Failed";
-							//failTuple.add(failedContent);
-							this.failedRowNumber = this.tempRowNumber;
-							if (failedEntry.containsKey(key) && newRecord) {
-								//key=key+"-DUP"+cnt;
-							}
+				boolean newRecord=false;
+				String key = entry.getKey();
+				String content = entry.getValue();
+			try{
+			if (!hasNoUniqueKey) {
+				if (key != null && !failedEntry.containsKey(key)) {
+					String dataToCompareContent = dataToCompare.get(key);
+					int sourceCount = Collections.frequency(data.values(), content);
+					int targetCount = Collections.frequency(dataToCompare.values(), content);
+					//logger.info("Target----->Comoare info SRC content: " + content + " TGT content: +" + dataToCompareContent + "+ SRC CNT : " + sourceCount + "TGT CNT :" + targetCount );
+					for (int cnt = 0; cnt < (sourceCount - targetCount); cnt++) {
+						String failedContent = (content != null) ? content : "";
+						this.result = "Failed";
+						//failTuple.add(failedContent);
+						this.failedRowNumber = this.tempRowNumber;
+						if (failedEntry.containsKey(key) && newRecord) {
+							//key=key+"-DUP"+cnt;
+						}
+						/*if (sourceFailedData.containsValue(failedContent)) {
+							String failedKey = getKeyForValue(sourceFailedData, failedContent);
+						//	logger.info("Removed ONE RECURD FROM SOURCE--BF-" + sourceFailedData.size());
+							sourceFailedData.remove(failedKey);
+						//	logger.info("Removed ONE RECURD FROM SOURCE--AF-" + sourceFailedData.size());
+						} else {
 							failedEntry.put(key, failedContent);
+							cntt++;
 							newRecord = true;
-						}
+						}*/
+						failedEntry.put(key, failedContent);
+						cntt++;
+						newRecord = true;
 					}
 				}
-					else if(hasNoUniqueKey){
-					if (key != null && !failedEntry.containsValue(content) ) {
-						String dataToCompareContent = dataToCompare.get(key);
-						int sourceCount = Collections.frequency(data.values(), content);
-						int targetCount = Collections.frequency(dataToCompare.values(), content);
-						for(int cnt=0; cnt<(sourceCount-targetCount) ; cnt++) {
-							String failedContent = (content != null) ? content : "";
-							this.result = "Failed";
-							//failTuple.add(failedContent);
-							this.failedRowNumber = this.tempRowNumber;
-							if(failedEntry.containsKey(key) && newRecord ){
-								key=key+"-DUP"+cnt;
-							}
+			} else if (hasNoUniqueKey) {
+				if (key != null && !failedEntry.containsValue(content)) {
+					String dataToCompareContent = dataToCompare.get(key);
+					int sourceCount = Collections.frequency(data.values(), content);
+					int targetCount = Collections.frequency(dataToCompare.values(), content);
+					for (int cnt = 0; cnt < (sourceCount - targetCount); cnt++) {
+						String failedContent = (content != null) ? content : "";
+						this.result = "Failed";
+						//failTuple.add(failedContent);
+						this.failedRowNumber = this.tempRowNumber;
+						if (failedEntry.containsKey(key) && newRecord) {
+							key = key + "-DUP" + cnt;
+						}
+						/*if (sourceFailedData.containsValue(failedContent)) {
+							String failedKey = getKeyForValue(sourceFailedData, failedContent);
+							sourceFailedData.remove(failedKey);
+							//logger.info("Removed ONE RECURD FROM SOURCE---"+failedContent);
+						} else {
 							failedEntry.put(key, failedContent);
-							newRecord=true;
-						}
+							cntt++;
+							newRecord = true;
+						}*/
+						failedEntry.put(key, failedContent);
+						cntt++;
+						newRecord = true;
 					}
 				}
+			}
 			} catch (Exception e) {
 				logger.error(e.getMessage(), e);
 			}
 			newRecord=false;
 		}
+		//logger.info(" Compare- Add. Rows" +cntt);
+	}
+
+
+	private void finalValidation(Map<String, String> data, Map<String, String> targetCountList, boolean hasNoUniqueKey) {
+		//logger.info("Started the source chunk mismatch");
+		ArrayList list= new ArrayList();
+		for (Map.Entry<String, String> entry : data.entrySet()) {
+
+			boolean newRecord=false;
+			String key = entry.getKey();
+			try {
+				if(!hasNoUniqueKey){
+					if (key != null && targetCountList.containsKey(key)) {
+						String content = entry.getValue();
+						String dataToCompareContent = targetCountList.get(key);
+						int sourceCount = Collections.frequency(data.values(), content);
+						int targetCount = Collections.frequency(targetCountList.values(), content);
+						//if it is mismatch
+						if(sourceCount>0 && targetCount>0 ){
+							//if(Collections.frequency(failedEntry.values(), content)<(sourceCount-targetCount)){
+							list.add(key);
+							String removeKey=getKeyForValue( targetCountList,content);
+							if(removeKey!=null)
+								targetCountList.remove(removeKey);
+						}
+					}
+
+				}
+				if(hasNoUniqueKey){
+					String content = entry.getValue();
+					String dataToCompareContent = targetCountList.get(key);
+					int sourceCount = Collections.frequency(data.values(), content);
+					int targetCount = Collections.frequency(targetCountList.values(), content);
+					//if it is mismatch
+					if(sourceCount>0 && targetCount>0 ){
+						//if(Collections.frequency(failedEntry.values(), content)<(sourceCount-targetCount)){
+						list.add(key);
+						String removeKey=getKeyForValue( targetCountList,content);
+						if(removeKey!=null)
+							targetCountList.remove(removeKey);
+					}
+				}
+			} catch (Exception e) {
+				logger.error(e.getMessage(), e);
+			}
+		}
+		//logger.info("Processed the source chunk mismatch");
+		removeData(list,data);
+	}
+
+	private void removeData(ArrayList list, Map<String, String> data) {
+		//.info("started data removal");
+		if(list.size()>0){
+			for(int i=0; i< list.size(); i++)
+			{
+				data.remove(list.get(i));
+			}
+		}
+		//.info("Processed data removal");
+	}
+
+	private String getKeyForValue(Map<String, String> targetCountList, String content) {
+		for (Map.Entry<String, String> entry : targetCountList.entrySet()) {
+
+			boolean newRecord = false;
+			String key = entry.getKey();
+			String value = entry.getValue();
+			if (value.equalsIgnoreCase(content))
+				return key;
+		}
+		return null;
 	}
 }

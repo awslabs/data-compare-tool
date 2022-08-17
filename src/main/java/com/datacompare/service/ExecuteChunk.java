@@ -444,7 +444,7 @@ public class ExecuteChunk implements Runnable {
 			Long tarCnt = Long.valueOf(fetchTargetData.getHashMap().size());
 			getTargetCount().add(tarCnt);
 			CompareData compareData = new CompareData(fetchSourceData.getHashMap(), fetchTargetData.getHashMap(),
-					getChunkNo(), getNumberOfChunks(),isHasNoUniqueKey());
+					getChunkNo(), getNumberOfChunks(),isHasNoUniqueKey(),getSourceData(),getTargetData());
 			
 			executor = Executors.newFixedThreadPool(1);
 			executor.execute(compareData);
@@ -461,13 +461,23 @@ public class ExecuteChunk implements Runnable {
 
 			Map<String, String> sourceData = compareData.getSourceData();
 			getSourceData().putAll(sourceData);
-			
 			Map<String, String> targetData = compareData.getTargetData();
-			getTargetData().putAll(targetData);  
-			
+			getTargetData().putAll(targetData);
+
+			ExecutorService validationExecutor = Executors.newFixedThreadPool(1);
+			ValidateChunk executeChunk = new ValidateChunk(getSourceData(),getSourceData(), getTargetData(), hasNoUniqueKey);
+			validationExecutor.execute(executeChunk);
+			validationExecutor.shutdown();
+			while (!validationExecutor.isTerminated()) {
+			}
+
+			//logger.info("Execute Chunk- New Missing "+sourceData.size());
+			//logger.info("Execute Chunk- Add. Rows "+targetData.size());
+			//logger.info("Execute Chunk- New Missing Total"+getSourceData().size());
+			//logger.info("Execute Chunk- Add. Rows Total"+getTargetData().size());
+
 			fetchSourceData.getHashMap().clear();
 			fetchTargetData.getHashMap().clear();
-			
 			fetchSourceData = null;
 			fetchTargetData = null;
 			executor = null;

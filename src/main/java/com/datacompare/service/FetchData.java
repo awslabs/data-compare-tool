@@ -99,7 +99,7 @@ public class FetchData implements Runnable {
 
     @Override
     public void run() {
-
+        //logger.info("Starting sql statement execution.."+chunk);
         Thread.currentThread().setName(getDbType() + " " + chunk);
 
         StringBuilder info = new StringBuilder();
@@ -399,6 +399,7 @@ public class FetchData implements Runnable {
 
             jdbcUtil.closeResultSet(rs);
             jdbcUtil.closeStatement(stmt);
+            //logger.info("Statement execution completed"+chunk );
         }
     }
 

@@ -14,16 +14,11 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -557,6 +552,7 @@ public class CompareService {
 		StringBuilder info = new StringBuilder();
 		// Get the Java runtime
        // Runtime runtime = Runtime.getRuntime();
+
         long usedMemory = 0;
 		try {
 			checkIfTableExistsInPg(schemaName.toLowerCase(), tableName.toLowerCase(), "POSTGRESQL", targetConn);
@@ -612,14 +608,14 @@ public class CompareService {
 						fetchTargetMetadata.getTableMetadataMap(), appProperties);
 				executeChunk.setSourceData(mismatchSourceData);
 				executeChunk.setTargetData(mismatchTargetData);
-				executeChunk.setFailTuple(failTuple); 
-				executeChunk.setResult(result); 
+				executeChunk.setFailTuple(failTuple);
+				executeChunk.setResult(result);
 				executeChunk.setSourceCount(sourceCountList);
 				executeChunk.setTargetCount(targetCountList);
 				executeChunk.setSourceTimeTaken(sourceTimeTaken);
 				executeChunk.setTargetTimeTaken(targetTimeTaken);
 				executeChunk.setHasNoUniqueKey(fetchSourceMetadata.isHasNoUniqueKey());
-				executor.execute(executeChunk); 
+				executor.execute(executeChunk);
 			}
 			executor.shutdown();
 			while (!executor.isTerminated()) {
@@ -637,6 +633,22 @@ public class CompareService {
 			logger.info(info.toString());
 			long sourceCount = getCount(sourceCountList);
 			long targetCount = getCount(targetCountList);
+			logger.info("Size of the source mismatch data before final validation"+ mismatchSourceData.size());
+			logger.info("Size of the target mismatch data before final validation "+ mismatchTargetData.size());
+
+			ExecutorService validationExecutor = Executors.newFixedThreadPool(1);
+			//List <Map<String, String> > finalList =splitMap(  mismatchSourceData, mismatchSourceData.size()/maxNoofThreads);
+			//for(int cnt=0; cnt<finalList.size(); cnt++) {
+			//	logger.info("final validation"+cnt +" Size if the map "+finalList.get(cnt).size());
+				ValidateChunk executeChunk = new ValidateChunk(mismatchSourceData,mismatchSourceData, mismatchTargetData,fetchSourceMetadata.isHasNoUniqueKey() );
+				validationExecutor.execute(executeChunk);
+//
+			//}
+			validationExecutor.shutdown();
+			while (!validationExecutor.isTerminated()) {
+			}
+		//	finalValidation(mismatchSourceData,mismatchTargetData,fetchSourceMetadata.isHasNoUniqueKey());
+		//	finalValidation(mismatchTargetData,mismatchSourceData,fetchSourceMetadata.isHasNoUniqueKey());
 //			long sourceTotalRowCount = fetchSourceMetadata.getRowCount();
 //			dto.setRowCountSource(sourceTotalRowCount);
 			dto.setRowCountSource(sourceCount);
@@ -667,7 +679,114 @@ public class CompareService {
 		logger.info(info.toString());
 		return dto;
 	}
-	
+
+
+		public List<Map<String, String>> splitMap( Map<String, String> original, long max) {
+
+			int counter = 0;
+			int lcounter = 0;
+			List<Map<String, String>> listOfSplitMaps = new ArrayList<Map<String, String>> ();
+			Map<String, String> splitMap = new HashMap<> ();
+
+			for (Map.Entry<String, String> m : original.entrySet()) {
+				if (counter < max) {
+					splitMap.put(m.getKey(), m.getValue());
+					counter++;
+					lcounter++;
+
+					if (counter == max || lcounter == original.size()) {
+						counter = 0;
+						listOfSplitMaps.add(splitMap);
+						splitMap = new HashMap<> ();
+					}
+				}
+			}
+
+			return listOfSplitMaps;
+		}
+
+
+	private void finalValidation(Map<String, String> data, Map<String, String> targetCountList, boolean hasNoUniqueKey) {
+		//logger.info("Started the source chunk mismatch");
+		ArrayList list= new ArrayList();
+			for (Map.Entry<String, String> entry : data.entrySet()) {
+
+				boolean newRecord=false;
+				String key = entry.getKey();
+				String content = entry.getValue();
+				//logger.info("FINAL REMOVEAL------KEY--o--" + key);
+				//logger.info("FINAL REMOVEAL------content--o--" + content);
+				try {
+					if(!hasNoUniqueKey){
+						if (key != null && targetCountList.containsKey(key)) {
+
+							String dataToCompareContent = targetCountList.get(key);
+							int sourceCount = Collections.frequency(data.values(), content);
+							int targetCount = Collections.frequency(targetCountList.values(), content);
+							//if it is mismatch
+							if(sourceCount>0 && targetCount>0 ){
+								//if(Collections.frequency(failedEntry.values(), content)<(sourceCount-targetCount)){
+								list.add(key);
+								String removeKey=getKeyForValue( targetCountList,content);
+							//	logger.info("FINAL REMOVEAL------KEY----" + removeKey);
+								if(removeKey!=null) {
+									targetCountList.remove(removeKey);
+								//	logger.info("FINAL REMOVEAL----------"+content);
+								}
+							}
+						}
+
+					}
+					if(hasNoUniqueKey){
+						 content = entry.getValue();
+							int sourceCount = Collections.frequency(data.values(), content);
+							int targetCount = Collections.frequency(targetCountList.values(), content);
+						//logger.info("FINAL REMOVEAL------FEQ----" + sourceCount);
+					//	logger.info("FINAL REMOVEAL------FEQ----" + targetCount);
+							//if it is mismatch
+							if(sourceCount>0 && targetCount>0 ){
+							//if(Collections.frequency(failedEntry.values(), content)<(sourceCount-targetCount)){
+								list.add(key);
+								String removeKey=getKeyForValue( targetCountList,content);
+							//	logger.info("FINAL REMOVEAL------KEY----" + removeKey);
+								if(removeKey!=null) {
+									targetCountList.remove(removeKey);
+								//	logger.info("FINAL REMOVEAL----------" + content);
+								}
+								}
+								}
+				} catch (Exception e) {
+					logger.error(e.getMessage(), e);
+				}
+			}
+		//logger.info("Processed the source chunk mismatch");
+			removeData(list,data);
+		}
+
+	private void removeData(ArrayList list, Map<String, String> data) {
+		//logger.info("started data removal");
+		if(list.size()>0){
+            for(int i=0; i< list.size(); i++)
+			{
+			//	logger.info("FINAL REMOVEAL------KEY----" + list.get(i));
+				data.remove(list.get(i));
+			//	logger.info("FINAL REMOVEAL----------" + data.get(list.get(i)));
+			}
+        }
+		//logger.info("Processed data removal");
+	}
+
+	private String getKeyForValue(Map<String, String> targetCountList, String content) {
+		for (Map.Entry<String, String> entry : targetCountList.entrySet()) {
+
+			boolean newRecord = false;
+			String key = entry.getKey();
+			String value = entry.getValue();
+			if (value.equalsIgnoreCase(content))
+				return key;
+		}
+        return null;
+	}
 	/**
 	 * 
 	 * @param targetChunk
