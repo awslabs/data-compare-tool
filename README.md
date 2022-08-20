@@ -35,6 +35,7 @@ The data compare tool helps in validating the migrated data. Source will be eith
 -  Option to set SSL Mode for target database.
 -  Compares Clob and Blob data types also.
 -  Supports Secrets in AWS Secret Manager to manage the database credentials and server details
+-  Option to provide unique columns for a table, if there is no primary key
 
 ## High Level Design
 
@@ -171,6 +172,9 @@ Optional arguments:
 --srcDBSecretName : Source Database Secret Name defined in Secret Manager eg: OracleDB
 --tgtDBSecretMgrEndPoint :Secret Manager endpoint for target database eg: secretsmanager.us-east-1.amazonaws.com
 --tgtDBSecretName : Secret Manager endpoint for target database eg: PostgresDB
+--primaryKey:<table name>:<columns with comma separation> provide uniuqe columns with comma(,) separted, if there is no primary key for the table 
+
+--primaryKey=EMPLOYEE:id,name,salary ; DEPARTMENT:id,name,org
 
 Note: Secrets defined in AWS Secret Manager is optional and it will override the database properties defined using sourceDBType, sourceHost, sourcePort etc..
 ```
@@ -191,7 +195,7 @@ java -Xms10m -Xmx1024m -cp  "/Users/amsudan/Desktop/Projects/DataValidation/awsl
  CLI arguments with AWS Secret Manager:
 
 ```
- java -cp "<Data compare jar folder path >/datacompare-tool-1.0.0.jar:<Oracle Driver Folder path>/datacompare-tool-1.0.0.jar:< oracle driver folder path>/ojdbc7-12.1.0.2.jar:< oracle driver folder path>/*"   -Dloader.main="com.datacompare.Application" org.springframework.boot.loader.PropertiesLauncher --sourceDBType=ORACLE  --secMgrRegion="region" --srcDBSecretMgrEndPoint="secretsmanager.region.amazonaws.com" --srcDBSecretName="source-dms-secrets" --tgtDBSecretMgrEndPoint="secretsmanager.region.amazonaws.com" --tgtDBSecretName="target-dms-secrets" --schemaName="schename" --tableName="tablename" --chunkSize=5 --noofParallelChunks=4 --maxTextSize=4000 --displayCompleteData=1
+ java -cp "<Data compare jar folder path >/datacompare-tool-1.0.0.jar:<Oracle Driver Folder path>/datacompare-tool-1.0.0.jar:< oracle driver folder path>/ojdbc7-12.1.0.2.jar:< oracle driver folder path>/*"   -Dloader.main="com.datacompare.Application" org.springframework.boot.loader.PropertiesLauncher --sourceDBType=ORACLE  --secMgrRegion="region" --srcDBSecretMgrEndPoint="secretsmanager.region.amazonaws.com" --srcDBSecretName="source-dms-secrets" --tgtDBSecretMgrEndPoint="secretsmanager.region.amazonaws.com" --tgtDBSecretName="target-dms-secrets" --schemaName="schename" --tableName="tablename" --chunkSize=5 --noofParallelChunks=4 --maxTextSize=4000 --displayCompleteData=1 --primaryKey=<Table Name>:< column names with comma separation>
 
 ```
 
