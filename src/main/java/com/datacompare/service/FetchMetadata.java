@@ -393,32 +393,32 @@ public class FetchMetadata {
 
 		} else if (isHasNoUniqueKey()) {
 			String pkeys = null;
-			pkeys = getSuppliedPrimaryKey(appProperties, tableName);
+			//pkeys = getSuppliedPrimaryKey(appProperties, tableName);
 			if ("ORACLE".equals(getDbType())) {
-				if (pkeys != null && pkeys.length() > 0) {
-					uniqueKeyCol.append(pkeys + " as key1,");
+				//if (pkeys != null && pkeys.length() > 0) {
+					//uniqueKeyCol.append(pkeys + " as key1,");
 					//setHasNoUniqueKey(false);
-				} else {
+				//} else {
 					uniqueKeyCol.append("ROWNUM AS key1,");
-				}
+				//}
 
 			} else if ("POSTGRESQL".equals(getDbType())) {
-				if (pkeys != null && pkeys.length() > 0) {
-					uniqueKeyCol.append(pkeys + " as key1,");
+				//if (pkeys != null && pkeys.length() > 0) {
+					//uniqueKeyCol.append(pkeys + " as key1,");
 					//setHasNoUniqueKey(false);
-				} else {
+				//} else {
 					uniqueKeyCol.append("row_number() over() as key1,");
-				}
+			//	}
 
 
 			} else if ("SQLSERVER".equals(getDbType())) {
 
-				if (pkeys != null && pkeys.length() > 0) {
-					uniqueKeyCol.append(pkeys + " as key1,");
-					setHasNoUniqueKey(false);
-				} else {
+				//if (pkeys != null && pkeys.length() > 0) {
+					//uniqueKeyCol.append(pkeys + " as key1,");
+					//setHasNoUniqueKey(false);
+				//} else {
 					uniqueKeyCol.append("ROWNUM AS key1,");
-				}
+				//}
 			}
 		}
 	}
@@ -635,16 +635,16 @@ public class FetchMetadata {
 		StringBuilder sql = new StringBuilder();
 		
 		if(isHasNoUniqueKey()) {
-           if(pKey!=null) {
+         /*  if(pKey!=null) {
 			   sql.append("SELECT min(").append(pKey).append(") AS startRange, max(").append(pKey)
 					   .append(") AS endRange,count(*) AS chunkSize, nt FROM (SELECT ").append(pKey).append(" ,ntile(").append(ntileSize).append(") OVER (ORDER BY ").append(cols).append(" ) nt FROM ").append(schemaName)
 					   .append(".").append(tableName);
 		   }
-		   else{
+		   else{*/
 			   sql.append("SELECT min(ROWNUM) AS startRange, max(ROWNUM) AS endRange,count(*) AS chunkSize, nt FROM (SELECT ROWNUM")
 					   .append(" ,ntile(").append(ntileSize).append(") OVER (ORDER BY ").append(cols).append(" ) nt FROM ").append(schemaName)
 					   .append(".").append(tableName);
-		   }
+		 //  }
 			
 		} else {
 
@@ -717,25 +717,24 @@ public class FetchMetadata {
 					}
                     if(count==0) {
 
-						if(suppliedPKey!=null) {
+					/*	if(suppliedPKey!=null) {
 							condition.append(pKey).append(" >= ").append(startRange).append(" and ").append(pKey)
 									.append(" <= ").append(endRange).append(" order by 1");
 						}
-						else{
+						else{*/
 							condition.append("key1").append(" >= ").append(startRange).append(" and ").append("key1")
 									.append(" <= ").append(endRange).append(" order by 1");
-						}
+						//}
 					}
 					else{
-						if(suppliedPKey!=null) {
+						/*if(suppliedPKey!=null) {
 							condition.append(pKey).append(" >= ").append(startRange).append(" and ").append(pKey)
 									.append(" <= ").append(endRange).append(" order by 1");
-						}else {
+						}else {*/
 							condition.append("key1").append(" >= ").append(startRange).append(" and ").append("key1")
 									.append(" <= ").append(endRange).append(" order by 1");
 						}
 
-					}
 				}
 			} else {
 
