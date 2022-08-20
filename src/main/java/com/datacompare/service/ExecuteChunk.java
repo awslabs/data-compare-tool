@@ -60,6 +60,16 @@ public class ExecuteChunk implements Runnable {
 	private AppProperties appProperties;
 
 	private boolean hasNoUniqueKey;
+
+	public boolean isHasProvidedUniqueKey() {
+		return hasProvidedUniqueKey;
+	}
+
+	public void setHasProvidedUniqueKey(boolean hasProvidedUniqueKey) {
+		this.hasProvidedUniqueKey = hasProvidedUniqueKey;
+	}
+
+	private boolean hasProvidedUniqueKey;
 	/**
 	 * 
 	 * @param sourceDBType
@@ -79,7 +89,7 @@ public class ExecuteChunk implements Runnable {
 	public ExecuteChunk(String sourceDBType, String targetDBType, String sourceChunk, String targetChunk,
 			String sourceSql, String targetSql, int chunkNo, int numberOfChunks, Connection sourceConnection,
 			Connection targetConnection, Map<String, TableColumnMetadata> sourceTableMetadata,
-			Map<String, TableColumnMetadata> targetTableMetadata, AppProperties appProperties) {
+			Map<String, TableColumnMetadata> targetTableMetadata, AppProperties appProperties,boolean hasProvidedUniqueKey) {
 
 		setSourceDBType(sourceDBType);
 		setTargetDBType(targetDBType);
@@ -87,13 +97,14 @@ public class ExecuteChunk implements Runnable {
 		setTargetChunk(targetChunk);
 		setSourceSql(sourceSql);
 		setTargetSql(targetSql);
-		setAppProperties(appProperties); 
+		setAppProperties(appProperties);
 		setChunkNo(chunkNo);
 		setNumberOfChunks(numberOfChunks);
 		setSourceConnection(sourceConnection);
 		setTargetConnection(targetConnection);
 		setSourceTableMetadata(sourceTableMetadata);
-		setTargetTableMetadata(targetTableMetadata); 
+		setTargetTableMetadata(targetTableMetadata);
+		setHasProvidedUniqueKey(hasProvidedUniqueKey);
 		
 		Thread.currentThread().setName("Executing Chunk No " + getChunkNo()+1); 
 
@@ -444,7 +455,7 @@ public class ExecuteChunk implements Runnable {
 			Long tarCnt = Long.valueOf(fetchTargetData.getHashMap().size());
 			getTargetCount().add(tarCnt);
 			CompareData compareData = new CompareData(fetchSourceData.getHashMap(), fetchTargetData.getHashMap(),
-					getChunkNo(), getNumberOfChunks(),isHasNoUniqueKey(),getSourceData(),getTargetData());
+					getChunkNo(), getNumberOfChunks(),isHasNoUniqueKey(),getSourceData(),getTargetData(),isHasProvidedUniqueKey());
 			
 			executor = Executors.newFixedThreadPool(1);
 			executor.execute(compareData);
@@ -465,7 +476,7 @@ public class ExecuteChunk implements Runnable {
 			getTargetData().putAll(targetData);
 
 			ExecutorService validationExecutor = Executors.newFixedThreadPool(1);
-			ValidateChunk executeChunk = new ValidateChunk(getSourceData(),getSourceData(), getTargetData(), hasNoUniqueKey);
+			ValidateChunk executeChunk = new ValidateChunk(getSourceData(),getSourceData(), getTargetData(), hasNoUniqueKey,isHasProvidedUniqueKey());
 			validationExecutor.execute(executeChunk);
 			validationExecutor.shutdown();
 			while (!validationExecutor.isTerminated()) {
