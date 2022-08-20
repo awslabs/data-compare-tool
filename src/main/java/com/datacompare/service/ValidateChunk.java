@@ -14,6 +14,16 @@ public class ValidateChunk implements Runnable {
 
     private Map<String, String> targetFailedData;
 
+    public boolean isHasProvidedUniqueKey() {
+        return hasProvidedUniqueKey;
+    }
+
+    public void setHasProvidedUniqueKey(boolean hasProvidedUniqueKey) {
+        this.hasProvidedUniqueKey = hasProvidedUniqueKey;
+    }
+
+    private boolean hasProvidedUniqueKey;
+
     public Map<String, String> getProcessMap() {
         return processMap;
     }
@@ -63,14 +73,15 @@ public class ValidateChunk implements Runnable {
 
 
 
-    public ValidateChunk( Map<String, String> processMap, Map<String, String> sourceFailedData, Map<String, String> targetFailedData,  boolean hasNoUniqueKey) {
+    public ValidateChunk( Map<String, String> processMap, Map<String, String> sourceFailedData, Map<String, String> targetFailedData,  boolean hasNoUniqueKey,boolean hasProvidedUniqueKey) {
 
         this.processMap = processMap;
         this.hasNoUniqueKey = hasNoUniqueKey;
         this.sourceFailedData = sourceFailedData;
         this.targetFailedData = targetFailedData;
+        this.hasProvidedUniqueKey=hasProvidedUniqueKey;
 
-        Thread.currentThread().setName("alidate the  ChunkNo ");
+        Thread.currentThread().setName("validate the  ChunkNo ");
     }
 
     public void run() {
@@ -107,7 +118,8 @@ public class ValidateChunk implements Runnable {
     }
 
     private void finalValidation( ) {
-        //logger.info("Started the source chunk mismatch");
+        logger.info("Started the chunk mismatch validation");
+        int removedCount=0;
         ArrayList list = new ArrayList();
         for (Map.Entry<String, String> entry : processMap.entrySet()) {
 
@@ -117,28 +129,20 @@ public class ValidateChunk implements Runnable {
         //    logger.info("FINAL REMOVEAL------KEY--o--" + key);
          //   logger.info("FINAL REMOVEAL------content--o--" + content);
             try {
-                if (!hasNoUniqueKey) {
+                if (!hasNoUniqueKey || hasProvidedUniqueKey ) {
                     if (key != null && targetFailedData.containsKey(key)) {
 
                         String dataToCompareContent = targetFailedData.get(key);
-                        int sourceCount = Collections.frequency(processMap.values(), content);
-                        int targetCount = Collections.frequency(targetFailedData.values(), content);
+                        int sourceCount = Collections.frequency(processMap.keySet(), key);
+                        int targetCount = Collections.frequency(targetFailedData.keySet(), key);
                         //if it is mismatch
                         if (sourceCount > 0 && targetCount > 0) {
-                            //if(Collections.frequency(failedEntry.values(), content)<(sourceCount-targetCount)){
-                          //  list.add(key);
-                            String removeKey = getKeyForValue(targetFailedData, content);
-                         //   logger.info("FINAL REMOVEAL------KEY----" + removeKey);
-                            if (removeKey != null) {
-                                targetFailedData.remove(removeKey);
+                                targetFailedData.remove(key);
                                 sourceFailedData.remove(key);
-                          //      logger.info("FINAL REMOVEAL----------" + content);
+                                removedCount++;
                             }
                         }
-                    }
-
-                }
-                if (hasNoUniqueKey) {
+                }else  if (hasNoUniqueKey) {
                     content = entry.getValue();
                     int sourceCount = Collections.frequency(processMap.values(), content);
                     int targetCount = Collections.frequency(targetFailedData.values(), content);
@@ -153,6 +157,7 @@ public class ValidateChunk implements Runnable {
                         if (removeKey != null) {
                             targetFailedData.remove(removeKey);
                             sourceFailedData.remove(key);
+                            removedCount++;
                            // logger.info("FINAL REMOVEAL----------" + content);
                         }
                     }
@@ -161,7 +166,7 @@ public class ValidateChunk implements Runnable {
                 logger.error(e.getMessage(), e);
             }
         }
-        //logger.info("Processed the source chunk mismatch");
+        logger.info("Processed the source chunk mismatch- src filed count" +targetFailedData.size() + "Target Failed Cnt "+ targetFailedData.size()+ " removed count " +removedCount);
         //removeData(list, data);
     }
 
