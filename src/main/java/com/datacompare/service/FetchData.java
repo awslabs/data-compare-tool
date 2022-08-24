@@ -394,7 +394,9 @@ public class FetchData implements Runnable {
                     }
 
                     value.append(PIPE_SEPARATOR);
-                    pKeys.append(PIPE_SEPARATOR);
+                    if(pKeys.length()>0) {
+                        pKeys.append(PIPE_SEPARATOR);
+                    }
 
                     String val = StringUtils.normalizeSpace(value.toString()).trim();
                     String uKeys = StringUtils.normalizeSpace(pKeys.toString()).trim();
