@@ -406,13 +406,27 @@ public class FetchData implements Runnable {
                         keySize = keySize + key.getBytes().length;
                     }
                     //TODO------
-                       int dupNumber = Collections.frequency(getHashMap().keySet(), key.trim());
-                       if(dupNumber>1){
-                           String dupKey = key.trim() + "DUP" + (dupNumber-1);
+                   if(getPrimaryKeys()!=null && getPrimaryKeys().length()>0){
+                       if (getHashMap().containsKey(uKeys.trim())) {
+                           int dupNumber = getDuplicateNumber(getHashMap(), uKeys.trim());
+                          // int dupNumber = Collections.frequency(getHashMap().keySet(), uKeys.trim());
+                           String dupKey = uKeys.trim() + "DUP" + dupNumber;
                            getHashMap().put(dupKey, val);
-                       }else{
+                       } else {
+                           getHashMap().put(uKeys.trim(), val);
+                       }
+
+                   }else {
+                       if (getHashMap().containsKey(key.trim())) {
+                           int dupNumber = getDuplicateNumber(getHashMap(), key.trim());
+                           //int dupNumber = Collections.frequency(getHashMap().keySet(), key.trim());
+                           String dupKey = key.trim() + "DUP" + dupNumber;
+                           getHashMap().put(dupKey, val);
+                       } else {
                            getHashMap().put(key.trim(), val);
                        }
+                   }
+
 
 
                 } catch (Exception e) {
