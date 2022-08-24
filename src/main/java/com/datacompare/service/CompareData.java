@@ -233,11 +233,13 @@ public class CompareData implements Runnable {
 			if (key != null && !failedEntry.containsKey(key)) {
 				String content = entry.getValue();
 				String dataToCompareContent = dataToCompare.get(key);
-			   // int sourceCount = Collections.frequency(data.keySet(), key);
-				//int targetCount = Collections.frequency(dataToCompare.keySet(), key);
+			    int sourceCount = Collections.frequency(data.keySet(), key);
+				int targetCount = Collections.frequency(dataToCompare.keySet(), key);
 				int targetMismatchCount = Collections.frequency(dataToCompare.keySet(), content);
 				//if it is mismatch
-						if( !content.equalsIgnoreCase(dataToCompareContent)){
+						if(sourceCount>targetCount || !content.equalsIgnoreCase(dataToCompareContent)){
+							//if(Collections.frequency(failedEntry.values(), content)<(sourceCount-targetCount)){
+							//	for(int cnt=0; cnt<(sourceCount-targetCount) ; cnt++) {
 									String failedContent = (content != null) ? content : "";
 									this.result = "Failed";
 									//failTuple.add(failedContent);
@@ -310,9 +312,11 @@ public class CompareData implements Runnable {
 			if (!hasNoUniqueKey || hasProvidedUniqueKey) {
 				if (key != null && !failedEntry.containsKey(key)) {
 					String dataToCompareContent = dataToCompare.get(key);
-					//int sourceCount = Collections.frequency(data.keySet(), key);
-					//int targetCount = Collections.frequency(dataToCompare.keySet(), key);
-					if (!content.equalsIgnoreCase(dataToCompareContent)) {
+					int sourceCount = Collections.frequency(data.keySet(), key);
+					int targetCount = Collections.frequency(dataToCompare.keySet(), key);
+					if (sourceCount > targetCount) {
+						//logger.info("Target----->Comoare info SRC content: " + content + " TGT content: +" + dataToCompareContent + "+ SRC CNT : " + sourceCount + "TGT CNT :" + targetCount );
+						//	for (int cnt = 0; cnt < (sourceCount - targetCount); cnt++) {
 						String failedContent = (content != null) ? content : "";
 						this.result = "Failed";
 						//failTuple.add(failedContent);
