@@ -278,6 +278,9 @@ public class CompareData implements Runnable {
 					}
 					else{
 						sourceData.remove(key);
+						if(!content.equalsIgnoreCase(dataToCompareContent)){
+							key=getKeyForValue(targetData,content);
+						}
 						targetData.remove(key);
 					}
 				}
@@ -290,7 +293,6 @@ public class CompareData implements Runnable {
 		logger.info("Compare- Missing Rows " +cntt);
 
 }
-
 	/**
 	 *
 	 * @param data
