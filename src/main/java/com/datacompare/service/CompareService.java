@@ -1092,7 +1092,7 @@ public class CompareService {
 
 			if (!displayCompleteData) {
 
-				bw.append("<tr><td style='vertical-align: top;'><b>Additional Rows found in Target</b></td><td>");
+				bw.append("<tr><td style='vertical-align: top;'><b>Additional Rows found in Target / mismatched rows</b></td><td>");
 			}
 
 			for (final String key : mismatchTargetData.keySet()) {
