@@ -99,6 +99,7 @@ public class CompareData implements Runnable {
 		this.sourceFailedData=sourceFailedData;
 		this.targetFailedData=targetFailedData;
 		this.hasProvidedUniqueKey=hasProvidedUniqueKey;
+		this.chunkNo=chunkNo;
 		Thread.currentThread().setName("CompareData for ChunkNo " + chunkNo+1); 
 	}
 
@@ -221,76 +222,75 @@ public class CompareData implements Runnable {
 	 */
 	private void compare(Map<String, String> data, Map<String, String> dataToCompare, List<String> failTuple,
 			Map<String, String> failedEntry,boolean hasNoUniqueKey,Map<String, String> sourceFailedData, Map<String, String> targetFailedData,int chnCnt,boolean hasProvidedUniqueKey) {
-		int cntt=0;
-		//logger.info("Started compare source Chunk:"+chnCnt+"--Failed count-"+targetFailedData.size());
-		for (Map.Entry<String, String> entry : data.entrySet()) {
+		   int cntt=0;
+		// logger.info("Started compare source Chunk: "+chnCnt);
 
-		boolean newRecord=false;
-		this.tempRowNumber++;
-		String key = entry.getKey();
 		try {
 			if(!hasNoUniqueKey || hasProvidedUniqueKey){
-			if (key != null && !failedEntry.containsKey(key)) {
-				String content = entry.getValue();
-				String dataToCompareContent = dataToCompare.get(key);
-			    int sourceCount = Collections.frequency(data.keySet(), key);
-				int targetCount = Collections.frequency(dataToCompare.keySet(), key);
-				int targetMismatchCount = Collections.frequency(dataToCompare.keySet(), content);
-				//if it is mismatch
-						if(sourceCount>targetCount || !content.equalsIgnoreCase(dataToCompareContent)){
+				for (Map.Entry<String, String> entry : data.entrySet()) {
+					this.tempRowNumber++;
+					boolean newRecord = false;
+					String key = entry.getKey();
+					if (key != null && !failedEntry.containsKey(key)) {
+						String content = entry.getValue();
+						String dataToCompareContent = dataToCompare.get(key);
+						//	if(sourceCount>targetCount || !content.equalsIgnoreCase(dataToCompareContent)){
+						if (!content.equalsIgnoreCase(dataToCompareContent)) {
 							//if(Collections.frequency(failedEntry.values(), content)<(sourceCount-targetCount)){
 							//	for(int cnt=0; cnt<(sourceCount-targetCount) ; cnt++) {
-									String failedContent = (content != null) ? content : "";
-									this.result = "Failed";
-									//failTuple.add(failedContent);
-									this.failedRowNumber = this.tempRowNumber;
-									failedEntry.put(key, failedContent);
-									cntt++;
-									newRecord=true;
-								}
-						else{ //clean up the verified data. this is already verified
-							sourceData.remove(key);
-							targetData.remove(key);
-						}
-						}
-			}else if(hasNoUniqueKey){
-				String content = entry.getValue();
-				String dataToCompareContent = dataToCompare.get(key);
-				if (key != null && !failedEntry.containsValue(content)) {
-					int sourceCount = Collections.frequency(data.values(), content);
-					int targetCount = Collections.frequency(dataToCompare.values(), content);
-					//if it is mismatch
-					if(sourceCount>targetCount ){
-						//if(Collections.frequency(failedEntry.values(), content)<(sourceCount-targetCount)){
-						for(int cnt=0; cnt<(sourceCount-targetCount) ; cnt++) {
 							String failedContent = (content != null) ? content : "";
 							this.result = "Failed";
 							//failTuple.add(failedContent);
 							this.failedRowNumber = this.tempRowNumber;
-							if (failedEntry.containsKey(key) && newRecord) {
-								key = key + "-DUP"+cnt;
-							}
 							failedEntry.put(key, failedContent);
 							cntt++;
-							newRecord=true;
+							newRecord = true;
+						} else { //clean up the verified data. this is already verified
+							sourceData.remove(key);
+							targetData.remove(key);
 						}
-						newRecord=false;
 					}
-					else{
-						sourceData.remove(key);
-						if(!content.equalsIgnoreCase(dataToCompareContent)){
-							key=getKeyForValue(targetData,content);
+				}
+			}else if(hasNoUniqueKey) {
+				for (Map.Entry<String, String> entry : data.entrySet()) {
+					this.tempRowNumber++;
+					boolean newRecord = false;
+					String key = entry.getKey();
+					String content = entry.getValue();
+					String dataToCompareContent = dataToCompare.get(key);
+					if (key != null && !failedEntry.containsValue(content)) {
+						int sourceCount = Collections.frequency(data.values(), content);
+						int targetCount = Collections.frequency(dataToCompare.values(), content);
+						//if it is mismatch
+						if (sourceCount > targetCount) {
+							//if(Collections.frequency(failedEntry.values(), content)<(sourceCount-targetCount)){
+							for (int cnt = 0; cnt < (sourceCount - targetCount); cnt++) {
+								String failedContent = (content != null) ? content : "";
+								this.result = "Failed";
+								//failTuple.add(failedContent);
+								this.failedRowNumber = this.tempRowNumber;
+								if (failedEntry.containsKey(key) && newRecord) {
+									key = key + "-DUP" + cnt;
+								}
+								failedEntry.put(key, failedContent);
+								cntt++;
+								newRecord = true;
+							}
+							newRecord = false;
+						} else {
+							sourceData.remove(key);
+							if (!content.equalsIgnoreCase(dataToCompareContent)) {
+								key = getKeyForValue(targetData, content);
+							}
+							targetData.remove(key);
 						}
-						targetData.remove(key);
 					}
 				}
 			}
-
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 		}
-	}
-		logger.info("Compare- Missing Rows " +cntt);
+	//	logger.info("Compare- Missing Rows for chunk + "+chunkNo +" Failed count " +cntt);
 
 }
 	/**
@@ -304,7 +304,7 @@ public class CompareData implements Runnable {
 						 Map<String, String> failedEntry,boolean hasNoUniqueKey, Map<String, String> sourceFailedData, Map<String, String> targetFailedData,int chnCnt,boolean hasProvidedUniqueKey) {
         int cntt=0;
 
-		//.info("Started compare source Chunk:"+chnCnt+"--Failed count-"+targetFailedData.size());
+		//logger.info("Started compare source Chunk: "+chnCnt);
 		for (Map.Entry<String, String> entry : data.entrySet()) {
 			this.tempRowNumber++;
 				boolean newRecord=false;
@@ -319,6 +319,14 @@ public class CompareData implements Runnable {
 					if (sourceCount > targetCount) {
 						//logger.info("Target----->Comoare info SRC content: " + content + " TGT content: +" + dataToCompareContent + "+ SRC CNT : " + sourceCount + "TGT CNT :" + targetCount );
 						//	for (int cnt = 0; cnt < (sourceCount - targetCount); cnt++) {
+						String failedContent = (content != null) ? content : "";
+						this.result = "Failed";
+						//failTuple.add(failedContent);
+						this.failedRowNumber = this.tempRowNumber;
+						failedEntry.put(key, failedContent);
+						cntt++;
+						newRecord = true;
+					}else if(sourceCount==targetCount && !content.equalsIgnoreCase(dataToCompareContent)){
 						String failedContent = (content != null) ? content : "";
 						this.result = "Failed";
 						//failTuple.add(failedContent);
@@ -352,72 +360,11 @@ public class CompareData implements Runnable {
 			}
 			newRecord=false;
 		}
-		logger.info(" Compare- Add. Rows" +cntt);
-	}
-
-
-	private void finalValidation(Map<String, String> data, Map<String, String> targetCountList, boolean hasNoUniqueKey) {
-		//logger.info("Started the source chunk mismatch");
-		ArrayList list= new ArrayList();
-		for (Map.Entry<String, String> entry : data.entrySet()) {
-
-			boolean newRecord=false;
-			String key = entry.getKey();
-			try {
-				if(!hasNoUniqueKey || hasProvidedUniqueKey){
-					if (key != null && targetCountList.containsKey(key)) {
-						String content = entry.getValue();
-						String dataToCompareContent = targetCountList.get(key);
-						int sourceCount = Collections.frequency(data.values(), content);
-						int targetCount = Collections.frequency(targetCountList.values(), content);
-						//if it is mismatch
-						if(sourceCount>0 && targetCount>0 ){
-							//if(Collections.frequency(failedEntry.values(), content)<(sourceCount-targetCount)){
-							list.add(key);
-							String removeKey=getKeyForValue( targetCountList,content);
-							if(removeKey!=null)
-								targetCountList.remove(removeKey);
-						}
-					}
-
-				}
-				if(hasNoUniqueKey){
-					String content = entry.getValue();
-					String dataToCompareContent = targetCountList.get(key);
-					int sourceCount = Collections.frequency(data.values(), content);
-					int targetCount = Collections.frequency(targetCountList.values(), content);
-					//if it is mismatch
-					if(sourceCount>0 && targetCount>0 ){
-						//if(Collections.frequency(failedEntry.values(), content)<(sourceCount-targetCount)){
-						list.add(key);
-						String removeKey=getKeyForValue( targetCountList,content);
-						if(removeKey!=null)
-							targetCountList.remove(removeKey);
-					}
-				}
-			} catch (Exception e) {
-				logger.error(e.getMessage(), e);
-			}
-		}
-		//logger.info("Processed the source chunk mismatch");
-		removeData(list,data);
-	}
-
-	private void removeData(ArrayList list, Map<String, String> data) {
-		//.info("started data removal");
-		if(list.size()>0){
-			for(int i=0; i< list.size(); i++)
-			{
-				data.remove(list.get(i));
-			}
-		}
-		//.info("Processed data removal");
+	//	logger.info("Compare- Additional rows for chunk + "+chunkNo +" Failed count " +cntt);
 	}
 
 	private String getKeyForValue(Map<String, String> targetCountList, String content) {
 		for (Map.Entry<String, String> entry : targetCountList.entrySet()) {
-
-			boolean newRecord = false;
 			String key = entry.getKey();
 			String value = entry.getValue();
 			if (value.equalsIgnoreCase(content))
