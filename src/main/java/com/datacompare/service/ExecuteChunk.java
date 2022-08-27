@@ -438,11 +438,11 @@ public class ExecuteChunk implements Runnable {
 			
 			Thread.currentThread().setName("Executing Chunk No " + getChunkNo()+1);
 			FetchData fetchSourceData = new FetchData(getSourceDBType(), null, getSourceSql(), getSourceChunk(),
-					getSourceConnection(), getSourceTableMetadata(), null, getAppProperties());
+					getSourceConnection(), getSourceTableMetadata(), null, getAppProperties(),getChunkNo());
 			fetchSourceData.setTimeTaken(getSourceTimeTaken());
 			FetchData fetchTargetData = new FetchData(getTargetDBType(), getSourceDBType(), getTargetSql(),
 					getTargetChunk(), getTargetConnection(), getTargetTableMetadata(), getSourceTableMetadata(),
-					getAppProperties());
+					getAppProperties(),getChunkNo());
 			fetchTargetData.setTimeTaken(getTargetTimeTaken());
 			ExecutorService executor = Executors.newFixedThreadPool(2);
 			executor.execute(fetchSourceData); 
@@ -455,7 +455,7 @@ public class ExecuteChunk implements Runnable {
 			Long tarCnt = Long.valueOf(fetchTargetData.getHashMap().size());
 			getTargetCount().add(tarCnt);
 			CompareData compareData = new CompareData(fetchSourceData.getHashMap(), fetchTargetData.getHashMap(),
-					getChunkNo(), getNumberOfChunks(),isHasNoUniqueKey(),getSourceData(),getTargetData(),isHasProvidedUniqueKey());
+					getChunkNo(), getChunkNo(),isHasNoUniqueKey(),getSourceData(),getTargetData(),isHasProvidedUniqueKey());
 			
 			executor = Executors.newFixedThreadPool(1);
 			executor.execute(compareData);
@@ -476,7 +476,7 @@ public class ExecuteChunk implements Runnable {
 			getTargetData().putAll(targetData);
 
 			ExecutorService validationExecutor = Executors.newFixedThreadPool(1);
-			ValidateChunk executeChunk = new ValidateChunk(getSourceData(),getSourceData(), getTargetData(), hasNoUniqueKey,isHasProvidedUniqueKey());
+			ValidateChunk executeChunk = new ValidateChunk(getSourceData(),getSourceData(), getTargetData(), hasNoUniqueKey,isHasProvidedUniqueKey(),getChunkNo());
 			validationExecutor.execute(executeChunk);
 			validationExecutor.shutdown();
 			while (!validationExecutor.isTerminated()) {
