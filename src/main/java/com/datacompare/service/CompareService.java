@@ -637,7 +637,7 @@ public class CompareService {
 			logger.info("Size of the target mismatch data before final validation "+ mismatchTargetData.size());
 
 			ExecutorService validationExecutor = Executors.newFixedThreadPool(1);
-			ValidateChunk executeChunk = new ValidateChunk(mismatchSourceData,mismatchSourceData, mismatchTargetData,fetchSourceMetadata.isHasNoUniqueKey(),fetchSourceMetadata.isPrimeryKeySupplied(appProperties,tableName));
+			ValidateChunk executeChunk = new ValidateChunk(mismatchSourceData,mismatchSourceData, mismatchTargetData,fetchSourceMetadata.isHasNoUniqueKey(),fetchSourceMetadata.isPrimeryKeySupplied(appProperties,tableName),numChunks+1);
 			validationExecutor.execute(executeChunk);
 			validationExecutor.shutdown();
 			while (!validationExecutor.isTerminated()) {
@@ -668,10 +668,7 @@ public class CompareService {
 		logger.info(info.toString());
 		return dto;
 	}
-
-
 		public List<Map<String, String>> splitMap( Map<String, String> original, long max) {
-
 			int counter = 0;
 			int lcounter = 0;
 			List<Map<String, String>> listOfSplitMaps = new ArrayList<Map<String, String>> ();
@@ -690,7 +687,6 @@ public class CompareService {
 					}
 				}
 			}
-
 			return listOfSplitMaps;
 		}
 
@@ -889,21 +885,22 @@ public class CompareService {
 		info.append(targetCount);
 		info.append("\n");
 		logger.info(info.toString());
-		if((mismatchSourceData.size() != 0 ) || (mismatchTargetData.size()!=0)){
+		if((mismatchSourceData.size() != 0 ) || (mismatchTargetData.size()!=0)) {
 			info = new StringBuilder();
 			info.append(schemaName.toLowerCase());
 			info.append("_");
 			info.append(dto.getTableName().toLowerCase());
 			info.append("_table_comparison_result_");
-			info.append(new DateUtil().getAppendDateToFileName(new Date())); 
+			info.append(new DateUtil().getAppendDateToFileName(new Date()));
 			info.append(".html");
 			String fileName = info.toString();
 			try {
 				long totalFailedRowCount = 0;
 				StringBuilder bw = new StringBuilder();
-				writeHeader(fetchSourceMetadata, fetchTargetMetadata, displayCompleteData, bw);
-				if(((!fetchSourceMetadata.isHasNoUniqueKey() )|| (fetchSourceMetadata.isHasNoUniqueKey() && fetchSourceMetadata.isPrimeryKeySupplied(appProperties,tableName))))
-				writeMismatchData(mismatchSourceData, mismatchTargetData, displayCompleteData, dto, bw);
+				writeHeader(fetchSourceMetadata, fetchTargetMetadata, displayCompleteData, bw,getSuppliedPrimaryKey(appProperties));
+				if ((!fetchSourceMetadata.isHasNoUniqueKey()) || (fetchSourceMetadata.isHasNoUniqueKey() && fetchSourceMetadata.isPrimeryKeySupplied(appProperties, tableName))){
+					writeMismatchData(mismatchSourceData, mismatchTargetData, displayCompleteData, dto, bw);
+			     }
 				writeMismatchSourceData(mismatchSourceData, displayCompleteData, dto, bw);
 				writeMismatchTargetData(mismatchTargetData, displayCompleteData, dto, bw);
 				totalFailedRowCount = dto.getValueMismatchCount() + dto.getTargetFailedRowCount()
@@ -941,7 +938,7 @@ public class CompareService {
 	 * @param bw
 	 */
 	private void writeHeader(FetchMetadata fetchSourceMetadata, FetchMetadata fetchTargetMetadata,
-			boolean displayCompleteData, StringBuilder bw) {
+			boolean displayCompleteData, StringBuilder bw, String uniqueKeys) {
 
 		bw.append(
 				"<html><head><title>Data Compare Details</title><style>table{border: 1px solid #ddd; border-radius: 13px; border-collapse: collapse;} th, td {border-bottom: 1px solid #ddd;border-collapse: collapse; font-family: Arial; font-size: 10pt;} th, td {padding: 15px;}	th {text-align: left;} table {border-spacing: 5px; width: 100%; background-color: #f1f1c1;	border-color: gray;} table tr:nth-child(even) {background-color: #eee;} table tr:nth-child(odd) {background-color: #fff;} table th {color: white; background-color: black;}	</style></head><body>");
@@ -972,7 +969,8 @@ public class CompareService {
 			bw.append("<tr><td>&nbsp;</td>");
 
 			String sortColumns = fetchSourceMetadata.getSortKey();
-
+            if(uniqueKeys!=null && !uniqueKeys.isEmpty())
+				sortColumns=uniqueKeys;
 			bw.append("<td>").append(sortColumns).append("</td></tr>");
 		}
 	}
@@ -986,8 +984,8 @@ public class CompareService {
 	 * @param bw
 	 */
 	private void writeMismatchData(Map<String, String> mismatchSourceData, Map<String, String> mismatchTargetData,
-			boolean displayCompleteData, CompareResult dto, StringBuilder bw) {
-		
+								   boolean displayCompleteData, CompareResult dto, StringBuilder bw) {
+
 		boolean mismatchDataFound = (mismatchSourceData.size() > 0);
 		long mismatchRowCount = 0;
 
@@ -997,7 +995,7 @@ public class CompareService {
 		}
 
 		List<String> keys = new ArrayList<String>(mismatchSourceData.keySet());
-		
+
 		for (final String key : keys) {
 
 			if (mismatchTargetData.containsKey(key)) {
@@ -1031,7 +1029,6 @@ public class CompareService {
 
 		dto.setValueMismatchCount(mismatchRowCount);
 	}
-	
 	/**
 	 * 
 	 * @param mismatchSourceData
@@ -1230,5 +1227,17 @@ public class CompareService {
 	    }
 		
 	    return false;		
+	}
+	private String getSuppliedPrimaryKey(AppProperties appProperties) {
+		String pkeys =null;
+		if(appProperties!=null) {
+			String tableName=appProperties.getTableName();
+			if (appProperties.getPrimaryKeyMap() != null
+					&& !appProperties.getPrimaryKeyMap().isEmpty()
+					&& appProperties.getPrimaryKeyMap().get(tableName.toUpperCase()) != null) {
+				pkeys = appProperties.getPrimaryKeyMap().get(tableName.toUpperCase());
+			}
+		}
+		return pkeys;
 	}
 }
