@@ -668,16 +668,12 @@ public class FetchMetadata {
 			sql.append(") as a GROUP BY nt ORDER BY nt");
 		}
 		
-		logger.info("Fetch Chunks SQL Query: " + sql.toString()); 
-
+		logger.info("Fetch Chunks SQL Query: " + sql.toString());
 		Statement stmt = connection.createStatement();
-
 		ResultSet rs = stmt.executeQuery(sql.toString());
         int count=0;
 		while (rs.next()) {
-
 			int columnType= rs.getMetaData().getColumnType(1);
-
 			long startRange=0;
 			long endRange=0;
 			if(!isNoNumericColumnType(columnType)){
@@ -685,16 +681,13 @@ public class FetchMetadata {
 				 endRange = rs.getLong("endRange");
 			}
 			long chunkSize = rs.getLong("chunkSize");
-
 			StringBuilder condition = new StringBuilder();
             boolean whereapplied=false;
 			boolean filterapplied=false;
-
 			if(!isNoNumericColumnType(columnType)) {
 				condition.append("where ");
 				whereapplied=true;
 			}
-
 			if (filter != null && !filter.isEmpty() && !"Sample".equals(filterType)) {
 			 if(!whereapplied) {
 				 condition.append("where ");
