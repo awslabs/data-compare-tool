@@ -55,6 +55,9 @@ public class FetchData implements Runnable {
     private Connection connection = null;
 
     private int fetchSize;
+
+
+    private int chunkNum;
     private long rowCount;
     private boolean compareOnlyDate;
 
@@ -87,7 +90,7 @@ public class FetchData implements Runnable {
      */
     public FetchData(String dbType, String sourceDBType, String sql, String chunk, Connection connection,
                      Map<String, TableColumnMetadata> tableMetadata, Map<String, TableColumnMetadata> sourceTableMetadata,
-                     AppProperties appProperties) throws Exception {
+                     AppProperties appProperties,int chunkNum) throws Exception {
 
         if (!EnumUtils.isValidEnum(DatabaseInfo.dbType.class, dbType))
             throw new Exception(dbType + " not supported.");
@@ -104,6 +107,7 @@ public class FetchData implements Runnable {
         setHashMap(new ConcurrentHashMap<String, String>());
         setPrimaryKeys(getSuppliedPrimaryKey(appProperties));
         Thread.currentThread().setName(getDbType() + " " + getChunk());
+        setChunkNum(chunkNum);
 
         //logger.info("\n" + getDbType() + ": SQL Query without chunk: " + getSql());
     }
@@ -667,6 +671,13 @@ public class FetchData implements Runnable {
         this.sourceTableMetadataMap = sourceTableMetadataMap;
     }
 
+    public int getChunkNum() {
+        return chunkNum;
+    }
+
+    public void setChunkNum(int chunkNum) {
+        this.chunkNum = chunkNum;
+    }
     /**
      * @return the timeTaken
      */
