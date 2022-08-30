@@ -43,8 +43,17 @@ The data compare tool helps in validating the migrated data. Source will be eith
 
 ## Setup & Infra
 
-Java/Jre: jre-1.8.x or more should be installed on the machine from where this tool will be executed.
-Tool can executed in two ways:
+Software:
+
+-  Java/Jre: jre-1.8.x or more should be installed on the machine from where this tool will be executed.
+-  Maven: It's required to build the project, preferable apache-maven-3.8.1 or higher.
+-  OJDBC jar: It's required to run the project, preferable ojdbc7-12.1.0.2.jar or higher.
+-  IDE: Your preferred IDE for code changes (like Eclipse/IntelliJ).
+-  Web Browser/Postman: To launch the tool from web browser with URL.
+-  Database management tool to connect and view DB (like DBever/pgAdmin)
+
+Tool can be executed in two ways:
+
 a) Command Line mode: Tool accepts arguments and stops the process once it completes the data validation.
 b) Web mode: It can be used n number of times by supplying the required inputs from GUI one after another validation.
  
@@ -63,7 +72,7 @@ By default it runs on 8080 port, so make sure this port is open in case if it bl
 
 To run on a different port e.g:- 9000 use this argument with required port -Dserver.port=xxxx
 
-`java -cp "<Data compare jar folder path >/datacompare-tool-1.0.0.jar:<Oracle Driver Folder path>/ojdbc7-12.1.0.2.jar:< oracle driver folder path>/*" -Dloader.main="com.datacompare.Application" org.springframework.boot.loader.PropertiesLauncher  -Dserver.port=9000`
+`java -cp "<Data compare jar folder path >/datacompare-tool-1.0.0.jar:<Oracle Driver Folder path>/ojdbc7-12.1.0.2.jar:< oracle driver folder path>/*" -Dloader.main="com.datacompare.Application" -Dserver.port=9000 org.springframework.boot.loader.PropertiesLauncher`
 
 To write the log data to a file instead of displaying in command.
 
