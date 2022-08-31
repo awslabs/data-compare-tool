@@ -135,11 +135,12 @@ public class ValidateChunk implements Runnable {
                         String key = entry.getKey();
                         String content = entry.getValue();
                         String dataToCompareContent = targetFailedData.get(key);
-                        if (targetFailedData.containsValue(content)) {
+                        if (targetFailedData!=null && targetFailedData.containsValue(content)) {
                             //if(Collections.frequency(failedEntry.values(), content)<(sourceCount-targetCount)){
                             // list.add(key);
-                            if(!dataToCompareContent.equals(content)) {
+                            if( !content.equals(dataToCompareContent)) {
                                 String removeKey = getKeyForValue(targetFailedData, content);
+                                if(removeKey!=null)
                                 targetFailedData.remove(removeKey);
                             }else
                             {
@@ -154,19 +155,21 @@ public class ValidateChunk implements Runnable {
             } catch (Exception e) {
                 logger.error(e.getMessage(), e);
             }
-        logger.info("Processed the source chunk-"+chunkNum+" mismatch src filed count " +targetFailedData.size() + " Target Failed Cnt "+ targetFailedData.size()+ " removed count " +removedCount);
+        logger.info("Processed the source chunk-"+chunkNum+" removed count " +removedCount);
         //removeData(list, data);
     }
 
 
     private String getKeyForValue(Map<String, String> targetCountList, String content) {
-        for (Map.Entry<String, String> entry : targetCountList.entrySet()) {
+        if(content!=null) {
+            for (Map.Entry<String, String> entry : targetCountList.entrySet()) {
 
-            boolean newRecord = false;
-            String key = entry.getKey();
-            String value = entry.getValue();
-            if (value.equalsIgnoreCase(content))
-                return key;
+                boolean newRecord = false;
+                String key = entry.getKey();
+                String value = entry.getValue();
+                if (value != null && value.equalsIgnoreCase(content))
+                    return key;
+            }
         }
         return null;
     }
