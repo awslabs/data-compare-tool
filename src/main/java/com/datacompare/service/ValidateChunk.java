@@ -114,7 +114,7 @@ public class ValidateChunk implements Runnable {
     }
 
     private void finalValidation( ) {
-        logger.info("Started the chunk mismatch validation "+chunkNum);
+        //logger.info("Started the chunk mismatch validation "+chunkNum);
         int removedCount=0;
             try {
                 if (!hasNoUniqueKey || hasProvidedUniqueKey ) {
@@ -155,7 +155,7 @@ public class ValidateChunk implements Runnable {
             } catch (Exception e) {
                 logger.error(e.getMessage(), e);
             }
-        logger.info("Processed the source chunk-"+chunkNum+" removed count " +removedCount);
+        //logger.info("Processed the source chunk-"+chunkNum+" removed count " +removedCount);
         //removeData(list, data);
     }
 
