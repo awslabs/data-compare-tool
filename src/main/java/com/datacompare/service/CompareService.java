@@ -947,7 +947,7 @@ public class CompareService {
  				fileWrite.writeDataToFile(bw, fileName, CompareController.reportOutputFolder);
 
 				String detailedReportCsvFileNameWithPath= getDetailedReportCsvFileNameWithPath(schemaName,dto.getTableName(), CompareController.reportOutputFolder);
-				convertDetailedReportHtmlFileToCsvFile(bw,detailedReportCsvFileNameWithPath) ;
+				convertDetailedReportHtmlFileToCsvFile(bw,detailedReportCsvFileNameWithPath,displayCompleteData) ;
 
 			} catch (Exception e) {
 				logger.error(e.getMessage(), e);
@@ -1019,8 +1019,9 @@ public class CompareService {
 	 *
 	 * @param compareResultInHtmlFormat
 	 * @param detailedReportCsvFileNameWithPath
+	 * @param displayCompleteData
 	 */
-	public void convertDetailedReportHtmlFileToCsvFile(StringBuilder compareResultInHtmlFormat, String detailedReportCsvFileNameWithPath) {
+	public void convertDetailedReportHtmlFileToCsvFile(StringBuilder compareResultInHtmlFormat, String detailedReportCsvFileNameWithPath, boolean displayCompleteData) {
 		try {
 
 			FileWriter detailedReportCsvFileWriter = new FileWriter(detailedReportCsvFileNameWithPath);
@@ -1029,63 +1030,104 @@ public class CompareService {
 			String docHeader = htmlDocument.getElementsByTag("th").toString();
 			if (docHeader.contains("REASON OF FAILURE") && docHeader.contains("SOURCE TUPLE") && docHeader.contains("TARGET TUPLE")) {
 
+				//add headers in csv
+				if (!htmlDocument.getElementsByTag("th").isEmpty()) {
+					Elements headers = htmlDocument.getElementsByTag("th");
+					for (Element header : headers) {
+						detailedReportCsvFileWriter.write("\"" + header.text() + "\",");
+					}
+					detailedReportCsvFileWriter.write("\n");
+				}
+
 				Elements rows = htmlDocument.getElementsByTag("tr");
 				for (Element row : rows) {
 
+					//add row data in csv
 					if (!row.getElementsByTag("td").isEmpty()) {
 
+						//add column0 data in row
 						Element column0 = row.getElementsByTag("td").get(0);
-						detailedReportCsvFileWriter.write(column0.text());
+						if (!column0.text().isEmpty()) {
+							detailedReportCsvFileWriter.write("\"" + column0.text() + "\"");
+						}
 
+						//add column1 data in row
 						Element column1 = row.getElementsByTag("td").get(1);
 						if (column1.text().isEmpty()) {
-							detailedReportCsvFileWriter.write(",,,,");
+							detailedReportCsvFileWriter.write("," + ",");
 						} else if (column1.text().contains("||")) {
-							String cellTextAsSingleRow = column1.text().replaceAll("\\|\\|", ",");
+							String cellTextAsSingleRow = column1.text().replaceAll("\\s\\|\\|\\s", ",");
+							cellTextAsSingleRow = cellTextAsSingleRow.replaceAll("\\|\\|", "");
 							if (cellTextAsSingleRow.contains(" , , , ")) {
-								String cellTextAsNewRow = cellTextAsSingleRow.replaceAll("\\s\\,\\s\\,\\s\\,\\s", ",\n,");
-								detailedReportCsvFileWriter.write(cellTextAsNewRow);
+								String cellTextAsNewRow = cellTextAsSingleRow.replaceAll("\\s\\,\\s\\,\\s\\,\\s", "\",\n,\"");
+								detailedReportCsvFileWriter.write("," + "\"" + cellTextAsNewRow + "\"" + ",");
 							} else {
-								detailedReportCsvFileWriter.write(cellTextAsSingleRow);
+								detailedReportCsvFileWriter.write("," + "\"" + cellTextAsSingleRow + "\"" + ",");
 							}
+
 						} else {
-							detailedReportCsvFileWriter.write("," + column1.text().concat(",,,"));
+							detailedReportCsvFileWriter.write("," + "\"" + column1.text() + "\"" + ",");
 						}
+
+						//add column2 data in row
 						Element column2 = row.getElementsByTag("td").get(2);
 						if (column2.text().isEmpty()) {
-							detailedReportCsvFileWriter.write(",,,,,,");
+							detailedReportCsvFileWriter.write(",");
 						} else if (column2.text().contains("||")) {
 							String cellTextAsSingleRow = column2.text().replaceAll("\\s\\|\\|\\s", ",");
 							cellTextAsSingleRow = cellTextAsSingleRow.replaceAll("\\|\\|", "");
 							if (cellTextAsSingleRow.contains(" , , , ")) {
-								String cellTextAsNewRow = cellTextAsSingleRow.replaceAll("\\s\\,\\s\\,\\s\\,\\s", ",\n,");
-								detailedReportCsvFileWriter.write(cellTextAsNewRow);
+								String cellTextAsNewRow = cellTextAsSingleRow.replaceAll("\\s\\,\\s\\,\\s\\,\\s", "\",\n,\"");
+								detailedReportCsvFileWriter.write("\"" + cellTextAsNewRow + "\"" + ",");
 							} else {
-								detailedReportCsvFileWriter.write(cellTextAsSingleRow);
+								detailedReportCsvFileWriter.write("\"" + cellTextAsSingleRow + "\"" + ",");
 							}
 						} else {
-							detailedReportCsvFileWriter.write(column2.text().concat(",,,,,"));
+
+							detailedReportCsvFileWriter.write("\"" + column2.text() + "\"" + ",");
 						}
+
 					}
 					detailedReportCsvFileWriter.write("\n");
 				}
 			} else {
+
+				//add headers in csv
+				if (!htmlDocument.getElementsByTag("th").isEmpty()) {
+					Elements headers = htmlDocument.getElementsByTag("th");
+					for (Element header : headers) {
+						detailedReportCsvFileWriter.write("\"" + header.text() + "\",");
+					}
+					detailedReportCsvFileWriter.write("\n");
+				}
+
 				Elements rows = htmlDocument.getElementsByTag("tr");
 				for (Element row : rows) {
+					//add row data in csv
 					Elements columns = row.getElementsByTag("td");
 					for (Element column : columns) {
-						if (column.text().contains("||")) {
-							String cellTextAsSingleRow = column.text().replaceAll("\\|\\|", ",");
-							if (cellTextAsSingleRow.contains(" , , , ")) {
-								String cellTextAsNewRow = cellTextAsSingleRow.replaceAll("\\s\\,\\s\\,\\s\\,\\s", ",\n,");
-								detailedReportCsvFileWriter.write(cellTextAsNewRow);
+						String columnText = column.text();
+						if (columnText.contains("||")) {
+							if (columnText.contains(" || || || ")) {
+								String columnTextAsMultiRow = columnText.replaceAll("\\s\\|\\|\\s\\|\\|\\s\\|\\|\\s", " \",\n,\" ");
+								columnTextAsMultiRow = columnTextAsMultiRow.replaceAll("\\s\\|\\|\\s", ",");
+								columnTextAsMultiRow = columnTextAsMultiRow.replaceAll("\\|\\|", "");
+								detailedReportCsvFileWriter.write("\"" + columnTextAsMultiRow + "\"");
+							} else if (displayCompleteData) {
+								String columnTextAsSingleRow = columnText.replaceAll("\\s\\|\\|\\s", ",");
+								columnTextAsSingleRow = columnTextAsSingleRow.replaceAll("\\|\\|", "");
+								detailedReportCsvFileWriter.write("\"" + columnTextAsSingleRow + "\"");
+							} else if (!displayCompleteData) {
+								String columnTextAsMultiRow = columnText.replaceAll("\\s\\|\\|\\s", "\",\n,\"");
+								columnTextAsMultiRow = columnTextAsMultiRow.replaceAll("\\|\\|", "");
+								detailedReportCsvFileWriter.write("\"" + columnTextAsMultiRow + "\"");
 							} else {
-								detailedReportCsvFileWriter.write(cellTextAsSingleRow);
+								detailedReportCsvFileWriter.write("\"" + columnText + "\"");
 							}
-						} else if (column.text().isEmpty()) {
-							detailedReportCsvFileWriter.write(column.text().concat(","));
+						} else if (columnText.isEmpty()) {
+							detailedReportCsvFileWriter.write(columnText.concat(","));
 						} else {
-							detailedReportCsvFileWriter.write(column.text());
+							detailedReportCsvFileWriter.write("\"" + columnText + "\",");
 						}
 					}
 					detailedReportCsvFileWriter.write("\n");
@@ -1270,6 +1312,7 @@ public class CompareService {
 			if (!displayCompleteData) {
 
 				bw.append("<tr><td style='vertical-align: top;'><b>Rows did not migrated from Source</b></td><td>");
+				bw.append(" || ");
 			}
 
 			for (final String key : mismatchSourceData.keySet()) {
@@ -1314,6 +1357,7 @@ public class CompareService {
 			if (!displayCompleteData) {
 
 				bw.append("<tr><td style='vertical-align: top;'><b>Additional Rows found in Target</b></td><td>");
+				bw.append(" || ");
 			}
 
 			for (final String key : mismatchTargetData.keySet()) {
