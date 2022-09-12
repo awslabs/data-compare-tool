@@ -10,6 +10,7 @@
 
 package com.datacompare.service;
 
+import java.io.FileWriter;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -18,9 +19,11 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -134,24 +137,37 @@ public class CompareService {
 	  					}
 					}
   				}
-  				
+
+				String jobName = appProperties.getJobName();
+				jobName = (jobName != null && !jobName.isEmpty()) ? jobName : "data_comparison_result";
+				String fileName = jobName + "_" + appendDateToFileNames + ".html";
+
+				String summaryReportCsvFileNameWithPath = getSummaryReportCsvFileNameWithPath(appendDateToFileNames, jobName, CompareController.reportOutputFolder);
+				String summaryReportCsvFileName = jobName + "_" + appendDateToFileNames + ".csv";
+
+				data.append("<tr><td><b>")
+						.append("Summary Report In CSV</b>")
+						.append("</td>")
+						.append("<td colspan='6'>")
+						.append("<a href='")
+						.append(summaryReportCsvFileName)
+						.append("'>")
+						.append("View Details in CSV File ")
+						//.append(summaryReportCsvFileNameWithPath)
+						.append("</a>")
+						.append("</td></tr>");
+
 				data.append("</tbody>")
-				.append("</table>") 
-  				.append("</body>")
-  				.append("</html>");
-				
-        		String jobName = appProperties.getJobName();
-        		jobName = (jobName != null && !jobName.isEmpty()) ? jobName : "data_comparison_result";
-        		
-  	        	String fileName = jobName + "_" + appendDateToFileNames + ".html";
-  	        	
-  	        	FileUtil fileWrite = new FileUtil();
-  				
-  	        	fileWrite.writeDataToFile(data, fileName, CompareController.reportOutputFolder); 
-  	        	
-  	        	CompareController.reportFileName = fileName;
-	  			
-  			} else {
+						.append("</table>")
+						.append("</body>")
+						.append("</html>");
+
+				FileUtil fileWrite = new FileUtil();
+				fileWrite.writeDataToFile(data, fileName, CompareController.reportOutputFolder);
+				CompareController.reportFileName = fileName;
+
+				convertSummaryReportHtmlFileToCsvFile(data, summaryReportCsvFileNameWithPath);
+			} else {
   				
   				logger.info("Either Source or Target DB connection is not established."); 
   			}
@@ -351,8 +367,14 @@ public class CompareService {
 
 		if (dto.getFilename() != null && dto.getFilename().trim().endsWith(".html")) {
 
-			data.append("<tr><td><b>Report</b></td><td>").append("<a href='").append(dto.getFilename())
+			data.append("<tr><td><b>Detailed Report</b></td><td>").append("<a href='").append(dto.getFilename())
 					.append("'>View Details</a></td></tr>");
+
+			String detailedReportCsvFileName= getDetailedReportCsvFileName(appProperties.getSchemaName(),dto.getTableName());
+
+			data.append("<tr><td><b>Detailed Report In CSV</b></td><td>").append("<a href='").append(detailedReportCsvFileName)
+					.append("'>View Details in CSV File</a></td></tr>");
+
 		}
 
 		data.append("</table>")
@@ -360,9 +382,8 @@ public class CompareService {
 		.append("</tr>");
 
 		if (appProperties.getFilter() != null && !appProperties.getFilter().isEmpty()) {
-
-			data.append("<tr><td colspan='7'><b>").append(appProperties.getFilterType())
-					.append(" Filter Used</b>&nbsp;&nbsp;").append(appProperties.getFilter()).append("</td></tr>");
+			data.append("<tr><td ><b>").append(appProperties.getFilterType())
+					.append(" Filter Used</b></td><td colspan='6' >&nbsp;&nbsp;").append(appProperties.getFilter()).append("</td></tr>");
 		}
 	}
 	
@@ -924,9 +945,254 @@ public class CompareService {
  				bw.append("</tbody></table></body></html>");
  				FileUtil fileWrite = new FileUtil();
  				fileWrite.writeDataToFile(bw, fileName, CompareController.reportOutputFolder);
+
+				String detailedReportCsvFileNameWithPath= getDetailedReportCsvFileNameWithPath(schemaName,dto.getTableName(), CompareController.reportOutputFolder);
+				convertDetailedReportHtmlFileToCsvFile(bw,detailedReportCsvFileNameWithPath,displayCompleteData) ;
+
 			} catch (Exception e) {
 				logger.error(e.getMessage(), e);
 			}
+		}
+	}
+
+
+	/**
+	 * +
+	 *
+	 * @param schemaName
+	 * @param tableName
+	 * @return detailedReportCsvFileName
+	 */
+	private String getDetailedReportCsvFileName(String schemaName, String tableName) {
+
+		String detailedReportCsvFileName = "";
+		try {
+			StringBuilder detailedReportCsvFileNameSbr = new StringBuilder();
+			detailedReportCsvFileNameSbr.append(schemaName.toLowerCase());
+			detailedReportCsvFileNameSbr.append("_");
+			detailedReportCsvFileNameSbr.append(tableName.toLowerCase());
+			detailedReportCsvFileNameSbr.append("_table_comparison_result_");
+			detailedReportCsvFileNameSbr.append(new DateUtil().getAppendDateToFileName(new Date()));
+			detailedReportCsvFileNameSbr.append(".csv");
+
+			detailedReportCsvFileName = detailedReportCsvFileNameSbr.toString();
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+		}
+
+		return detailedReportCsvFileName;
+
+	}
+
+	/**
+	 * +
+	 *
+	 * @param schemaName
+	 * @param tableName
+	 * @param reportOutputFolder
+	 * @return detailedReportCsvFileNameWithPath
+	 */
+	private String getDetailedReportCsvFileNameWithPath(String schemaName, String tableName, String reportOutputFolder) {
+
+		String detailedReportCsvFileNameWithPath = "";
+		try {
+			StringBuilder detailedReportCsvFileName = new StringBuilder();
+			detailedReportCsvFileName.append(schemaName.toLowerCase());
+			detailedReportCsvFileName.append("_");
+			detailedReportCsvFileName.append(tableName.toLowerCase());
+			detailedReportCsvFileName.append("_table_comparison_result_");
+			detailedReportCsvFileName.append(new DateUtil().getAppendDateToFileName(new Date()));
+			detailedReportCsvFileName.append(".csv");
+			detailedReportCsvFileNameWithPath = detailedReportCsvFileName.toString();
+			if (null != reportOutputFolder && !reportOutputFolder.trim().isEmpty()) {
+				detailedReportCsvFileNameWithPath = reportOutputFolder + "/" + detailedReportCsvFileNameWithPath;
+			}
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+		}
+
+		return detailedReportCsvFileNameWithPath;
+	}
+
+	/**
+	 * +
+	 *
+	 * @param compareResultInHtmlFormat
+	 * @param detailedReportCsvFileNameWithPath
+	 * @param displayCompleteData
+	 */
+	public void convertDetailedReportHtmlFileToCsvFile(StringBuilder compareResultInHtmlFormat, String detailedReportCsvFileNameWithPath, boolean displayCompleteData) {
+		try {
+
+			FileWriter detailedReportCsvFileWriter = new FileWriter(detailedReportCsvFileNameWithPath);
+			Document htmlDocument = Jsoup.parseBodyFragment(compareResultInHtmlFormat.toString());
+
+			String docHeader = htmlDocument.getElementsByTag("th").toString();
+			if (docHeader.contains("REASON OF FAILURE") && docHeader.contains("SOURCE TUPLE") && docHeader.contains("TARGET TUPLE")) {
+
+				//add headers in csv
+				if (!htmlDocument.getElementsByTag("th").isEmpty()) {
+					Elements headers = htmlDocument.getElementsByTag("th");
+					for (Element header : headers) {
+						detailedReportCsvFileWriter.write("\"" + header.text() + "\",");
+					}
+					detailedReportCsvFileWriter.write("\n");
+				}
+
+				Elements rows = htmlDocument.getElementsByTag("tr");
+				for (Element row : rows) {
+
+					//add row data in csv
+					if (!row.getElementsByTag("td").isEmpty()) {
+
+						//add column0 data in row
+						Element column0 = row.getElementsByTag("td").get(0);
+						if (!column0.text().isEmpty()) {
+							detailedReportCsvFileWriter.write("\"" + column0.text() + "\"");
+						}
+
+						//add column1 data in row
+						Element column1 = row.getElementsByTag("td").get(1);
+						if (column1.text().isEmpty()) {
+							detailedReportCsvFileWriter.write("," + ",");
+						} else if (column1.text().contains("||")) {
+							String cellTextAsSingleRow = column1.text().replaceAll("\\s\\|\\|\\s", ",");
+							cellTextAsSingleRow = cellTextAsSingleRow.replaceAll("\\|\\|", "");
+							if (cellTextAsSingleRow.contains(" , , , ")) {
+								String cellTextAsNewRow = cellTextAsSingleRow.replaceAll("\\s\\,\\s\\,\\s\\,\\s", "\",\n,\"");
+								detailedReportCsvFileWriter.write("," + "\"" + cellTextAsNewRow + "\"" + ",");
+							} else {
+								detailedReportCsvFileWriter.write("," + "\"" + cellTextAsSingleRow + "\"" + ",");
+							}
+
+						} else {
+							detailedReportCsvFileWriter.write("," + "\"" + column1.text() + "\"" + ",");
+						}
+
+						//add column2 data in row
+						Element column2 = row.getElementsByTag("td").get(2);
+						if (column2.text().isEmpty()) {
+							detailedReportCsvFileWriter.write(",");
+						} else if (column2.text().contains("||")) {
+							String cellTextAsSingleRow = column2.text().replaceAll("\\s\\|\\|\\s", ",");
+							cellTextAsSingleRow = cellTextAsSingleRow.replaceAll("\\|\\|", "");
+							if (cellTextAsSingleRow.contains(" , , , ")) {
+								String cellTextAsNewRow = cellTextAsSingleRow.replaceAll("\\s\\,\\s\\,\\s\\,\\s", "\",\n,\"");
+								detailedReportCsvFileWriter.write("\"" + cellTextAsNewRow + "\"" + ",");
+							} else {
+								detailedReportCsvFileWriter.write("\"" + cellTextAsSingleRow + "\"" + ",");
+							}
+						} else {
+
+							detailedReportCsvFileWriter.write("\"" + column2.text() + "\"" + ",");
+						}
+
+					}
+					detailedReportCsvFileWriter.write("\n");
+				}
+			} else {
+
+				//add headers in csv
+				if (!htmlDocument.getElementsByTag("th").isEmpty()) {
+					Elements headers = htmlDocument.getElementsByTag("th");
+					for (Element header : headers) {
+						detailedReportCsvFileWriter.write("\"" + header.text() + "\",");
+					}
+					detailedReportCsvFileWriter.write("\n");
+				}
+
+				Elements rows = htmlDocument.getElementsByTag("tr");
+				for (Element row : rows) {
+					//add row data in csv
+					Elements columns = row.getElementsByTag("td");
+					for (Element column : columns) {
+						String columnText = column.text();
+						if (columnText.contains("||")) {
+							if (columnText.contains(" || || || ")) {
+								String columnTextAsMultiRow = columnText.replaceAll("\\s\\|\\|\\s\\|\\|\\s\\|\\|\\s", " \",\n,\" ");
+								columnTextAsMultiRow = columnTextAsMultiRow.replaceAll("\\s\\|\\|\\s", ",");
+								columnTextAsMultiRow = columnTextAsMultiRow.replaceAll("\\|\\|", "");
+								detailedReportCsvFileWriter.write("\"" + columnTextAsMultiRow + "\"");
+							} else if (displayCompleteData) {
+								String columnTextAsSingleRow = columnText.replaceAll("\\s\\|\\|\\s", ",");
+								columnTextAsSingleRow = columnTextAsSingleRow.replaceAll("\\|\\|", "");
+								detailedReportCsvFileWriter.write("\"" + columnTextAsSingleRow + "\"");
+							} else if (!displayCompleteData) {
+								String columnTextAsMultiRow = columnText.replaceAll("\\s\\|\\|\\s", "\",\n,\"");
+								columnTextAsMultiRow = columnTextAsMultiRow.replaceAll("\\|\\|", "");
+								detailedReportCsvFileWriter.write("\"" + columnTextAsMultiRow + "\"");
+							} else {
+								detailedReportCsvFileWriter.write("\"" + columnText + "\"");
+							}
+						} else if (columnText.isEmpty()) {
+							detailedReportCsvFileWriter.write(columnText.concat(","));
+						} else {
+							detailedReportCsvFileWriter.write("\"" + columnText + "\",");
+						}
+					}
+					detailedReportCsvFileWriter.write("\n");
+				}
+			}
+			detailedReportCsvFileWriter.close();
+			logger.info(detailedReportCsvFileNameWithPath + " written successfully");
+		} catch (Exception e) {
+			logger.error("Error while creating detailed report csv file");
+			logger.error(e.getMessage(), e);
+		}
+	}
+
+	/**
+	 * +
+	 *
+	 * @param appendDateToFileNames
+	 * @param jobName
+	 * @param reportOutputFolder
+	 * @return summaryReportCsvFileNameWithPath
+	 */
+	private String getSummaryReportCsvFileNameWithPath(String appendDateToFileNames, String jobName, String reportOutputFolder) {
+		String summaryReportCsvFileName = jobName + "_" + appendDateToFileNames + ".csv";
+		String summaryReportCsvFileNameWithPath = summaryReportCsvFileName;
+		if (null != reportOutputFolder && !reportOutputFolder.trim().isEmpty()) {
+			summaryReportCsvFileNameWithPath = reportOutputFolder + "/" + summaryReportCsvFileName;
+		}
+		return summaryReportCsvFileNameWithPath;
+	}
+
+	/**
+	 * +
+	 *
+	 * @param compareResultInHtmlFormat
+	 * @param summaryReportCsvFileNameWithPath
+	 */
+	public void convertSummaryReportHtmlFileToCsvFile(StringBuilder compareResultInHtmlFormat, String summaryReportCsvFileNameWithPath) {
+		try {
+			FileWriter summaryReportCsvFileWriter = new FileWriter(summaryReportCsvFileNameWithPath);
+			Document htmlDocument = Jsoup.parseBodyFragment(compareResultInHtmlFormat.toString());
+			Elements rows = htmlDocument.getElementsByTag("tr");
+
+			for (Element row : rows) {
+
+				//if (row.getElementsByTag("table").isEmpty()) {
+				//if (row.toString().contains("Detailed Report") || row.toString().contains("Summary Report")) {
+
+				if (!row.getElementsByTag("table").isEmpty() || row.toString().contains("Detailed Report") || row.toString().contains("Summary Report")) {
+					continue;
+				}
+				Elements columns = row.getElementsByTag("td");
+				for (Element column : columns) {
+					summaryReportCsvFileWriter.write(column.text().concat(", "));
+				}
+				summaryReportCsvFileWriter.write("\n");
+				//}
+				if (!row.getElementsContainingText("Sql Filter Used").isEmpty()) {
+					summaryReportCsvFileWriter.write("\n");
+				}
+			}
+			summaryReportCsvFileWriter.close();
+			logger.info(summaryReportCsvFileNameWithPath + " written successfully");
+		} catch (Exception e) {
+			logger.error("Error while creating summary report csv file");
+			logger.error(e.getMessage(), e);
 		}
 	}
 	
@@ -1046,6 +1312,7 @@ public class CompareService {
 			if (!displayCompleteData) {
 
 				bw.append("<tr><td style='vertical-align: top;'><b>Rows did not migrated from Source</b></td><td>");
+				bw.append(" || ");
 			}
 
 			for (final String key : mismatchSourceData.keySet()) {
@@ -1090,6 +1357,7 @@ public class CompareService {
 			if (!displayCompleteData) {
 
 				bw.append("<tr><td style='vertical-align: top;'><b>Additional Rows found in Target</b></td><td>");
+				bw.append(" || ");
 			}
 
 			for (final String key : mismatchTargetData.keySet()) {

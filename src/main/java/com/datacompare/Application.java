@@ -48,7 +48,6 @@ public class Application implements ApplicationRunner {
 		System.setProperty("logtimestamp", timeStampStr);
     	SpringApplication app = new SpringApplication(Application.class);
     	        app.run(args);
-    	SpringApplication.run(Application.class, args);
     }
  
     @Override

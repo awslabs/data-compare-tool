@@ -206,7 +206,7 @@ public class CompareData implements Runnable {
 		info.append("Finished analyzing chunkNo ");
 		info.append(chunkNo+1);
 		info.append(" out of ");
-		info.append(numberOfChunks);
+		info.append(numberOfChunks+2);
 		info.append(" chunks");
 		info.append("\n----------------------------------------------------------");
 		
