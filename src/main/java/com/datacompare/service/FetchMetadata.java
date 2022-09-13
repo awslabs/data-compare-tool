@@ -30,6 +30,7 @@ import com.datacompare.model.AppProperties;
 import com.datacompare.model.DatabaseInfo;
 import com.datacompare.model.TableColumnMetadata;
 import com.datacompare.util.JdbcUtil;
+import com.ds.DataSource;
 
 public class FetchMetadata {
 
@@ -63,6 +64,8 @@ public class FetchMetadata {
 	private String sql = null;
 
 	private Map<String, TableColumnMetadata> tableMetadataMap = new LinkedHashMap<String, TableColumnMetadata>();
+	
+	boolean isSourceDB=false;
 
 	/**
 	 * Function reading the table meta data checking the each columns value
@@ -80,26 +83,30 @@ public class FetchMetadata {
 	 * @param appProperties
 	 * @throws Exception
 	 */
-	public FetchMetadata(String dbType, String sourceDBType, Connection connection, String schemaName, String tableName,
+	public FetchMetadata(String dbType, String sourceDBType, /*Connection connection,boolean isSourceDB,*/ String schemaName, String tableName,
 			long rowCount, String sourceSortKey, String sourcePrimaryKey, boolean sourceHasNoUniqueKey,
 			Map<String, TableColumnMetadata> sourceTableMetadataMap, List<String> columnList,
 			AppProperties appProperties, boolean isSurceDB,long additionalrows) throws Exception {
 		
 		if (!EnumUtils.isValidEnum(DatabaseInfo.dbType.class, dbType)) throw new Exception(dbType + " not supported.");
-		
+		this.isSourceDB=isSurceDB;
 		if("Detail".equals(appProperties.getReportType())) {
 			
-			fetchDetailData(dbType, sourceDBType, connection, schemaName, tableName, rowCount, sourceSortKey,
+			fetchDetailData(dbType, sourceDBType, /*connection,*/ schemaName, tableName, rowCount, sourceSortKey,
 					sourcePrimaryKey, sourceHasNoUniqueKey, sourceTableMetadataMap, columnList, appProperties,additionalrows);
 			
 		} else if("Basic".equals(appProperties.getReportType())) {
 			
-			fetchBasicData(connection, schemaName, tableName, appProperties,isSurceDB);
+			fetchBasicData(/*connection,*/ schemaName, tableName, appProperties,isSurceDB);
 		}
 	}
 
 	public FetchMetadata() {
 
+	}
+	
+	public FetchMetadata(boolean isSourceDB) {
+		this.isSourceDB=isSourceDB;
 	}
 
 	/**
@@ -118,7 +125,7 @@ public class FetchMetadata {
 	 * @param appProperties
 	 * @throws Exception
 	 */
-	private void fetchDetailData(String dbType, String sourceDBType, Connection connection, String schemaName,
+	private void fetchDetailData(String dbType, String sourceDBType, /*Connection connection,*/ String schemaName,
 			String tableName, long rowCount, String sourceSortKey, String sourcePrimaryKey, boolean sourceHasNoUniqueKey,
 			Map<String, TableColumnMetadata> sourceTableMetadataMap, List<String> columnList,
 			AppProperties appProperties, long additionalrows) throws Exception {
@@ -134,10 +141,10 @@ public class FetchMetadata {
 
 		Map<Integer, String> primaryKeyMap = new TreeMap<Integer, String>();
 
-		fetchTableColumns(sourceDBType, connection, schemaName, tableName, columnList, appProperties.isIgnoreColumns()); 
-		fetchPrimaryColumns(connection, schemaName, tableName, primaryKeyMap, sourceSortKey, sourcePrimaryKey,
+		fetchTableColumns(sourceDBType, /*connection,*/ schemaName, tableName, columnList, appProperties.isIgnoreColumns()); 
+		fetchPrimaryColumns(/*connection,*/ schemaName, tableName, primaryKeyMap, sourceSortKey, sourcePrimaryKey,
 				sourceHasNoUniqueKey, sortKey, primaryKey, uniqueKeyCol,appProperties);
-		prepareQuery(connection, schemaName, tableName, sortKey.toString(), primaryKey.toString(),
+		prepareQuery(/*connection,*/ schemaName, tableName, sortKey.toString(), primaryKey.toString(),
 				uniqueKeyCol.toString(), appProperties.getFilter(), appProperties.getFilterType(), rowCount, sourceTableMetadataMap, additionalrows,appProperties);
 	}
 	
@@ -149,10 +156,10 @@ public class FetchMetadata {
 	 * @param appProperties
 	 * @throws SQLException
 	 */
-	private void fetchBasicData(Connection connection, String schemaName, String tableName,
+	private void fetchBasicData(/*Connection connection,*/ String schemaName, String tableName,
 			AppProperties appProperties,boolean isSourceDb) throws SQLException {
 		
-		Long totalRecords = getTotalRecords(connection, schemaName, tableName, appProperties.getFilter()); 
+		Long totalRecords = getTotalRecords(/*connection,*/ schemaName, tableName, appProperties.getFilter()); 
 
 		if(isSourceDb)
 		setSourceRowCount(totalRecords);
@@ -174,7 +181,7 @@ public class FetchMetadata {
 	 * @param sourceTableMetadataMap
 	 * @throws SQLException
 	 */
-	private void prepareQuery(Connection connection, String schemaName, String tableName, String sortKey,
+	private void prepareQuery(/*Connection connection,*/ String schemaName, String tableName, String sortKey,
 			String primaryKey, String uniqueKeyCol, String filter, String filterType, long rowCount,
 			Map<String, TableColumnMetadata> sourceTableMetadataMap, long additionalrows, AppProperties appProperties) throws SQLException {
 		
@@ -201,7 +208,7 @@ public class FetchMetadata {
 				query = "SELECT t2.* FROM (" + subQuery + ") t2";
 			}
 			
-			generateChunksPostgresql(connection, schemaName, tableName, filter);
+			generateChunksPostgresql(/*connection,*/ schemaName, tableName, filter);
 			break;
 
 		case "ORACLE":
@@ -216,7 +223,7 @@ public class FetchMetadata {
 				
 				query = "SELECT * FROM (" + subQuery +  ")";
 			}
-			generateSourceChunks(connection, schemaName, tableName, sortKey, primaryKey, filter, filterType, sortCols,rowCount,additionalrows,appProperties);
+			generateSourceChunks(/*connection,*/ schemaName, tableName, sortKey, primaryKey, filter, filterType, sortCols,rowCount,additionalrows,appProperties);
 			break;
 
 		case "SQLSERVER":
@@ -229,7 +236,7 @@ public class FetchMetadata {
 				String subQuery = "SELECT " + uniqueKeyCol + cols + " FROM (" + "SELECT " +  cols + " FROM " + schemaName + "." + tableName + ") t1";
 				query = "SELECT t2.* FROM (" + subQuery + " order by " + sortCols + ") t2";
 			}
-			generateSourceChunks(connection, schemaName, tableName, sortKey, primaryKey, filter, filterType, sortCols,rowCount,additionalrows,appProperties);
+			generateSourceChunks(/*connection,*/ schemaName, tableName, sortKey, primaryKey, filter, filterType, sortCols,rowCount,additionalrows,appProperties);
 			break;
 		}
 		
@@ -327,15 +334,15 @@ public class FetchMetadata {
 	 * @param uniqueKeyCol
 	 * @throws Exception
 	 */
-	private void fetchPrimaryColumns(Connection connection, String schemaName, String tableName,
+	private void fetchPrimaryColumns(/*Connection connection,*/ String schemaName, String tableName,
 			Map<Integer, String> primaryKeyMap, String sourceSortKey, String sourcePrimaryKey, boolean sourceHasNoUniqueKey, StringBuilder sortKey,
 			StringBuilder primaryKey, StringBuilder uniqueKeyCol,AppProperties appProperties) throws Exception {
 		if (!sourceHasNoUniqueKey) {
 
 			ResultSet rs = null;
-
+			Connection connection=null;
 			try {
-
+				connection=isSourceDB?DataSource.getInstance().getSourceDBConnection():DataSource.getInstance().getTargetDBConnection();
 				rs = connection.getMetaData().getPrimaryKeys(null, schemaName, tableName);
 
 				while (rs.next()) {
@@ -366,6 +373,7 @@ public class FetchMetadata {
 			} finally {
 
 				new JdbcUtil().closeResultSet(rs);
+				JdbcUtil.closeConnection(connection);
 			}
 		}
 		if (sortKey.toString().isEmpty()) {
@@ -449,7 +457,7 @@ public class FetchMetadata {
 		return id;
 }
 
-	public String convertDateToTimeStamp(String colName) {
+	private String convertDateToTimeStamp(String colName) {
 
 		String colNameTmp = colName;
 		if (colNameTmp != null) {
@@ -473,13 +481,14 @@ public class FetchMetadata {
 	 * @param tableName
 	 * @param columnList
 	 */
-	private void fetchTableColumns(String sourceDBType, Connection connection, String schemaName,
+	private void fetchTableColumns(String sourceDBType, /*Connection connection,*/ String schemaName,
 			String tableName, List<String> columnList, boolean ignoreColumns) {
 		
+		Connection connection=null;
 		ResultSet rs = null;
 		
 		try {
-
+			connection=isSourceDB?DataSource.getInstance().getSourceDBConnection():DataSource.getInstance().getTargetDBConnection();
 			rs = connection.getMetaData().getColumns(null, schemaName, tableName, null);
 			rs.setFetchSize(getFetchSize());
 
@@ -599,6 +608,7 @@ public class FetchMetadata {
 		} finally {
 
 			new JdbcUtil().closeResultSet(rs);
+			JdbcUtil.closeConnection(connection);
 		}
 	}
 	
@@ -614,16 +624,16 @@ public class FetchMetadata {
 	 * @param cols
 	 * @throws SQLException
 	 */
-	private void generateSourceChunks(Connection connection, String schemaName, String tableName, String sortKey,
+	private void generateSourceChunks(/*Connection connection,*/ String schemaName, String tableName, String sortKey,
 			String primaryKey, String filter, String filterType, String cols,long rowCount,long additionalRows,AppProperties appProperties) throws SQLException {
 
 		//logger.info("Started preparing chunks");
 
 		chunks.clear();
-
+		
 		String suppliedPKey=getSuppliedPrimaryKey(appProperties,tableName);
 		String pKey = getIdFromPrimaryKey(suppliedPKey);
-		Long totalRecords = getTotalRecords(connection, schemaName, tableName, filter); 
+		Long totalRecords = getTotalRecords(/*connection,*/ schemaName, tableName, filter); 
 
 		setSourceRowCount(totalRecords);
 
@@ -669,6 +679,7 @@ public class FetchMetadata {
 		}
 		
 		logger.info("Fetch Chunks SQL Query: " + sql.toString());
+		Connection connection=isSourceDB?DataSource.getInstance().getSourceDBConnection():DataSource.getInstance().getTargetDBConnection();
 		Statement stmt = connection.createStatement();
 		ResultSet rs = stmt.executeQuery(sql.toString());
         int count=0;
@@ -757,6 +768,7 @@ public class FetchMetadata {
 		
 		jdbcUtil.closeResultSet(rs);
 		jdbcUtil.closeStatement(stmt); 
+		JdbcUtil.closeConnection(connection);
 
 		logger.info("Completed preparing chunks "+totalRecords);
 	}
@@ -774,14 +786,14 @@ public class FetchMetadata {
 	 * @param cols
 	 * @throws SQLException
 	 */
-	private void generateTargetChunks(Connection connection, String schemaName, String tableName, String sortKey,
+	private void generateTargetChunks(/*Connection connection,*/ String schemaName, String tableName, String sortKey,
 									  String primaryKey, String filter, String filterType, String cols,long rowCount) throws SQLException {
 
 		logger.info("Started preparing chunks");
 
 		chunks.clear();
 
-		Long totalRecords = getTotalRecords(connection, schemaName, tableName, filter);
+		Long totalRecords = getTotalRecords(/*connection,*/ schemaName, tableName, filter);
 
 		setSourceRowCount(totalRecords);
 
@@ -820,7 +832,8 @@ public class FetchMetadata {
 		}
 
 		logger.info("Fetch Chunks SQL Query: " + sql.toString());
-
+		
+		Connection connection=isSourceDB?DataSource.getInstance().getSourceDBConnection():DataSource.getInstance().getTargetDBConnection();
 		Statement stmt = connection.createStatement();
 
 		ResultSet rs = stmt.executeQuery(sql.toString());
@@ -900,6 +913,7 @@ public class FetchMetadata {
 
 		jdbcUtil.closeResultSet(rs);
 		jdbcUtil.closeStatement(stmt);
+		JdbcUtil.closeConnection(connection);
 
 		logger.info("Completed preparing chunks"+totalRecords);
 	}
@@ -912,13 +926,13 @@ public class FetchMetadata {
 	 * @return
 	 * @throws SQLException
 	 */
-	public Long getTotalRecords(Connection connection, String schemaName, String tableName,
+	public Long getTotalRecords(/*Connection connection,*/ String schemaName, String tableName,
 			String filter) throws SQLException {
 		
 		Long totalRecords = Long.valueOf(0); 
 
 		StringBuilder sql = new StringBuilder();
-
+		Connection connection=isSourceDB?DataSource.getInstance().getSourceDBConnection():DataSource.getInstance().getTargetDBConnection();
 
 		sql.append("SELECT count(*) as totalrec FROM ").append(schemaName).append(".").append(tableName);
 		
@@ -939,7 +953,7 @@ public class FetchMetadata {
 		
 		jdbcUtil.closeResultSet(rs);
 		jdbcUtil.closeStatement(stmt); 
-		
+		JdbcUtil.closeConnection(connection);
 		
 		return totalRecords;
 	}
@@ -952,14 +966,14 @@ public class FetchMetadata {
 	 * @param filter
 	 * @throws SQLException
 	 */
-	private void generateChunksPostgresql(Connection connection, String schemaName, String tableName,
+	private void generateChunksPostgresql(/*Connection connection,*/ String schemaName, String tableName,
 			String filter) throws SQLException {
 
 		logger.info("Started preparing chunks for Postgresql");
 
 		chunks.clear();
 
-		Long totalRecords = getTotalRecords(connection, schemaName, tableName, filter);
+		Long totalRecords = getTotalRecords(/*connection,*/ schemaName, tableName, filter);
 
 	/*	if (rowCount == 0) {
 

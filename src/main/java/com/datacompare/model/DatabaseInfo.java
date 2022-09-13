@@ -28,7 +28,9 @@ public class DatabaseInfo {
 	private final boolean   sslRequire;
 	private final String	trustStorePath;
 	private final String	trsutStorePassword;
-
+    
+	private int connectionPoolMinSize;
+	private int connectionPoolMaxSize;
 	
 	/**
 	 * 
@@ -114,6 +116,24 @@ public class DatabaseInfo {
 	public String getTrsutStorePassword() {
 		return trsutStorePassword;
 	}
+	
+	
+	public int getConnectionPoolMinSize() {
+		return connectionPoolMinSize;
+	}
+
+	public void setConnectionPoolMinSize(int connectionPoolMinSize) {
+		this.connectionPoolMinSize = connectionPoolMinSize;
+	}
+
+	public int getConnectionPoolMaxSize() {
+		return connectionPoolMaxSize;
+	}
+
+	public void setConnectionPoolMaxSize(int connectionPoolMaxSize) {
+		this.connectionPoolMaxSize = connectionPoolMaxSize;
+	}
+
 	/**
 	 * 
 	 * @return
