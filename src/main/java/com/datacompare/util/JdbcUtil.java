@@ -39,7 +39,7 @@ public class JdbcUtil {
 	 * 
 	 * @param connection
 	 */
-	public void closeConnection(Connection connection) {
+	public static void closeConnection(Connection connection) {
 		
 		if (connection != null) {
 			

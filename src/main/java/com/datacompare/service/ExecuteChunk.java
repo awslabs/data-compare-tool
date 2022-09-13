@@ -34,7 +34,7 @@ public class ExecuteChunk implements Runnable {
 	private int numberOfChunks;
 	private String result;
 	private String sourceChunk;
-	private Connection sourceConnection = null;
+	//private Connection sourceConnection = null;
 
 	private String sourceDBType;
 	private String sourceSql;
@@ -43,7 +43,7 @@ public class ExecuteChunk implements Runnable {
 	private Map<String, TableColumnMetadata> targetTableMetadata = null;
 	private String targetChunk;
 
-	private Connection targetConnection = null;
+	//private Connection targetConnection = null;
 
 	private String targetDBType;
 	private String targetSql;
@@ -87,8 +87,8 @@ public class ExecuteChunk implements Runnable {
 	 * @param appProperties
 	 */
 	public ExecuteChunk(String sourceDBType, String targetDBType, String sourceChunk, String targetChunk,
-			String sourceSql, String targetSql, int chunkNo, int numberOfChunks, Connection sourceConnection,
-			Connection targetConnection, Map<String, TableColumnMetadata> sourceTableMetadata,
+			String sourceSql, String targetSql, int chunkNo, int numberOfChunks, /*Connection sourceConnection,
+			Connection targetConnection,*/ Map<String, TableColumnMetadata> sourceTableMetadata,
 			Map<String, TableColumnMetadata> targetTableMetadata, AppProperties appProperties,boolean hasProvidedUniqueKey) {
 
 		setSourceDBType(sourceDBType);
@@ -100,8 +100,8 @@ public class ExecuteChunk implements Runnable {
 		setAppProperties(appProperties);
 		setChunkNo(chunkNo);
 		setNumberOfChunks(numberOfChunks);
-		setSourceConnection(sourceConnection);
-		setTargetConnection(targetConnection);
+		//setSourceConnection(sourceConnection);
+		//setTargetConnection(targetConnection);
 		setSourceTableMetadata(sourceTableMetadata);
 		setTargetTableMetadata(targetTableMetadata);
 		setHasProvidedUniqueKey(hasProvidedUniqueKey);
@@ -165,9 +165,9 @@ public class ExecuteChunk implements Runnable {
 	/**
 	 * @return the sourceConnection
 	 */
-	public Connection getSourceConnection() {
+	/*public Connection getSourceConnection() {
 		return sourceConnection;
-	}
+	}*/
 
 	/**
 	 * @return the sourceDBType
@@ -207,9 +207,9 @@ public class ExecuteChunk implements Runnable {
 	/**
 	 * @return the targetConnection
 	 */
-	public Connection getTargetConnection() {
+	/*public Connection getTargetConnection() {
 		return targetConnection;
-	}
+	}*/
 
 	/**
 	 * @return the targetDBType
@@ -263,9 +263,9 @@ public class ExecuteChunk implements Runnable {
 	/**
 	 * @param sourceConnection the sourceConnection to set
 	 */
-	public void setSourceConnection(Connection sourceConnection) {
+	/*public void setSourceConnection(Connection sourceConnection) {
 		this.sourceConnection = sourceConnection;
-	}
+	}*/
 
 	/**
 	 * @param sourceDBType the sourceDBType to set
@@ -305,9 +305,9 @@ public class ExecuteChunk implements Runnable {
 	/**
 	 * @param targetConnection the targetConnection to set
 	 */
-	public void setTargetConnection(Connection targetConnection) {
+	/*public void setTargetConnection(Connection targetConnection) {
 		this.targetConnection = targetConnection;
-	}
+	}*/
 
 	/**
 	 * @param targetDBType the targetDBType to set
@@ -438,10 +438,10 @@ public class ExecuteChunk implements Runnable {
 			
 			Thread.currentThread().setName("Executing Chunk No " + getChunkNo()+1);
 			FetchData fetchSourceData = new FetchData(getSourceDBType(), null, getSourceSql(), getSourceChunk(),
-					getSourceConnection(), getSourceTableMetadata(), null, getAppProperties(),getChunkNo());
+					/*getSourceConnection(),*/ true, getSourceTableMetadata(), null, getAppProperties(),getChunkNo());
 			fetchSourceData.setTimeTaken(getSourceTimeTaken());
 			FetchData fetchTargetData = new FetchData(getTargetDBType(), getSourceDBType(), getTargetSql(),
-					getTargetChunk(), getTargetConnection(), getTargetTableMetadata(), getSourceTableMetadata(),
+					getTargetChunk(), /*getTargetConnection(),*/ false, getTargetTableMetadata(), getSourceTableMetadata(),
 					getAppProperties(),getChunkNo());
 			fetchTargetData.setTimeTaken(getTargetTimeTaken());
 			ExecutorService executor = Executors.newFixedThreadPool(2);

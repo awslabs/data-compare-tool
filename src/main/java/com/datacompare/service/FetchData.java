@@ -16,6 +16,8 @@ import com.datacompare.model.TableColumnMetadata;
 import com.datacompare.util.DateUtil;
 import com.datacompare.util.JdbcUtil;
 import com.datacompare.util.MemoryUtil;
+import com.ds.DataSource;
+
 import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.postgresql.largeobject.LargeObject;
@@ -60,6 +62,7 @@ public class FetchData implements Runnable {
     private int chunkNum;
     private long rowCount;
     private boolean compareOnlyDate;
+    private boolean isSourceDB;
 
     public String getPrimaryKeys() {
         return primaryKeys;
@@ -88,14 +91,16 @@ public class FetchData implements Runnable {
      * @param appProperties
      * @throws Exception
      */
-    public FetchData(String dbType, String sourceDBType, String sql, String chunk, Connection connection,
+    public FetchData(String dbType, String sourceDBType, String sql, String chunk, /*Connection connection,*/ boolean isSourceDB,
                      Map<String, TableColumnMetadata> tableMetadata, Map<String, TableColumnMetadata> sourceTableMetadata,
                      AppProperties appProperties,int chunkNum) throws Exception {
 
         if (!EnumUtils.isValidEnum(DatabaseInfo.dbType.class, dbType))
             throw new Exception(dbType + " not supported.");
-
-        setConnection(connection);
+       
+        this.isSourceDB=isSourceDB;
+        //setConnection(connection);
+        
         setDbType(dbType);
         setSourceDBType(sourceDBType);
         setSql(sql);
@@ -130,13 +135,14 @@ public class FetchData implements Runnable {
 
         Statement stmt = null;
         ResultSet rs = null;
-
+        Connection con=null;
         try {
-
+            con=isSourceDB?DataSource.getInstance().getSourceDBConnection():DataSource.getInstance().getTargetDBConnection();
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
             SimpleDateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             getHashMap().clear();
-            stmt = getConnection().createStatement();
+            //stmt = getConnection().createStatement();
+            stmt = con.createStatement();
             long start = System.currentTimeMillis();
             long keySize = 0;
             long valSize = 0;
@@ -477,6 +483,7 @@ public class FetchData implements Runnable {
 
             jdbcUtil.closeResultSet(rs);
             jdbcUtil.closeStatement(stmt);
+            JdbcUtil.closeConnection(con);
             //logger.info("Statement execution completed"+chunk );
         }
     }

@@ -46,13 +46,13 @@ public class Application implements ApplicationRunner {
 		Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 		String timeStampStr=timestamp.toString();
 		System.setProperty("logtimestamp", timeStampStr);
-    	SpringApplication app = new SpringApplication(Application.class);
+		SpringApplication app = new SpringApplication(Application.class);
     	        app.run(args);
     }
  
     @Override
     public void run(ApplicationArguments args) throws Exception {
-    	
+    	long startTime=System.currentTimeMillis();
     	logger.debug("Command-line arguments: {}", Arrays.toString(args.getSourceArgs()));
         logger.debug("Non Option Args: {}", args.getNonOptionArgs());
         logger.info("Option Names: {}", args.getOptionNames());
@@ -84,6 +84,14 @@ public class Application implements ApplicationRunner {
 				appProperties.setSrcDBSecretName(arguments.get("srcDBSecretName"));
 				appProperties.setTgtDBSecretManagerEndPoint(arguments.get("tgtDBSecretMgrEndPoint"));
 				appProperties.setTgtDBSecretName(arguments.get("tgtDBSecretName"));
+				
+				if(!StringUtils.isEmpty(arguments.get("connectionPoolMaxSize"))) {
+					appProperties.setConnectionPoolMaxSize(Integer.parseInt(arguments.get("connectionPoolMaxSize")));
+				}
+				if(!StringUtils.isEmpty(arguments.get("connectionPoolMinSize"))) {
+					appProperties.setConnectionPoolMinSize(Integer.parseInt(arguments.get("connectionPoolMinSize")));
+				}
+				
 				logger.info("Properties: "+ appProperties);
         		if("All".equals(appProperties.getConnectionType())) {
         			setDatabaseProperties(arguments, appProperties);
@@ -106,7 +114,7 @@ public class Application implements ApplicationRunner {
 			} catch (Exception e) {
 				logger.error("Error", e);  
 			}
-        	
+        	logger.info("######Total Execution Time is####### "+(System.currentTimeMillis()-startTime));
         	//Exit the process normally.
         	System.exit(0); 
         }
