@@ -27,7 +27,10 @@ public class AppProperties {
 	private String tgtDBSecretManagerEndPoint;
 	private String tgtDBSecretName;
 	private String primaryKeys;
-
+	
+	private int connectionPoolMinSize;
+	private int connectionPoolMaxSize;
+	
 	public HashMap<String, String> getPrimaryKeyMap() {
 		return primaryKeyMap;
 	}
@@ -716,4 +719,22 @@ public class AppProperties {
 	public String getTgtDBSecretName() {
 		return tgtDBSecretName;
 	}
+
+	public int getConnectionPoolMinSize() {
+		return connectionPoolMinSize;
+	}
+
+	public void setConnectionPoolMinSize(int connectionPoolMinSize) {
+		this.connectionPoolMinSize = connectionPoolMinSize;
+	}
+
+	public int getConnectionPoolMaxSize() {
+		return connectionPoolMaxSize;
+	}
+
+	public void setConnectionPoolMaxSize(int connectionPoolMaxSize) {
+		this.connectionPoolMaxSize = connectionPoolMaxSize;
+	}
+	
+	
 }

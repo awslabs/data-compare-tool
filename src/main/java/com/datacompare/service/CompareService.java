@@ -32,41 +32,42 @@ import com.datacompare.model.DatabaseInfo.dbType;
 import com.datacompare.util.DateUtil;
 import com.datacompare.util.FileUtil;
 import com.datacompare.util.JdbcUtil;
+import com.ds.DataSource;
 
 public class CompareService {
 
 	public Logger logger = LoggerFactory.getLogger("CompareService");
 	
-	private Connection sourceConn = null;
-	private Connection targetConn = null;
+	//private Connection sourceConn = null;
+	//private Connection targetConn = null;
 	
 	/**
 	 * @return the sourceConn
 	 */
-	public Connection getSourceConn() {
+	/*public Connection getSourceConn() {
 		return sourceConn;
-	}
+	}*/
 
 	/**
 	 * @param sourceConn the sourceConn to set
 	 */
-	public void setSourceConn(Connection sourceConn) {
+	/*public void setSourceConn(Connection sourceConn) {
 		this.sourceConn = sourceConn;
-	}
+	}*/
 
 	/**
 	 * @return the targetConn
 	 */
-	public Connection getTargetConn() {
+	/*public Connection getTargetConn() {
 		return targetConn;
-	}
+	}*/
 
 	/**
 	 * @param targetConn the targetConn to set
 	 */
-	public void setTargetConn(Connection targetConn) {
+	/*public void setTargetConn(Connection targetConn) {
 		this.targetConn = targetConn;
-	}
+	}*/
 
 	/**
 	 * 
@@ -87,9 +88,8 @@ public class CompareService {
 			
 	  		setConnections(appProperties); 
   			
-  			if(getSourceConn() != null && getTargetConn() != null) { 
-  				
-  				long rowNo = 1;
+  			if(DataSource.getInstance().isPoolInitialized()) { 
+	  			long rowNo = 1;
   				Date date = new Date();
   				DateUtil dateUtil = new DateUtil();
   				String executionStartedAt = dateUtil.getExecutionDate(date);
@@ -110,7 +110,7 @@ public class CompareService {
   					
   					for (String tableName : tableNameParts) { 
 
-						CompareResult dto = compare(appProperties, getSourceConn(), getTargetConn(),
+						CompareResult dto = compare(appProperties, /*getSourceConn(), getTargetConn(),*/
 								appProperties.getSchemaName(), tableName, columnList);
 
 			  			String executedTableName = appProperties.getSchemaName() + "." + tableName;
@@ -124,7 +124,7 @@ public class CompareService {
   					
   					for (String schemaName : schemaParts) { 
   						
-						List<CompareResult> dtos = compareSchema(appProperties, getSourceConn(), getTargetConn(), schemaName, columnList);
+						List<CompareResult> dtos = compareSchema(appProperties, /*getSourceConn(), getTargetConn(),*/ schemaName, columnList);
 	  					
 	  					for (CompareResult dto : dtos) {
 							
@@ -164,8 +164,8 @@ public class CompareService {
 			
 	  		JdbcUtil jdbcUtil = new JdbcUtil();
 	  		
-	  		jdbcUtil.closeConnection(getSourceConn());
-	  		jdbcUtil.closeConnection(getTargetConn());
+	  		//jdbcUtil.closeConnection(getSourceConn());
+	  		//jdbcUtil.closeConnection(getTargetConn());
 		}
 	}
 
@@ -234,32 +234,62 @@ public class CompareService {
 					appProperties.getSourceDBName(), appProperties.getSourceDBService(),
 					appProperties.getSourceUserName(), appProperties.getSourceUserPassword(), appProperties.isSourceSSLRequire(),
 					dbType.valueOf(appProperties.getSourceDBType().toUpperCase()),false,appProperties.getTrustStorePath(),appProperties.getTrsutStorePassword());
+			sourceDb.setConnectionPoolMinSize(appProperties.getConnectionPoolMinSize());
+			sourceDb.setConnectionPoolMaxSize(appProperties.getConnectionPoolMaxSize());
 			
 			DatabaseInfo targetDb = new DatabaseInfo(appProperties.getTargetIP(), appProperties.getTargetPort(),
 					appProperties.getTargetDBName(), null, appProperties.getTargetUserName(),
 					appProperties.getTargetUserPassword(), appProperties.isTargetSSLRequire(), dbType.POSTGRESQL,
 					true, appProperties.getTrustStorePath(),  appProperties.getTrsutStorePassword());
+			targetDb.setConnectionPoolMinSize(appProperties.getConnectionPoolMinSize());
+			targetDb.setConnectionPoolMaxSize(appProperties.getConnectionPoolMaxSize());
 
-  			sourceConn = getConnection(sourceDb);
-  			logger.info("Source DB Connection Details: " + sourceConn);
+  			//sourceConn = getConnection(sourceDb);
+  			//logger.info("Source DB Connection Details: " + sourceConn);
   			
-  			targetConn = getConnection(targetDb);
-  			logger.info("Target DB Connection Details: " + targetConn);
+  			//targetConn = getConnection(targetDb);
+  			//logger.info("Target DB Connection Details: " + targetConn);
+  			
+  			//try the pool start
+			DataSource.getInstance().initializePool(sourceDb, targetDb);
+	  		/*Connection ssscon=DataSource.getInstance().getSourceDBConnection();
+	  		logger.info("Successfully Retrieved a connection " + ssscon);
+	  		Connection ssscon2=DataSource.getInstance().getSourceDBConnection();
+	  		logger.info("Successfully Retrieved a connection2 " + ssscon2);
+	  		Connection ssscon3=DataSource.getInstance().getSourceDBConnection();
+	  		logger.info("Successfully Retrieved a connection3 " + ssscon3);
+	  		Connection ssscon4=DataSource.getInstance().getSourceDBConnection();
+	  		logger.info("Successfully Retrieved a connection4 " + ssscon4);
+	  		
+	  		ssscon.close();
+	  		ssscon2.close();
+	  		ssscon3.close();
+	  		ssscon4.close();
+	  		logger.info("Successfully closed the connection and put it in pool");*/
+	  		//try the pool end
+	  		
   			
 		} else if("JDBC".equals(appProperties.getConnectionType())) {
 			
-			sourceConn = getConnection(appProperties.getSourceJdbcUrl(),
+			/*sourceConn = getConnection(appProperties.getSourceJdbcUrl(),
 					jdbcUtil.getDriverClass(appProperties.getSourceDBType().toUpperCase()),
 					appProperties.getSourceUserName(), appProperties.getSourceUserPassword());
   			logger.info("Source DB Connection Details: " + sourceConn);
   			
 			targetConn = getConnection(appProperties.getTargetJdbcUrl(), jdbcUtil.getDriverClass("POSTGRESQL"),
-					appProperties.getTargetUserName(), appProperties.getTargetUserPassword());
+					appProperties.getTargetUserName(), appProperties.getTargetUserPassword());*/
+			
+			DataSource.getInstance().initializePool(appProperties.getSourceJdbcUrl(),
+					jdbcUtil.getDriverClass(appProperties.getSourceDBType().toUpperCase()),
+					appProperties.getSourceUserName(), appProperties.getSourceUserPassword(),
+					appProperties.getTargetJdbcUrl(), jdbcUtil.getDriverClass("POSTGRESQL"),
+					appProperties.getTargetUserName(), appProperties.getSourceUserPassword(),
+					appProperties.getConnectionPoolMinSize(), appProperties.getConnectionPoolMaxSize());
   			logger.info("Target DB Connection Details: " + targetConn);
 		}
 		
-		setSourceConn(sourceConn);
-		setTargetConn(targetConn); 
+		//setSourceConn(sourceConn);
+		//setTargetConn(targetConn); 
 	}
 	
 	/**
@@ -520,12 +550,12 @@ public class CompareService {
 	 * @param columnList
 	 * @return
 	 */
-	public CompareResult compare(AppProperties appProperties, Connection sourceConn, Connection targetConn,
+	public CompareResult compare(AppProperties appProperties, /*Connection sourceConn, Connection targetConn,*/
 			String schemaName, String tableName, List<String> columnList) {
 		if("Detail".equals(appProperties.getReportType())) {
-			return compareDetailData(appProperties, sourceConn, targetConn, schemaName, tableName, columnList);
+			return compareDetailData(appProperties, /*sourceConn, targetConn,*/ schemaName, tableName, columnList);
 		} else if("Basic".equals(appProperties.getReportType())) {
-			return compareBasicData(appProperties, sourceConn, targetConn, schemaName, tableName);
+			return compareBasicData(appProperties,/* sourceConn, targetConn,*/ schemaName, tableName);
 		}
 		return null;
 	}
@@ -540,7 +570,7 @@ public class CompareService {
 	 * @param columnList
 	 * @return
 	 */
-	private CompareResult compareDetailData(AppProperties appProperties, Connection sourceConn, Connection targetConn,
+	private CompareResult compareDetailData(AppProperties appProperties, /*Connection sourceConn, Connection targetConn,*/
 			String schemaName, String tableName, List<String> columnList) {
 		
 		String sourceDBType = appProperties.getSourceDBType().toUpperCase();
@@ -555,19 +585,19 @@ public class CompareService {
 
         long usedMemory = 0;
 		try {
-			checkIfTableExistsInPg(schemaName.toLowerCase(), tableName.toLowerCase(), "POSTGRESQL", targetConn);
+			checkIfTableExistsInPg(schemaName.toLowerCase(), tableName.toLowerCase(), "POSTGRESQL"/*, targetConn*/);
             long rowCount=0;
-			long sourceRowCount= new FetchMetadata().getTotalRecords(sourceConn,schemaName.toUpperCase(), tableName.toUpperCase(),null);
-			long targetRowCount= new FetchMetadata().getTotalRecords(targetConn,schemaName.toUpperCase(), tableName.toUpperCase(),null);
+			long sourceRowCount= new FetchMetadata(true).getTotalRecords(/*sourceConn,*/schemaName.toUpperCase(), tableName.toUpperCase(),null);
+			long targetRowCount= new FetchMetadata(false).getTotalRecords(/*targetConn,*/schemaName.toUpperCase(), tableName.toUpperCase(),null);
             if(sourceRowCount>targetRowCount)
                rowCount=sourceRowCount;
 			else {
 				rowCount = targetRowCount;
 				additionalrows = targetRowCount-sourceRowCount;
 			}
-			FetchMetadata fetchSourceMetadata = new FetchMetadata(sourceDBType, null, sourceConn,
+			FetchMetadata fetchSourceMetadata = new FetchMetadata(sourceDBType, null, /*sourceConn,true,*/
 					schemaName.toUpperCase(), tableName.toUpperCase(), rowCount, null, null, false, null, columnList, appProperties,true,additionalrows);
-			FetchMetadata fetchTargetMetadata = new FetchMetadata("POSTGRESQL", sourceDBType, targetConn,
+			FetchMetadata fetchTargetMetadata = new FetchMetadata("POSTGRESQL", sourceDBType, /*targetConn, false,*/
 					schemaName.toLowerCase(), tableName.toLowerCase(), rowCount,
 					fetchSourceMetadata.getSortKey(), fetchSourceMetadata.getPrimaryKey(),
 					fetchSourceMetadata.isHasNoUniqueKey(),
@@ -604,7 +634,7 @@ public class CompareService {
 						? getTargetChunkWhenNoUniqueKey(sourceChunks.get(i)) : sourceChunks.get(i);
 				ExecuteChunk executeChunk = new ExecuteChunk(sourceDBType, "POSTGRESQL", sourceChunks.get(i),
 						targetChunk, fetchSourceMetadata.getSql(), fetchTargetMetadata.getSql(), i, numChunks,
-						sourceConn, targetConn, fetchSourceMetadata.getTableMetadataMap(),
+						/*sourceConn, targetConn,*/ fetchSourceMetadata.getTableMetadataMap(),
 						fetchTargetMetadata.getTableMetadataMap(), appProperties,fetchSourceMetadata.isPrimeryKeySupplied(appProperties,tableName));
 				executeChunk.setSourceData(mismatchSourceData);
 				executeChunk.setTargetData(mismatchTargetData);
@@ -783,7 +813,7 @@ public class CompareService {
 	 * @param tableName
 	 * @return
 	 */
-	private CompareResult compareBasicData(AppProperties appProperties, Connection sourceConn, Connection targetConn,
+	private CompareResult compareBasicData(AppProperties appProperties, /*Connection sourceConn, Connection targetConn,*/
 			String schemaName, String tableName ){
 		String sourceDBType = appProperties.getSourceDBType().toUpperCase();
 		CompareResult result = new CompareResult();
@@ -793,10 +823,10 @@ public class CompareService {
        // Runtime runtime = Runtime.getRuntime();
         long usedMemory = 0;
 		try {
-			checkIfTableExistsInPg(schemaName.toLowerCase(), tableName.toLowerCase(), "POSTGRESQL", targetConn);
-			FetchMetadata fetchSourceMetadata = new FetchMetadata(sourceDBType, null, sourceConn,
+			checkIfTableExistsInPg(schemaName.toLowerCase(), tableName.toLowerCase(), "POSTGRESQL"/*, targetConn*/);
+			FetchMetadata fetchSourceMetadata = new FetchMetadata(sourceDBType, null, /*sourceConn, true,*/
 					schemaName.toUpperCase(), tableName.toUpperCase(), 0, null, null, false, null, null, appProperties,true,0);
-			FetchMetadata fetchTargetMetadata = new FetchMetadata("POSTGRESQL", null, targetConn,
+			FetchMetadata fetchTargetMetadata = new FetchMetadata("POSTGRESQL", null, /*targetConn, false,*/
 					schemaName.toLowerCase(), tableName.toLowerCase(), 0, null, null, false, null, null, appProperties,false,0);
 			info = new StringBuilder();
 			info.append("\n----------------------------------------------------\n");
@@ -840,12 +870,12 @@ public class CompareService {
 	 * @param conn
 	 * @throws Exception
 	 */
-	private void checkIfTableExistsInPg(String schemaName, String tableName, String dbType, Connection conn) throws Exception {
+	private void checkIfTableExistsInPg(String schemaName, String tableName, String dbType/*, Connection conn*/) throws Exception {
 		
 		ResultSet rs = null;
-		
+		Connection conn=null;
 		try {
-			
+			conn=DataSource.getInstance().getTargetDBConnection();
 			rs = conn.getMetaData().getTables(null, schemaName, tableName , null);
 			
 			if (!rs.next()) {
@@ -859,6 +889,7 @@ public class CompareService {
 		} finally {
 			
 			new JdbcUtil().closeResultSet(rs);
+			JdbcUtil.closeConnection(conn);
 		} 
 	}
 
@@ -1127,16 +1158,18 @@ public class CompareService {
 	 * @param columnList
 	 * @return
 	 */
-	public List<CompareResult> compareSchema(AppProperties appProperties, Connection sourceConn, Connection targetConn,
+	public List<CompareResult> compareSchema(AppProperties appProperties, /*Connection sourceConn, Connection targetConn,*/
 			String schemaName, List<String> columnList) {
 
 		List<CompareResult> tableList = new ArrayList<CompareResult>();
 		List<String> tableNames = new ArrayList<String>();
 
 		ResultSet rs = null;
-
+		Connection sourceConn=null;
+		
 		try {
-
+			sourceConn =DataSource.getInstance().getSourceDBConnection();
+			
 			List<String> ignoreTables = (appProperties.getTableName() != null && !appProperties.getTableName().isEmpty()
 					&& appProperties.isIgnoreTables()) ? Arrays.asList(appProperties.getTableName().split(","))
 					: new ArrayList<String>();
@@ -1160,6 +1193,7 @@ public class CompareService {
 		} finally {
 
 			new JdbcUtil().closeResultSet(rs);
+			JdbcUtil.closeConnection(sourceConn);
 		}
 
 	//	ExecutorService executor = Executors.newFixedThreadPool(10);
@@ -1184,7 +1218,7 @@ public class CompareService {
 			}
 			for (final String key : hashMap.keySet()) {
 				CompareResult dto = hashMap.get(key);*/
-				CompareResult dto = compare(appProperties, sourceConn, targetConn, schemaName, tableName, columnList);
+				CompareResult dto = compare(appProperties, /*sourceConn, targetConn,*/ schemaName, tableName, columnList);
 				//if (dto.getReason() == null && !(dto.getResult() != null && "Completed".equals(dto.getResult())) ) {
 					//dto.setTableName(tableName);
 				if (dto.getReason() == null && !(dto.getResult() != null && "Completed".equals(dto.getResult()))) {
