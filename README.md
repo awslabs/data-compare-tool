@@ -56,7 +56,7 @@ Tool can be executed in two ways:
 
 a) Command Line mode: Tool accepts arguments and stops the process once it completes the data validation.
 b) Web mode: It can be used n number of times by supplying the required inputs from GUI one after another validation.
- 
+
 ## Web Mode
 
 
@@ -83,8 +83,8 @@ Fields to understand after launching the application.
 -  Select the Source database either 'ORACLE' or 'SQLSERVER' target is 'PostgreSQL' only.
 -  Provide source database details like host name/ip, port, user name, password & select Service/SID and provide database name in case if source db is ORACLE, Database name in case if source db is SQLSERVER.
 -  Provide target database details like host name/ip, port, user name, password & Database name. Select SSL Mode if target database is secured using SSL.
--  Schema name(s) (single or comma separated) 
--  Table name(s) (single or comma separated) if there is single schema name then only table name(s) will be picked for comparison. 
+-  Schema name(s) (single or comma separated)
+-  Table name(s) (single or comma separated) if there is single schema name then only table name(s) will be picked for comparison.
 -  Ignore column(s)(single or comma separated) if these column(s) to be ignored from comparison. Present for data types like clob, blob & lob has no support for comparison.
 -  Provide DB chunk size, this value will be used to fetch that many no of rows from a single table. By default the value is 10000, max value is 1000000.
 -  Provide Parallel chunks, this value will be used to execute this many no of chunks in parallel from a single table. By default the value is 1, max value is 10.
@@ -158,7 +158,7 @@ Required arguments:
 --sourceDBName | --targetDBName : Database name to be used to connect. SID/Service name in case if source db is ORACLE, Database name in case if source db is SQLSERVER. Database name for target db.
 --schemaName : Database schema(s) single or comma separated. e.g:- "xxx,yyy,zzz"
 --chunkSize : No of rows to fetch from a table for comparison. Default value is 10000, max value is 1000000
---noofParallelChunks : No of parallel chunks to fetch for comparison. Default value is 1, max value is 10. 
+--noofParallelChunks : No of parallel chunks to fetch for comparison. Default value is 1, max value is 10.
 ```
 
 
@@ -182,7 +182,7 @@ Optional arguments:
 --tgtDBSecretMgrEndPoint :Secret Manager endpoint for target database eg: secretsmanager.us-east-1.amazonaws.com
 --tgtDBSecretName : Secret Manager endpoint for target database eg: PostgresDB
 
---primaryKey:<table name>:<columns with comma separation> provide uniuqe columns with comma(,) separted, if there is no primary key for the table 
+--primaryKey:<table name>:<columns with comma separation> provide uniuqe columns with comma(,) separted, if there is no primary key for the table
 --primaryKey=EMPLOYEE:id,name,salary ; DEPARTMENT:id,name,org
 
 --connectionPoolMaxSize: Integer value for pool max size like 25.
@@ -190,12 +190,12 @@ Optional arguments:
 
 Note: Secrets defined in AWS Secret Manager is optional and it will override the database properties defined using sourceDBType, sourceHost, sourcePort etc..
 ```
- 
+
 Java heap size parameters:
 
  ```
  -Xms : It is used for setting the initial and minimum heap size.
- -Xmx : It is used for setting the maximum heap size. 
+ -Xmx : It is used for setting the maximum heap size.
  ```
 
 Example:
@@ -203,7 +203,7 @@ Example:
  ```
 java -Xms10m -Xmx1024m -cp  "/Users/amsudan/Desktop/Projects/DataValidation/awslab/DBJarFix/data-compare-tool/target/datacompare-tool-1.0.0.jar:/Users/amsudan/Desktop/lib/ojdbc7-12.1.0.2.jar:/Users/amsudan/Desktop/lib/*"   -Dloader.main="com.datacompare.Application" org.springframework.boot.loader.PropertiesLauncher --sourceDBType=ORACLE --sourceHost="XXXX" --sourcePort=1521 --sourceUsername="XXXX" --sourcePassword="XXXXX"  --sourceDBName="dbname" --targetHost="XXXX" --targetPort=5432 --targetUsername="XXXX" --targetDBName=dbmae --targetPassword="XXXX"  --schemaName="XXXX" --tableName="XXXXX" --chunkSize=10000 --noofParallelChunks=5 --maxTextSize=4000 --displayCompleteData=1 --primaryKey=EMPLOYEE:"id,name,salary" --connectionPoolMaxSize=25 --connectionPoolMinSize=15
 ```
- 
+
  CLI arguments with AWS Secret Manager:
 
 ```
@@ -217,7 +217,7 @@ java -Xms10m -Xmx1024m -cp  "/Users/amsudan/Desktop/Projects/DataValidation/awsl
  ```
 ## Output
 
-
+A. HTML:
 Once the process is completed. The result will be generated as .html file. Filename format is <<Job Name>>_<<yyyy-MM-DD_HH-mm>>.html.
 This file has details like table name, ignored columns, max decimals compared, compared only date, source table count, target table count, matched rows count, missing rows count, unmatched rows count, additional rows in target, execution started at, time taken for execution, status, message and report link in case if any data mismatch.
 
@@ -226,11 +226,21 @@ In case if any mismatch of data found, then it generates separate .html file for
 Possible Status values: Completed / Failed. Completed means the tool has compared the data. Failed means it was unable to compare the data.
 Possible Message: Additional rows found in Target / Rows did not migrated from source / Tuple value mismatched / Data Matched.
 
+B. CSV:
+Once the process is completed. The result will be generated as .csv file for 1) Summary Report and 2) Detailed Report.
+
+- Summary Report filename format is <<Job Name>>_<<yyyy-MM-DD_HH-mm>>.csv
+This file has details similar to html file, i.e. table name, columns, max decimals compared, Max Text Size Compared, compared only date, source table count, target table count, matched rows count, missing rows count, unmatched rows count, additional rows in target, execution started at, time taken for execution, status, message, Sql Filter Used.
+
+- Detailed Report filename format is <<schema_name>>_<<table_name>>_table_comparison_result_<<yyyy-MM-DD_HH-mm>>.csv 
+In case if any mismatch of data found, then it generates separate .csv file for each table. Similar to HTML report based on different conditions it contains values for REASON OF FAILURE, UNIQUE KEYS, SOURCE TUPLE, TARGET TUPLE etc.
+
+
 ## Limitations
 
 
 -  Random or Sample data validation.
--  Only one Table can be compared at a time (Tables are compared in sequential order). 
+-  Only one Table can be compared at a time (Tables are compared in sequential order).
 -  Unable to check the progress percentage of comparison.
 
 ## Security
@@ -240,4 +250,3 @@ See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more inform
 ## License
 
 This project is licensed under the Apache-2.0 License.
-
