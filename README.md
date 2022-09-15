@@ -181,9 +181,12 @@ Optional arguments:
 --srcDBSecretName : Source Database Secret Name defined in Secret Manager eg: OracleDB
 --tgtDBSecretMgrEndPoint :Secret Manager endpoint for target database eg: secretsmanager.us-east-1.amazonaws.com
 --tgtDBSecretName : Secret Manager endpoint for target database eg: PostgresDB
---primaryKey:<table name>:<columns with comma separation> provide uniuqe columns with comma(,) separted, if there is no primary key for the table 
 
+--primaryKey:<table name>:<columns with comma separation> provide uniuqe columns with comma(,) separted, if there is no primary key for the table 
 --primaryKey=EMPLOYEE:id,name,salary ; DEPARTMENT:id,name,org
+
+--connectionPoolMaxSize: Integer value for pool max size like 25.
+--connectionPoolMinSize: Integer value for pool min size like 15.
 
 Note: Secrets defined in AWS Secret Manager is optional and it will override the database properties defined using sourceDBType, sourceHost, sourcePort etc..
 ```
@@ -198,7 +201,7 @@ Java heap size parameters:
 Example:
 
  ```
-java -Xms10m -Xmx1024m -cp  "/Users/amsudan/Desktop/Projects/DataValidation/awslab/DBJarFix/data-compare-tool/target/datacompare-tool-1.0.0.jar:/Users/amsudan/Desktop/lib/ojdbc7-12.1.0.2.jar:/Users/amsudan/Desktop/lib/*"   -Dloader.main="com.datacompare.Application" org.springframework.boot.loader.PropertiesLauncher --sourceDBType=ORACLE --sourceHost="XXXX" --sourcePort=1521 --sourceUsername="XXXX" --sourcePassword="XXXXX"  --sourceDBName="dbname" --targetHost="XXXX" --targetPort=5432 --targetUsername="XXXX" --targetDBName=dbmae --targetPassword="XXXX"  --schemaName="XXXX" --tableName="XXXXX" --chunkSize=10000 --noofParallelChunks=5 --maxTextSize=4000 --displayCompleteData=1
+java -Xms10m -Xmx1024m -cp  "/Users/amsudan/Desktop/Projects/DataValidation/awslab/DBJarFix/data-compare-tool/target/datacompare-tool-1.0.0.jar:/Users/amsudan/Desktop/lib/ojdbc7-12.1.0.2.jar:/Users/amsudan/Desktop/lib/*"   -Dloader.main="com.datacompare.Application" org.springframework.boot.loader.PropertiesLauncher --sourceDBType=ORACLE --sourceHost="XXXX" --sourcePort=1521 --sourceUsername="XXXX" --sourcePassword="XXXXX"  --sourceDBName="dbname" --targetHost="XXXX" --targetPort=5432 --targetUsername="XXXX" --targetDBName=dbmae --targetPassword="XXXX"  --schemaName="XXXX" --tableName="XXXXX" --chunkSize=10000 --noofParallelChunks=5 --maxTextSize=4000 --displayCompleteData=1 --primaryKey=EMPLOYEE:"id,name,salary" --connectionPoolMaxSize=25 --connectionPoolMinSize=15
 ```
  
  CLI arguments with AWS Secret Manager:
