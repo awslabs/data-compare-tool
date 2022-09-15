@@ -219,9 +219,9 @@ java -Xms10m -Xmx1024m -cp  "/Users/amsudan/Desktop/Projects/DataValidation/awsl
 
 A. HTML:
 Once the process is completed. The result will be generated as .html file. Filename format is <<Job Name>>_<<yyyy-MM-DD_HH-mm>>.html.
-This file has details like table name, ignored columns, max decimals compared, compared only date, source table count, target table count, matched rows count, missing rows count, unmatched rows count, additional rows in target, execution started at, time taken for execution, status, message and report link in case if any data mismatch.
+This file has details like table name, ignored columns, max decimals compared, compared only date, source table count, target table count, matched rows count, missing rows count, unmatched rows count, additional rows in target, execution started at, time taken for execution, status, message and report link in case if any data mismatch. Also it contains link Summary Report In CSV for these data in csv format.
 
-In case if any mismatch of data found, then it generates separate .html file for each table. Filename format is <<schema_name>>_<<table_name>>_table_comparison_result_<<yyyy-MM-DD_HH-mm>>.html. Navigation link is available to this page from data_comparison_result_<<yyyy-MM-DD_HH-mm>>.html page in that respective row.
+In case if any mismatch of data found, then it generates separate .html file for each table. Filename format is <<schema_name>>_<<table_name>>_table_comparison_result_<<yyyy-MM-DD_HH-mm>>.html. Navigation link is available to this page from data_comparison_result_<<yyyy-MM-DD_HH-mm>>.html page in that respective row. Also it contains link Detailed Report In CSV for these data in csv format.
 
 Possible Status values: Completed / Failed. Completed means the tool has compared the data. Failed means it was unable to compare the data.
 Possible Message: Additional rows found in Target / Rows did not migrated from source / Tuple value mismatched / Data Matched.
@@ -232,7 +232,7 @@ Once the process is completed. The result will be generated as .csv file for 1) 
 - Summary Report filename format is <<Job Name>>_<<yyyy-MM-DD_HH-mm>>.csv
 This file has details similar to html file, i.e. table name, columns, max decimals compared, Max Text Size Compared, compared only date, source table count, target table count, matched rows count, missing rows count, unmatched rows count, additional rows in target, execution started at, time taken for execution, status, message, Sql Filter Used.
 
-- Detailed Report filename format is <<schema_name>>_<<table_name>>_table_comparison_result_<<yyyy-MM-DD_HH-mm>>.csv 
+- Detailed Report filename format is <<schema_name>>_<<table_name>>_table_comparison_result_<<yyyy-MM-DD_HH-mm>>.csv
 In case if any mismatch of data found, then it generates separate .csv file for each table. Similar to HTML report based on different conditions it contains values for REASON OF FAILURE, UNIQUE KEYS, SOURCE TUPLE, TARGET TUPLE etc.
 
 
