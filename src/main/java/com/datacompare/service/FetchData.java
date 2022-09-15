@@ -85,7 +85,6 @@ public class FetchData implements Runnable {
      * @param sourceDBType
      * @param sql
      * @param chunk
-     * @param connection
      * @param tableMetadata
      * @param sourceTableMetadata
      * @param appProperties
@@ -481,8 +480,8 @@ public class FetchData implements Runnable {
 
             JdbcUtil jdbcUtil = new JdbcUtil();
 
-            jdbcUtil.closeResultSet(rs);
-            jdbcUtil.closeStatement(stmt);
+            JdbcUtil.closeResultSet(rs);
+            JdbcUtil.closeStatement(stmt);
             JdbcUtil.closeConnection(con);
             //logger.info("Statement execution completed"+chunk );
         }

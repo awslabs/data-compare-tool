@@ -242,7 +242,7 @@ public class CompareService {
 	  	Connection sourceConn = null;
 	  	Connection targetConn = null;
 	  	
-	  	JdbcUtil jdbcUtil = new JdbcUtil();
+	  	//JdbcUtil jdbcUtil = new JdbcUtil();
 	  	
 		if("All".equals(appProperties.getConnectionType())) {
 			
@@ -296,9 +296,9 @@ public class CompareService {
 					appProperties.getTargetUserName(), appProperties.getTargetUserPassword());*/
 			
 			DataSource.getInstance().initializePool(appProperties.getSourceJdbcUrl(),
-					jdbcUtil.getDriverClass(appProperties.getSourceDBType().toUpperCase()),
+					JdbcUtil.getDriverClass(appProperties.getSourceDBType().toUpperCase()),
 					appProperties.getSourceUserName(), appProperties.getSourceUserPassword(),
-					appProperties.getTargetJdbcUrl(), jdbcUtil.getDriverClass("POSTGRESQL"),
+					appProperties.getTargetJdbcUrl(), JdbcUtil.getDriverClass("POSTGRESQL"),
 					appProperties.getTargetUserName(), appProperties.getSourceUserPassword(),
 					appProperties.getConnectionPoolMinSize(), appProperties.getConnectionPoolMaxSize());
   			logger.info("Target DB Connection Details: " + targetConn);
@@ -564,19 +564,17 @@ public class CompareService {
 	/**
 	 * 
 	 * @param appProperties
-	 * @param sourceConn
-	 * @param targetConn
 	 * @param schemaName
 	 * @param tableName
 	 * @param columnList
 	 * @return
 	 */
-	public CompareResult compare(AppProperties appProperties, /*Connection sourceConn, Connection targetConn,*/
-			String schemaName, String tableName, List<String> columnList) {
+	public CompareResult compare(AppProperties appProperties,
+			String schemaName,String tableName,List<String> columnList) {
 		if("Detail".equals(appProperties.getReportType())) {
-			return compareDetailData(appProperties, /*sourceConn, targetConn,*/ schemaName, tableName, columnList);
+			return compareDetailData(appProperties, schemaName, tableName, columnList);
 		} else if("Basic".equals(appProperties.getReportType())) {
-			return compareBasicData(appProperties,/* sourceConn, targetConn,*/ schemaName, tableName);
+			return compareBasicData(appProperties,schemaName, tableName);
 		}
 		return null;
 	}
@@ -584,14 +582,12 @@ public class CompareService {
 	/**
 	 * 
 	 * @param appProperties
-	 * @param sourceConn
-	 * @param targetConn
 	 * @param schemaName
 	 * @param tableName
 	 * @param columnList
 	 * @return
 	 */
-	private CompareResult compareDetailData(AppProperties appProperties, /*Connection sourceConn, Connection targetConn,*/
+	private CompareResult compareDetailData(AppProperties appProperties,
 			String schemaName, String tableName, List<String> columnList) {
 		
 		String sourceDBType = appProperties.getSourceDBType().toUpperCase();
@@ -828,13 +824,11 @@ public class CompareService {
 	/**
 	 * 
 	 * @param appProperties
-	 * @param sourceConn
-	 * @param targetConn
 	 * @param schemaName
 	 * @param tableName
 	 * @return
 	 */
-	private CompareResult compareBasicData(AppProperties appProperties, /*Connection sourceConn, Connection targetConn,*/
+	private CompareResult compareBasicData(AppProperties appProperties,
 			String schemaName, String tableName ){
 		String sourceDBType = appProperties.getSourceDBType().toUpperCase();
 		CompareResult result = new CompareResult();
@@ -888,10 +882,9 @@ public class CompareService {
 	 * @param schemaName
 	 * @param tableName
 	 * @param dbType
-	 * @param conn
 	 * @throws Exception
 	 */
-	private void checkIfTableExistsInPg(String schemaName, String tableName, String dbType/*, Connection conn*/) throws Exception {
+	private void checkIfTableExistsInPg(String schemaName, String tableName, String dbType) throws Exception {
 		
 		ResultSet rs = null;
 		Connection conn=null;
@@ -1420,13 +1413,11 @@ public class CompareService {
 	/**
 	 * 
 	 * @param appProperties
-	 * @param sourceConn
-	 * @param targetConn
 	 * @param schemaName
 	 * @param columnList
 	 * @return
 	 */
-	public List<CompareResult> compareSchema(AppProperties appProperties, /*Connection sourceConn, Connection targetConn,*/
+	public List<CompareResult> compareSchema(AppProperties appProperties,
 			String schemaName, List<String> columnList) {
 
 		List<CompareResult> tableList = new ArrayList<CompareResult>();
@@ -1496,14 +1487,6 @@ public class CompareService {
 				}
 
 				tableList.add(dto);
-
-	/*			StringBuilder info = new StringBuilder();
-
-				info.append("\n----------------------------------------------------\n");
-				info.append("Finished Comparing Table Name: ");
-				info.append(key);
-				info.append(" in Schema: ");
-				info.append(schemaName);*/
 
 				logger.info(info.toString());
 			}

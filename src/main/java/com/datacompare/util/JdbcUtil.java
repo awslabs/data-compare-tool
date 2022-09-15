@@ -17,7 +17,7 @@ public class JdbcUtil {
 	 * @param dbType
 	 * @return
 	 */
-	public String getDriverClass(String dbType) {
+	public static String getDriverClass(String dbType) {
 		
 		if("ORACLE".equals(dbType)) {
 			
@@ -58,7 +58,7 @@ public class JdbcUtil {
 	 * 
 	 * @param statement
 	 */
-	public void closeStatement(Statement statement) {
+	public static void closeStatement(Statement statement) {
 		
 		if(statement != null) {
 			
@@ -77,7 +77,7 @@ public class JdbcUtil {
 	 * 
 	 * @param resultSet
 	 */
-	public void closeResultSet(ResultSet resultSet) {
+	public static void closeResultSet(ResultSet resultSet) {
 		
 		if (resultSet != null) {
 			

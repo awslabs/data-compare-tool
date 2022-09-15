@@ -47,7 +47,7 @@ public class Application implements ApplicationRunner {
 		String timeStampStr=timestamp.toString();
 		System.setProperty("logtimestamp", timeStampStr);
 		SpringApplication app = new SpringApplication(Application.class);
-    	        app.run(args);
+		app.run(args);
     }
  
     @Override
