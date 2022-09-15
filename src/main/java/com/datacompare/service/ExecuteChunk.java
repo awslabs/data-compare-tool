@@ -34,7 +34,7 @@ public class ExecuteChunk implements Runnable {
 	private int numberOfChunks;
 	private String result;
 	private String sourceChunk;
-	private Connection sourceConnection = null;
+	//private Connection sourceConnection = null;
 
 	private String sourceDBType;
 	private String sourceSql;
@@ -43,7 +43,7 @@ public class ExecuteChunk implements Runnable {
 	private Map<String, TableColumnMetadata> targetTableMetadata = null;
 	private String targetChunk;
 
-	private Connection targetConnection = null;
+	//private Connection targetConnection = null;
 
 	private String targetDBType;
 	private String targetSql;
@@ -60,6 +60,16 @@ public class ExecuteChunk implements Runnable {
 	private AppProperties appProperties;
 
 	private boolean hasNoUniqueKey;
+
+	public boolean isHasProvidedUniqueKey() {
+		return hasProvidedUniqueKey;
+	}
+
+	public void setHasProvidedUniqueKey(boolean hasProvidedUniqueKey) {
+		this.hasProvidedUniqueKey = hasProvidedUniqueKey;
+	}
+
+	private boolean hasProvidedUniqueKey;
 	/**
 	 * 
 	 * @param sourceDBType
@@ -77,9 +87,9 @@ public class ExecuteChunk implements Runnable {
 	 * @param appProperties
 	 */
 	public ExecuteChunk(String sourceDBType, String targetDBType, String sourceChunk, String targetChunk,
-			String sourceSql, String targetSql, int chunkNo, int numberOfChunks, Connection sourceConnection,
-			Connection targetConnection, Map<String, TableColumnMetadata> sourceTableMetadata,
-			Map<String, TableColumnMetadata> targetTableMetadata, AppProperties appProperties) {
+			String sourceSql, String targetSql, int chunkNo, int numberOfChunks, /*Connection sourceConnection,
+			Connection targetConnection,*/ Map<String, TableColumnMetadata> sourceTableMetadata,
+			Map<String, TableColumnMetadata> targetTableMetadata, AppProperties appProperties,boolean hasProvidedUniqueKey) {
 
 		setSourceDBType(sourceDBType);
 		setTargetDBType(targetDBType);
@@ -87,13 +97,14 @@ public class ExecuteChunk implements Runnable {
 		setTargetChunk(targetChunk);
 		setSourceSql(sourceSql);
 		setTargetSql(targetSql);
-		setAppProperties(appProperties); 
+		setAppProperties(appProperties);
 		setChunkNo(chunkNo);
 		setNumberOfChunks(numberOfChunks);
-		setSourceConnection(sourceConnection);
-		setTargetConnection(targetConnection);
+		//setSourceConnection(sourceConnection);
+		//setTargetConnection(targetConnection);
 		setSourceTableMetadata(sourceTableMetadata);
-		setTargetTableMetadata(targetTableMetadata); 
+		setTargetTableMetadata(targetTableMetadata);
+		setHasProvidedUniqueKey(hasProvidedUniqueKey);
 		
 		Thread.currentThread().setName("Executing Chunk No " + getChunkNo()+1); 
 
@@ -154,9 +165,9 @@ public class ExecuteChunk implements Runnable {
 	/**
 	 * @return the sourceConnection
 	 */
-	public Connection getSourceConnection() {
+	/*public Connection getSourceConnection() {
 		return sourceConnection;
-	}
+	}*/
 
 	/**
 	 * @return the sourceDBType
@@ -196,9 +207,9 @@ public class ExecuteChunk implements Runnable {
 	/**
 	 * @return the targetConnection
 	 */
-	public Connection getTargetConnection() {
+	/*public Connection getTargetConnection() {
 		return targetConnection;
-	}
+	}*/
 
 	/**
 	 * @return the targetDBType
@@ -252,9 +263,9 @@ public class ExecuteChunk implements Runnable {
 	/**
 	 * @param sourceConnection the sourceConnection to set
 	 */
-	public void setSourceConnection(Connection sourceConnection) {
+	/*public void setSourceConnection(Connection sourceConnection) {
 		this.sourceConnection = sourceConnection;
-	}
+	}*/
 
 	/**
 	 * @param sourceDBType the sourceDBType to set
@@ -294,9 +305,9 @@ public class ExecuteChunk implements Runnable {
 	/**
 	 * @param targetConnection the targetConnection to set
 	 */
-	public void setTargetConnection(Connection targetConnection) {
+	/*public void setTargetConnection(Connection targetConnection) {
 		this.targetConnection = targetConnection;
-	}
+	}*/
 
 	/**
 	 * @param targetDBType the targetDBType to set
@@ -427,11 +438,11 @@ public class ExecuteChunk implements Runnable {
 			
 			Thread.currentThread().setName("Executing Chunk No " + getChunkNo()+1);
 			FetchData fetchSourceData = new FetchData(getSourceDBType(), null, getSourceSql(), getSourceChunk(),
-					getSourceConnection(), getSourceTableMetadata(), null, getAppProperties());
+					/*getSourceConnection(),*/ true, getSourceTableMetadata(), null, getAppProperties(),getChunkNo());
 			fetchSourceData.setTimeTaken(getSourceTimeTaken());
 			FetchData fetchTargetData = new FetchData(getTargetDBType(), getSourceDBType(), getTargetSql(),
-					getTargetChunk(), getTargetConnection(), getTargetTableMetadata(), getSourceTableMetadata(),
-					getAppProperties());
+					getTargetChunk(), /*getTargetConnection(),*/ false, getTargetTableMetadata(), getSourceTableMetadata(),
+					getAppProperties(),getChunkNo());
 			fetchTargetData.setTimeTaken(getTargetTimeTaken());
 			ExecutorService executor = Executors.newFixedThreadPool(2);
 			executor.execute(fetchSourceData); 
@@ -444,7 +455,7 @@ public class ExecuteChunk implements Runnable {
 			Long tarCnt = Long.valueOf(fetchTargetData.getHashMap().size());
 			getTargetCount().add(tarCnt);
 			CompareData compareData = new CompareData(fetchSourceData.getHashMap(), fetchTargetData.getHashMap(),
-					getChunkNo(), getNumberOfChunks(),isHasNoUniqueKey(),getSourceData(),getTargetData());
+					getChunkNo(), getChunkNo(),isHasNoUniqueKey(),getSourceData(),getTargetData(),isHasProvidedUniqueKey());
 			
 			executor = Executors.newFixedThreadPool(1);
 			executor.execute(compareData);
@@ -465,7 +476,7 @@ public class ExecuteChunk implements Runnable {
 			getTargetData().putAll(targetData);
 
 			ExecutorService validationExecutor = Executors.newFixedThreadPool(1);
-			ValidateChunk executeChunk = new ValidateChunk(getSourceData(),getSourceData(), getTargetData(), hasNoUniqueKey);
+			ValidateChunk executeChunk = new ValidateChunk(getSourceData(),getSourceData(), getTargetData(), hasNoUniqueKey,isHasProvidedUniqueKey(),getChunkNo());
 			validationExecutor.execute(executeChunk);
 			validationExecutor.shutdown();
 			while (!validationExecutor.isTerminated()) {

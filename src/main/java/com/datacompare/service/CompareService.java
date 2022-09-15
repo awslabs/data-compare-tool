@@ -10,6 +10,7 @@
 
 package com.datacompare.service;
 
+import java.io.FileWriter;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -18,9 +19,11 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,41 +35,42 @@ import com.datacompare.model.DatabaseInfo.dbType;
 import com.datacompare.util.DateUtil;
 import com.datacompare.util.FileUtil;
 import com.datacompare.util.JdbcUtil;
+import com.ds.DataSource;
 
 public class CompareService {
 
 	public Logger logger = LoggerFactory.getLogger("CompareService");
 	
-	private Connection sourceConn = null;
-	private Connection targetConn = null;
+	//private Connection sourceConn = null;
+	//private Connection targetConn = null;
 	
 	/**
 	 * @return the sourceConn
 	 */
-	public Connection getSourceConn() {
+	/*public Connection getSourceConn() {
 		return sourceConn;
-	}
+	}*/
 
 	/**
 	 * @param sourceConn the sourceConn to set
 	 */
-	public void setSourceConn(Connection sourceConn) {
+	/*public void setSourceConn(Connection sourceConn) {
 		this.sourceConn = sourceConn;
-	}
+	}*/
 
 	/**
 	 * @return the targetConn
 	 */
-	public Connection getTargetConn() {
+	/*public Connection getTargetConn() {
 		return targetConn;
-	}
+	}*/
 
 	/**
 	 * @param targetConn the targetConn to set
 	 */
-	public void setTargetConn(Connection targetConn) {
+	/*public void setTargetConn(Connection targetConn) {
 		this.targetConn = targetConn;
-	}
+	}*/
 
 	/**
 	 * 
@@ -87,9 +91,8 @@ public class CompareService {
 			
 	  		setConnections(appProperties); 
   			
-  			if(getSourceConn() != null && getTargetConn() != null) { 
-  				
-  				long rowNo = 1;
+  			if(DataSource.getInstance().isPoolInitialized()) { 
+	  			long rowNo = 1;
   				Date date = new Date();
   				DateUtil dateUtil = new DateUtil();
   				String executionStartedAt = dateUtil.getExecutionDate(date);
@@ -110,7 +113,7 @@ public class CompareService {
   					
   					for (String tableName : tableNameParts) { 
 
-						CompareResult dto = compare(appProperties, getSourceConn(), getTargetConn(),
+						CompareResult dto = compare(appProperties, /*getSourceConn(), getTargetConn(),*/
 								appProperties.getSchemaName(), tableName, columnList);
 
 			  			String executedTableName = appProperties.getSchemaName() + "." + tableName;
@@ -124,7 +127,7 @@ public class CompareService {
   					
   					for (String schemaName : schemaParts) { 
   						
-						List<CompareResult> dtos = compareSchema(appProperties, getSourceConn(), getTargetConn(), schemaName, columnList);
+						List<CompareResult> dtos = compareSchema(appProperties, /*getSourceConn(), getTargetConn(),*/ schemaName, columnList);
 	  					
 	  					for (CompareResult dto : dtos) {
 							
@@ -134,29 +137,42 @@ public class CompareService {
 	  					}
 					}
   				}
-  				
+
+				String jobName = appProperties.getJobName();
+				jobName = (jobName != null && !jobName.isEmpty()) ? jobName : "data_comparison_result";
+				String fileName = jobName + "_" + appendDateToFileNames + ".html";
+
+				String summaryReportCsvFileNameWithPath = getSummaryReportCsvFileNameWithPath(appendDateToFileNames, jobName, CompareController.reportOutputFolder);
+				String summaryReportCsvFileName = jobName + "_" + appendDateToFileNames + ".csv";
+
+				data.append("<tr><td><b>")
+						.append("Summary Report In CSV</b>")
+						.append("</td>")
+						.append("<td colspan='6'>")
+						.append("<a href='")
+						.append(summaryReportCsvFileName)
+						.append("'>")
+						.append("View Details in CSV File ")
+						//.append(summaryReportCsvFileNameWithPath)
+						.append("</a>")
+						.append("</td></tr>");
+
 				data.append("</tbody>")
-				.append("</table>") 
-  				.append("</body>")
-  				.append("</html>");
-				
-        		String jobName = appProperties.getJobName();
-        		jobName = (jobName != null && !jobName.isEmpty()) ? jobName : "data_comparison_result";
-        		
-  	        	String fileName = jobName + "_" + appendDateToFileNames + ".html";
-  	        	
-  	        	FileUtil fileWrite = new FileUtil();
-  				
-  	        	fileWrite.writeDataToFile(data, fileName, CompareController.reportOutputFolder); 
-  	        	
-  	        	CompareController.reportFileName = fileName;
-	  			
-  			} else {
+						.append("</table>")
+						.append("</body>")
+						.append("</html>");
+
+				FileUtil fileWrite = new FileUtil();
+				fileWrite.writeDataToFile(data, fileName, CompareController.reportOutputFolder);
+				CompareController.reportFileName = fileName;
+
+				convertSummaryReportHtmlFileToCsvFile(data, summaryReportCsvFileNameWithPath);
+			} else {
   				
   				logger.info("Either Source or Target DB connection is not established."); 
   			}
 	  			
-	  	} catch (Exception ex) { 
+	  	} catch (Exception ex) {
 	  		
 	  		logger.error(ex.getMessage(), ex);
 	  		
@@ -164,8 +180,8 @@ public class CompareService {
 			
 	  		JdbcUtil jdbcUtil = new JdbcUtil();
 	  		
-	  		jdbcUtil.closeConnection(getSourceConn());
-	  		jdbcUtil.closeConnection(getTargetConn());
+	  		//jdbcUtil.closeConnection(getSourceConn());
+	  		//jdbcUtil.closeConnection(getTargetConn());
 		}
 	}
 
@@ -226,7 +242,7 @@ public class CompareService {
 	  	Connection sourceConn = null;
 	  	Connection targetConn = null;
 	  	
-	  	JdbcUtil jdbcUtil = new JdbcUtil();
+	  	//JdbcUtil jdbcUtil = new JdbcUtil();
 	  	
 		if("All".equals(appProperties.getConnectionType())) {
 			
@@ -234,32 +250,62 @@ public class CompareService {
 					appProperties.getSourceDBName(), appProperties.getSourceDBService(),
 					appProperties.getSourceUserName(), appProperties.getSourceUserPassword(), appProperties.isSourceSSLRequire(),
 					dbType.valueOf(appProperties.getSourceDBType().toUpperCase()),false,appProperties.getTrustStorePath(),appProperties.getTrsutStorePassword());
+			sourceDb.setConnectionPoolMinSize(appProperties.getConnectionPoolMinSize());
+			sourceDb.setConnectionPoolMaxSize(appProperties.getConnectionPoolMaxSize());
 			
 			DatabaseInfo targetDb = new DatabaseInfo(appProperties.getTargetIP(), appProperties.getTargetPort(),
 					appProperties.getTargetDBName(), null, appProperties.getTargetUserName(),
 					appProperties.getTargetUserPassword(), appProperties.isTargetSSLRequire(), dbType.POSTGRESQL,
 					true, appProperties.getTrustStorePath(),  appProperties.getTrsutStorePassword());
+			targetDb.setConnectionPoolMinSize(appProperties.getConnectionPoolMinSize());
+			targetDb.setConnectionPoolMaxSize(appProperties.getConnectionPoolMaxSize());
 
-  			sourceConn = getConnection(sourceDb);
-  			logger.info("Source DB Connection Details: " + sourceConn);
+  			//sourceConn = getConnection(sourceDb);
+  			//logger.info("Source DB Connection Details: " + sourceConn);
   			
-  			targetConn = getConnection(targetDb);
-  			logger.info("Target DB Connection Details: " + targetConn);
+  			//targetConn = getConnection(targetDb);
+  			//logger.info("Target DB Connection Details: " + targetConn);
+  			
+  			//try the pool start
+			DataSource.getInstance().initializePool(sourceDb, targetDb);
+	  		/*Connection ssscon=DataSource.getInstance().getSourceDBConnection();
+	  		logger.info("Successfully Retrieved a connection " + ssscon);
+	  		Connection ssscon2=DataSource.getInstance().getSourceDBConnection();
+	  		logger.info("Successfully Retrieved a connection2 " + ssscon2);
+	  		Connection ssscon3=DataSource.getInstance().getSourceDBConnection();
+	  		logger.info("Successfully Retrieved a connection3 " + ssscon3);
+	  		Connection ssscon4=DataSource.getInstance().getSourceDBConnection();
+	  		logger.info("Successfully Retrieved a connection4 " + ssscon4);
+	  		
+	  		ssscon.close();
+	  		ssscon2.close();
+	  		ssscon3.close();
+	  		ssscon4.close();
+	  		logger.info("Successfully closed the connection and put it in pool");*/
+	  		//try the pool end
+	  		
   			
 		} else if("JDBC".equals(appProperties.getConnectionType())) {
 			
-			sourceConn = getConnection(appProperties.getSourceJdbcUrl(),
+			/*sourceConn = getConnection(appProperties.getSourceJdbcUrl(),
 					jdbcUtil.getDriverClass(appProperties.getSourceDBType().toUpperCase()),
 					appProperties.getSourceUserName(), appProperties.getSourceUserPassword());
   			logger.info("Source DB Connection Details: " + sourceConn);
   			
 			targetConn = getConnection(appProperties.getTargetJdbcUrl(), jdbcUtil.getDriverClass("POSTGRESQL"),
-					appProperties.getTargetUserName(), appProperties.getTargetUserPassword());
+					appProperties.getTargetUserName(), appProperties.getTargetUserPassword());*/
+			
+			DataSource.getInstance().initializePool(appProperties.getSourceJdbcUrl(),
+					JdbcUtil.getDriverClass(appProperties.getSourceDBType().toUpperCase()),
+					appProperties.getSourceUserName(), appProperties.getSourceUserPassword(),
+					appProperties.getTargetJdbcUrl(), JdbcUtil.getDriverClass("POSTGRESQL"),
+					appProperties.getTargetUserName(), appProperties.getSourceUserPassword(),
+					appProperties.getConnectionPoolMinSize(), appProperties.getConnectionPoolMaxSize());
   			logger.info("Target DB Connection Details: " + targetConn);
 		}
 		
-		setSourceConn(sourceConn);
-		setTargetConn(targetConn); 
+		//setSourceConn(sourceConn);
+		//setTargetConn(targetConn); 
 	}
 	
 	/**
@@ -351,8 +397,14 @@ public class CompareService {
 
 		if (dto.getFilename() != null && dto.getFilename().trim().endsWith(".html")) {
 
-			data.append("<tr><td><b>Report</b></td><td>").append("<a href='").append(dto.getFilename())
+			data.append("<tr><td><b>Detailed Report</b></td><td>").append("<a href='").append(dto.getFilename())
 					.append("'>View Details</a></td></tr>");
+
+			String detailedReportCsvFileName= getDetailedReportCsvFileName(appProperties.getSchemaName(),dto.getTableName());
+
+			data.append("<tr><td><b>Detailed Report In CSV</b></td><td>").append("<a href='").append(detailedReportCsvFileName)
+					.append("'>View Details in CSV File</a></td></tr>");
+
 		}
 
 		data.append("</table>")
@@ -360,9 +412,8 @@ public class CompareService {
 		.append("</tr>");
 
 		if (appProperties.getFilter() != null && !appProperties.getFilter().isEmpty()) {
-
-			data.append("<tr><td colspan='7'><b>").append(appProperties.getFilterType())
-					.append(" Filter Used</b>&nbsp;&nbsp;").append(appProperties.getFilter()).append("</td></tr>");
+			data.append("<tr><td ><b>").append(appProperties.getFilterType())
+					.append(" Filter Used</b></td><td colspan='6' >&nbsp;&nbsp;").append(appProperties.getFilter()).append("</td></tr>");
 		}
 	}
 	
@@ -513,19 +564,17 @@ public class CompareService {
 	/**
 	 * 
 	 * @param appProperties
-	 * @param sourceConn
-	 * @param targetConn
 	 * @param schemaName
 	 * @param tableName
 	 * @param columnList
 	 * @return
 	 */
-	public CompareResult compare(AppProperties appProperties, Connection sourceConn, Connection targetConn,
-			String schemaName, String tableName, List<String> columnList) {
+	public CompareResult compare(AppProperties appProperties,
+			String schemaName,String tableName,List<String> columnList) {
 		if("Detail".equals(appProperties.getReportType())) {
-			return compareDetailData(appProperties, sourceConn, targetConn, schemaName, tableName, columnList);
+			return compareDetailData(appProperties, schemaName, tableName, columnList);
 		} else if("Basic".equals(appProperties.getReportType())) {
-			return compareBasicData(appProperties, sourceConn, targetConn, schemaName, tableName);
+			return compareBasicData(appProperties,schemaName, tableName);
 		}
 		return null;
 	}
@@ -533,14 +582,12 @@ public class CompareService {
 	/**
 	 * 
 	 * @param appProperties
-	 * @param sourceConn
-	 * @param targetConn
 	 * @param schemaName
 	 * @param tableName
 	 * @param columnList
 	 * @return
 	 */
-	private CompareResult compareDetailData(AppProperties appProperties, Connection sourceConn, Connection targetConn,
+	private CompareResult compareDetailData(AppProperties appProperties,
 			String schemaName, String tableName, List<String> columnList) {
 		
 		String sourceDBType = appProperties.getSourceDBType().toUpperCase();
@@ -555,19 +602,19 @@ public class CompareService {
 
         long usedMemory = 0;
 		try {
-			checkIfTableExistsInPg(schemaName.toLowerCase(), tableName.toLowerCase(), "POSTGRESQL", targetConn);
+			checkIfTableExistsInPg(schemaName.toLowerCase(), tableName.toLowerCase(), "POSTGRESQL"/*, targetConn*/);
             long rowCount=0;
-			long sourceRowCount= new FetchMetadata().getTotalRecords(sourceConn,schemaName.toUpperCase(), tableName.toUpperCase(),null);
-			long targetRowCount= new FetchMetadata().getTotalRecords(targetConn,schemaName.toUpperCase(), tableName.toUpperCase(),null);
+			long sourceRowCount= new FetchMetadata(true).getTotalRecords(/*sourceConn,*/schemaName.toUpperCase(), tableName.toUpperCase(),null);
+			long targetRowCount= new FetchMetadata(false).getTotalRecords(/*targetConn,*/schemaName.toUpperCase(), tableName.toUpperCase(),null);
             if(sourceRowCount>targetRowCount)
                rowCount=sourceRowCount;
 			else {
 				rowCount = targetRowCount;
 				additionalrows = targetRowCount-sourceRowCount;
 			}
-			FetchMetadata fetchSourceMetadata = new FetchMetadata(sourceDBType, null, sourceConn,
+			FetchMetadata fetchSourceMetadata = new FetchMetadata(sourceDBType, null, /*sourceConn,true,*/
 					schemaName.toUpperCase(), tableName.toUpperCase(), rowCount, null, null, false, null, columnList, appProperties,true,additionalrows);
-			FetchMetadata fetchTargetMetadata = new FetchMetadata("POSTGRESQL", sourceDBType, targetConn,
+			FetchMetadata fetchTargetMetadata = new FetchMetadata("POSTGRESQL", sourceDBType, /*targetConn, false,*/
 					schemaName.toLowerCase(), tableName.toLowerCase(), rowCount,
 					fetchSourceMetadata.getSortKey(), fetchSourceMetadata.getPrimaryKey(),
 					fetchSourceMetadata.isHasNoUniqueKey(),
@@ -604,8 +651,8 @@ public class CompareService {
 						? getTargetChunkWhenNoUniqueKey(sourceChunks.get(i)) : sourceChunks.get(i);
 				ExecuteChunk executeChunk = new ExecuteChunk(sourceDBType, "POSTGRESQL", sourceChunks.get(i),
 						targetChunk, fetchSourceMetadata.getSql(), fetchTargetMetadata.getSql(), i, numChunks,
-						sourceConn, targetConn, fetchSourceMetadata.getTableMetadataMap(),
-						fetchTargetMetadata.getTableMetadataMap(), appProperties);
+						/*sourceConn, targetConn,*/ fetchSourceMetadata.getTableMetadataMap(),
+						fetchTargetMetadata.getTableMetadataMap(), appProperties,fetchSourceMetadata.isPrimeryKeySupplied(appProperties,tableName));
 				executeChunk.setSourceData(mismatchSourceData);
 				executeChunk.setTargetData(mismatchTargetData);
 				executeChunk.setFailTuple(failTuple);
@@ -637,23 +684,12 @@ public class CompareService {
 			logger.info("Size of the target mismatch data before final validation "+ mismatchTargetData.size());
 
 			ExecutorService validationExecutor = Executors.newFixedThreadPool(1);
-			//List <Map<String, String> > finalList =splitMap(  mismatchSourceData, mismatchSourceData.size()/maxNoofThreads);
-			//for(int cnt=0; cnt<finalList.size(); cnt++) {
-			//	logger.info("final validation"+cnt +" Size if the map "+finalList.get(cnt).size());
-				ValidateChunk executeChunk = new ValidateChunk(mismatchSourceData,mismatchSourceData, mismatchTargetData,fetchSourceMetadata.isHasNoUniqueKey() );
-				validationExecutor.execute(executeChunk);
-//
-			//}
+			ValidateChunk executeChunk = new ValidateChunk(mismatchSourceData,mismatchSourceData, mismatchTargetData,fetchSourceMetadata.isHasNoUniqueKey(),fetchSourceMetadata.isPrimeryKeySupplied(appProperties,tableName),numChunks+1);
+			validationExecutor.execute(executeChunk);
 			validationExecutor.shutdown();
 			while (!validationExecutor.isTerminated()) {
 			}
-		//	finalValidation(mismatchSourceData,mismatchTargetData,fetchSourceMetadata.isHasNoUniqueKey());
-		//	finalValidation(mismatchTargetData,mismatchSourceData,fetchSourceMetadata.isHasNoUniqueKey());
-//			long sourceTotalRowCount = fetchSourceMetadata.getRowCount();
-//			dto.setRowCountSource(sourceTotalRowCount);
 			dto.setRowCountSource(sourceCount);
-//			long targetTotalRowCount = fetchTargetMetadata.getRowCount();
-//			dto.setRowCountTarget(targetTotalRowCount);
 			dto.setRowCountTarget(targetCount);
 			dto.setTableName(tableName);
 			writeDataToFile(fetchSourceMetadata, mismatchSourceData, fetchTargetMetadata, mismatchTargetData, dto,
@@ -679,10 +715,7 @@ public class CompareService {
 		logger.info(info.toString());
 		return dto;
 	}
-
-
 		public List<Map<String, String>> splitMap( Map<String, String> original, long max) {
-
 			int counter = 0;
 			int lcounter = 0;
 			List<Map<String, String>> listOfSplitMaps = new ArrayList<Map<String, String>> ();
@@ -701,92 +734,9 @@ public class CompareService {
 					}
 				}
 			}
-
 			return listOfSplitMaps;
 		}
 
-
-	private void finalValidation(Map<String, String> data, Map<String, String> targetCountList, boolean hasNoUniqueKey) {
-		//logger.info("Started the source chunk mismatch");
-		ArrayList list= new ArrayList();
-			for (Map.Entry<String, String> entry : data.entrySet()) {
-
-				boolean newRecord=false;
-				String key = entry.getKey();
-				String content = entry.getValue();
-				//logger.info("FINAL REMOVEAL------KEY--o--" + key);
-				//logger.info("FINAL REMOVEAL------content--o--" + content);
-				try {
-					if(!hasNoUniqueKey){
-						if (key != null && targetCountList.containsKey(key)) {
-
-							String dataToCompareContent = targetCountList.get(key);
-							int sourceCount = Collections.frequency(data.values(), content);
-							int targetCount = Collections.frequency(targetCountList.values(), content);
-							//if it is mismatch
-							if(sourceCount>0 && targetCount>0 ){
-								//if(Collections.frequency(failedEntry.values(), content)<(sourceCount-targetCount)){
-								list.add(key);
-								String removeKey=getKeyForValue( targetCountList,content);
-							//	logger.info("FINAL REMOVEAL------KEY----" + removeKey);
-								if(removeKey!=null) {
-									targetCountList.remove(removeKey);
-								//	logger.info("FINAL REMOVEAL----------"+content);
-								}
-							}
-						}
-
-					}
-					if(hasNoUniqueKey){
-						 content = entry.getValue();
-							int sourceCount = Collections.frequency(data.values(), content);
-							int targetCount = Collections.frequency(targetCountList.values(), content);
-						//logger.info("FINAL REMOVEAL------FEQ----" + sourceCount);
-					//	logger.info("FINAL REMOVEAL------FEQ----" + targetCount);
-							//if it is mismatch
-							if(sourceCount>0 && targetCount>0 ){
-							//if(Collections.frequency(failedEntry.values(), content)<(sourceCount-targetCount)){
-								list.add(key);
-								String removeKey=getKeyForValue( targetCountList,content);
-							//	logger.info("FINAL REMOVEAL------KEY----" + removeKey);
-								if(removeKey!=null) {
-									targetCountList.remove(removeKey);
-								//	logger.info("FINAL REMOVEAL----------" + content);
-								}
-								}
-								}
-				} catch (Exception e) {
-					logger.error(e.getMessage(), e);
-				}
-			}
-		//logger.info("Processed the source chunk mismatch");
-			removeData(list,data);
-		}
-
-	private void removeData(ArrayList list, Map<String, String> data) {
-		//logger.info("started data removal");
-		if(list.size()>0){
-            for(int i=0; i< list.size(); i++)
-			{
-			//	logger.info("FINAL REMOVEAL------KEY----" + list.get(i));
-				data.remove(list.get(i));
-			//	logger.info("FINAL REMOVEAL----------" + data.get(list.get(i)));
-			}
-        }
-		//logger.info("Processed data removal");
-	}
-
-	private String getKeyForValue(Map<String, String> targetCountList, String content) {
-		for (Map.Entry<String, String> entry : targetCountList.entrySet()) {
-
-			boolean newRecord = false;
-			String key = entry.getKey();
-			String value = entry.getValue();
-			if (value.equalsIgnoreCase(content))
-				return key;
-		}
-        return null;
-	}
 	/**
 	 * 
 	 * @param targetChunk
@@ -874,13 +824,11 @@ public class CompareService {
 	/**
 	 * 
 	 * @param appProperties
-	 * @param sourceConn
-	 * @param targetConn
 	 * @param schemaName
 	 * @param tableName
 	 * @return
 	 */
-	private CompareResult compareBasicData(AppProperties appProperties, Connection sourceConn, Connection targetConn,
+	private CompareResult compareBasicData(AppProperties appProperties,
 			String schemaName, String tableName ){
 		String sourceDBType = appProperties.getSourceDBType().toUpperCase();
 		CompareResult result = new CompareResult();
@@ -890,10 +838,10 @@ public class CompareService {
        // Runtime runtime = Runtime.getRuntime();
         long usedMemory = 0;
 		try {
-			checkIfTableExistsInPg(schemaName.toLowerCase(), tableName.toLowerCase(), "POSTGRESQL", targetConn);
-			FetchMetadata fetchSourceMetadata = new FetchMetadata(sourceDBType, null, sourceConn,
+			checkIfTableExistsInPg(schemaName.toLowerCase(), tableName.toLowerCase(), "POSTGRESQL"/*, targetConn*/);
+			FetchMetadata fetchSourceMetadata = new FetchMetadata(sourceDBType, null, /*sourceConn, true,*/
 					schemaName.toUpperCase(), tableName.toUpperCase(), 0, null, null, false, null, null, appProperties,true,0);
-			FetchMetadata fetchTargetMetadata = new FetchMetadata("POSTGRESQL", null, targetConn,
+			FetchMetadata fetchTargetMetadata = new FetchMetadata("POSTGRESQL", null, /*targetConn, false,*/
 					schemaName.toLowerCase(), tableName.toLowerCase(), 0, null, null, false, null, null, appProperties,false,0);
 			info = new StringBuilder();
 			info.append("\n----------------------------------------------------\n");
@@ -934,15 +882,14 @@ public class CompareService {
 	 * @param schemaName
 	 * @param tableName
 	 * @param dbType
-	 * @param conn
 	 * @throws Exception
 	 */
-	private void checkIfTableExistsInPg(String schemaName, String tableName, String dbType, Connection conn) throws Exception {
+	private void checkIfTableExistsInPg(String schemaName, String tableName, String dbType) throws Exception {
 		
 		ResultSet rs = null;
-		
+		Connection conn=null;
 		try {
-			
+			conn=DataSource.getInstance().getTargetDBConnection();
 			rs = conn.getMetaData().getTables(null, schemaName, tableName , null);
 			
 			if (!rs.next()) {
@@ -956,6 +903,7 @@ public class CompareService {
 		} finally {
 			
 			new JdbcUtil().closeResultSet(rs);
+			JdbcUtil.closeConnection(conn);
 		} 
 	}
 
@@ -982,21 +930,22 @@ public class CompareService {
 		info.append(targetCount);
 		info.append("\n");
 		logger.info(info.toString());
-		if((mismatchSourceData.size() != 0 ) || (mismatchTargetData.size()!=0)){
+		if((mismatchSourceData.size() != 0 ) || (mismatchTargetData.size()!=0)) {
 			info = new StringBuilder();
 			info.append(schemaName.toLowerCase());
 			info.append("_");
 			info.append(dto.getTableName().toLowerCase());
 			info.append("_table_comparison_result_");
-			info.append(new DateUtil().getAppendDateToFileName(new Date())); 
+			info.append(new DateUtil().getAppendDateToFileName(new Date()));
 			info.append(".html");
 			String fileName = info.toString();
 			try {
 				long totalFailedRowCount = 0;
 				StringBuilder bw = new StringBuilder();
-				writeHeader(fetchSourceMetadata, fetchTargetMetadata, displayCompleteData, bw);
-				if(((!fetchSourceMetadata.isHasNoUniqueKey() )|| (fetchSourceMetadata.isHasNoUniqueKey() && fetchSourceMetadata.isPrimeryKeySupplied(appProperties,tableName))))
-				writeMismatchData(mismatchSourceData, mismatchTargetData, displayCompleteData, dto, bw);
+				writeHeader(fetchSourceMetadata, fetchTargetMetadata, displayCompleteData, bw,getSuppliedPrimaryKey(appProperties));
+				if ((!fetchSourceMetadata.isHasNoUniqueKey()) || (fetchSourceMetadata.isHasNoUniqueKey() && fetchSourceMetadata.isPrimeryKeySupplied(appProperties, tableName))){
+					writeMismatchData(mismatchSourceData, mismatchTargetData, displayCompleteData, dto, bw);
+			     }
 				writeMismatchSourceData(mismatchSourceData, displayCompleteData, dto, bw);
 				writeMismatchTargetData(mismatchTargetData, displayCompleteData, dto, bw);
 				totalFailedRowCount = dto.getValueMismatchCount() + dto.getTargetFailedRowCount()
@@ -1020,9 +969,254 @@ public class CompareService {
  				bw.append("</tbody></table></body></html>");
  				FileUtil fileWrite = new FileUtil();
  				fileWrite.writeDataToFile(bw, fileName, CompareController.reportOutputFolder);
+
+				String detailedReportCsvFileNameWithPath= getDetailedReportCsvFileNameWithPath(schemaName,dto.getTableName(), CompareController.reportOutputFolder);
+				convertDetailedReportHtmlFileToCsvFile(bw,detailedReportCsvFileNameWithPath,displayCompleteData) ;
+
 			} catch (Exception e) {
 				logger.error(e.getMessage(), e);
 			}
+		}
+	}
+
+
+	/**
+	 * +
+	 *
+	 * @param schemaName
+	 * @param tableName
+	 * @return detailedReportCsvFileName
+	 */
+	private String getDetailedReportCsvFileName(String schemaName, String tableName) {
+
+		String detailedReportCsvFileName = "";
+		try {
+			StringBuilder detailedReportCsvFileNameSbr = new StringBuilder();
+			detailedReportCsvFileNameSbr.append(schemaName.toLowerCase());
+			detailedReportCsvFileNameSbr.append("_");
+			detailedReportCsvFileNameSbr.append(tableName.toLowerCase());
+			detailedReportCsvFileNameSbr.append("_table_comparison_result_");
+			detailedReportCsvFileNameSbr.append(new DateUtil().getAppendDateToFileName(new Date()));
+			detailedReportCsvFileNameSbr.append(".csv");
+
+			detailedReportCsvFileName = detailedReportCsvFileNameSbr.toString();
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+		}
+
+		return detailedReportCsvFileName;
+
+	}
+
+	/**
+	 * +
+	 *
+	 * @param schemaName
+	 * @param tableName
+	 * @param reportOutputFolder
+	 * @return detailedReportCsvFileNameWithPath
+	 */
+	private String getDetailedReportCsvFileNameWithPath(String schemaName, String tableName, String reportOutputFolder) {
+
+		String detailedReportCsvFileNameWithPath = "";
+		try {
+			StringBuilder detailedReportCsvFileName = new StringBuilder();
+			detailedReportCsvFileName.append(schemaName.toLowerCase());
+			detailedReportCsvFileName.append("_");
+			detailedReportCsvFileName.append(tableName.toLowerCase());
+			detailedReportCsvFileName.append("_table_comparison_result_");
+			detailedReportCsvFileName.append(new DateUtil().getAppendDateToFileName(new Date()));
+			detailedReportCsvFileName.append(".csv");
+			detailedReportCsvFileNameWithPath = detailedReportCsvFileName.toString();
+			if (null != reportOutputFolder && !reportOutputFolder.trim().isEmpty()) {
+				detailedReportCsvFileNameWithPath = reportOutputFolder + "/" + detailedReportCsvFileNameWithPath;
+			}
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+		}
+
+		return detailedReportCsvFileNameWithPath;
+	}
+
+	/**
+	 * +
+	 *
+	 * @param compareResultInHtmlFormat
+	 * @param detailedReportCsvFileNameWithPath
+	 * @param displayCompleteData
+	 */
+	public void convertDetailedReportHtmlFileToCsvFile(StringBuilder compareResultInHtmlFormat, String detailedReportCsvFileNameWithPath, boolean displayCompleteData) {
+		try {
+
+			FileWriter detailedReportCsvFileWriter = new FileWriter(detailedReportCsvFileNameWithPath);
+			Document htmlDocument = Jsoup.parseBodyFragment(compareResultInHtmlFormat.toString());
+
+			String docHeader = htmlDocument.getElementsByTag("th").toString();
+			if (docHeader.contains("REASON OF FAILURE") && docHeader.contains("SOURCE TUPLE") && docHeader.contains("TARGET TUPLE")) {
+
+				//add headers in csv
+				if (!htmlDocument.getElementsByTag("th").isEmpty()) {
+					Elements headers = htmlDocument.getElementsByTag("th");
+					for (Element header : headers) {
+						detailedReportCsvFileWriter.write("\"" + header.text() + "\",");
+					}
+					detailedReportCsvFileWriter.write("\n");
+				}
+
+				Elements rows = htmlDocument.getElementsByTag("tr");
+				for (Element row : rows) {
+
+					//add row data in csv
+					if (!row.getElementsByTag("td").isEmpty()) {
+
+						//add column0 data in row
+						Element column0 = row.getElementsByTag("td").get(0);
+						if (!column0.text().isEmpty()) {
+							detailedReportCsvFileWriter.write("\"" + column0.text() + "\"");
+						}
+
+						//add column1 data in row
+						Element column1 = row.getElementsByTag("td").get(1);
+						if (column1.text().isEmpty()) {
+							detailedReportCsvFileWriter.write("," + ",");
+						} else if (column1.text().contains("||")) {
+							String cellTextAsSingleRow = column1.text().replaceAll("\\s\\|\\|\\s", ",");
+							cellTextAsSingleRow = cellTextAsSingleRow.replaceAll("\\|\\|", "");
+							if (cellTextAsSingleRow.contains(" , , , ")) {
+								String cellTextAsNewRow = cellTextAsSingleRow.replaceAll("\\s\\,\\s\\,\\s\\,\\s", "\",\n,\"");
+								detailedReportCsvFileWriter.write("," + "\"" + cellTextAsNewRow + "\"" + ",");
+							} else {
+								detailedReportCsvFileWriter.write("," + "\"" + cellTextAsSingleRow + "\"" + ",");
+							}
+
+						} else {
+							detailedReportCsvFileWriter.write("," + "\"" + column1.text() + "\"" + ",");
+						}
+
+						//add column2 data in row
+						Element column2 = row.getElementsByTag("td").get(2);
+						if (column2.text().isEmpty()) {
+							detailedReportCsvFileWriter.write(",");
+						} else if (column2.text().contains("||")) {
+							String cellTextAsSingleRow = column2.text().replaceAll("\\s\\|\\|\\s", ",");
+							cellTextAsSingleRow = cellTextAsSingleRow.replaceAll("\\|\\|", "");
+							if (cellTextAsSingleRow.contains(" , , , ")) {
+								String cellTextAsNewRow = cellTextAsSingleRow.replaceAll("\\s\\,\\s\\,\\s\\,\\s", "\",\n,\"");
+								detailedReportCsvFileWriter.write("\"" + cellTextAsNewRow + "\"" + ",");
+							} else {
+								detailedReportCsvFileWriter.write("\"" + cellTextAsSingleRow + "\"" + ",");
+							}
+						} else {
+
+							detailedReportCsvFileWriter.write("\"" + column2.text() + "\"" + ",");
+						}
+
+					}
+					detailedReportCsvFileWriter.write("\n");
+				}
+			} else {
+
+				//add headers in csv
+				if (!htmlDocument.getElementsByTag("th").isEmpty()) {
+					Elements headers = htmlDocument.getElementsByTag("th");
+					for (Element header : headers) {
+						detailedReportCsvFileWriter.write("\"" + header.text() + "\",");
+					}
+					detailedReportCsvFileWriter.write("\n");
+				}
+
+				Elements rows = htmlDocument.getElementsByTag("tr");
+				for (Element row : rows) {
+					//add row data in csv
+					Elements columns = row.getElementsByTag("td");
+					for (Element column : columns) {
+						String columnText = column.text();
+						if (columnText.contains("||")) {
+							if (columnText.contains(" || || || ")) {
+								String columnTextAsMultiRow = columnText.replaceAll("\\s\\|\\|\\s\\|\\|\\s\\|\\|\\s", " \",\n,\" ");
+								columnTextAsMultiRow = columnTextAsMultiRow.replaceAll("\\s\\|\\|\\s", ",");
+								columnTextAsMultiRow = columnTextAsMultiRow.replaceAll("\\|\\|", "");
+								detailedReportCsvFileWriter.write("\"" + columnTextAsMultiRow + "\"");
+							} else if (displayCompleteData) {
+								String columnTextAsSingleRow = columnText.replaceAll("\\s\\|\\|\\s", ",");
+								columnTextAsSingleRow = columnTextAsSingleRow.replaceAll("\\|\\|", "");
+								detailedReportCsvFileWriter.write("\"" + columnTextAsSingleRow + "\"");
+							} else if (!displayCompleteData) {
+								String columnTextAsMultiRow = columnText.replaceAll("\\s\\|\\|\\s", "\",\n,\"");
+								columnTextAsMultiRow = columnTextAsMultiRow.replaceAll("\\|\\|", "");
+								detailedReportCsvFileWriter.write("\"" + columnTextAsMultiRow + "\"");
+							} else {
+								detailedReportCsvFileWriter.write("\"" + columnText + "\"");
+							}
+						} else if (columnText.isEmpty()) {
+							detailedReportCsvFileWriter.write(columnText.concat(","));
+						} else {
+							detailedReportCsvFileWriter.write("\"" + columnText + "\",");
+						}
+					}
+					detailedReportCsvFileWriter.write("\n");
+				}
+			}
+			detailedReportCsvFileWriter.close();
+			logger.info(detailedReportCsvFileNameWithPath + " written successfully");
+		} catch (Exception e) {
+			logger.error("Error while creating detailed report csv file");
+			logger.error(e.getMessage(), e);
+		}
+	}
+
+	/**
+	 * +
+	 *
+	 * @param appendDateToFileNames
+	 * @param jobName
+	 * @param reportOutputFolder
+	 * @return summaryReportCsvFileNameWithPath
+	 */
+	private String getSummaryReportCsvFileNameWithPath(String appendDateToFileNames, String jobName, String reportOutputFolder) {
+		String summaryReportCsvFileName = jobName + "_" + appendDateToFileNames + ".csv";
+		String summaryReportCsvFileNameWithPath = summaryReportCsvFileName;
+		if (null != reportOutputFolder && !reportOutputFolder.trim().isEmpty()) {
+			summaryReportCsvFileNameWithPath = reportOutputFolder + "/" + summaryReportCsvFileName;
+		}
+		return summaryReportCsvFileNameWithPath;
+	}
+
+	/**
+	 * +
+	 *
+	 * @param compareResultInHtmlFormat
+	 * @param summaryReportCsvFileNameWithPath
+	 */
+	public void convertSummaryReportHtmlFileToCsvFile(StringBuilder compareResultInHtmlFormat, String summaryReportCsvFileNameWithPath) {
+		try {
+			FileWriter summaryReportCsvFileWriter = new FileWriter(summaryReportCsvFileNameWithPath);
+			Document htmlDocument = Jsoup.parseBodyFragment(compareResultInHtmlFormat.toString());
+			Elements rows = htmlDocument.getElementsByTag("tr");
+
+			for (Element row : rows) {
+
+				//if (row.getElementsByTag("table").isEmpty()) {
+				//if (row.toString().contains("Detailed Report") || row.toString().contains("Summary Report")) {
+
+				if (!row.getElementsByTag("table").isEmpty() || row.toString().contains("Detailed Report") || row.toString().contains("Summary Report")) {
+					continue;
+				}
+				Elements columns = row.getElementsByTag("td");
+				for (Element column : columns) {
+					summaryReportCsvFileWriter.write(column.text().concat(", "));
+				}
+				summaryReportCsvFileWriter.write("\n");
+				//}
+				if (!row.getElementsContainingText("Sql Filter Used").isEmpty()) {
+					summaryReportCsvFileWriter.write("\n");
+				}
+			}
+			summaryReportCsvFileWriter.close();
+			logger.info(summaryReportCsvFileNameWithPath + " written successfully");
+		} catch (Exception e) {
+			logger.error("Error while creating summary report csv file");
+			logger.error(e.getMessage(), e);
 		}
 	}
 	
@@ -1034,7 +1228,7 @@ public class CompareService {
 	 * @param bw
 	 */
 	private void writeHeader(FetchMetadata fetchSourceMetadata, FetchMetadata fetchTargetMetadata,
-			boolean displayCompleteData, StringBuilder bw) {
+			boolean displayCompleteData, StringBuilder bw, String uniqueKeys) {
 
 		bw.append(
 				"<html><head><title>Data Compare Details</title><style>table{border: 1px solid #ddd; border-radius: 13px; border-collapse: collapse;} th, td {border-bottom: 1px solid #ddd;border-collapse: collapse; font-family: Arial; font-size: 10pt;} th, td {padding: 15px;}	th {text-align: left;} table {border-spacing: 5px; width: 100%; background-color: #f1f1c1;	border-color: gray;} table tr:nth-child(even) {background-color: #eee;} table tr:nth-child(odd) {background-color: #fff;} table th {color: white; background-color: black;}	</style></head><body>");
@@ -1065,7 +1259,8 @@ public class CompareService {
 			bw.append("<tr><td>&nbsp;</td>");
 
 			String sortColumns = fetchSourceMetadata.getSortKey();
-
+            if(uniqueKeys!=null && !uniqueKeys.isEmpty())
+				sortColumns=uniqueKeys;
 			bw.append("<td>").append(sortColumns).append("</td></tr>");
 		}
 	}
@@ -1079,8 +1274,8 @@ public class CompareService {
 	 * @param bw
 	 */
 	private void writeMismatchData(Map<String, String> mismatchSourceData, Map<String, String> mismatchTargetData,
-			boolean displayCompleteData, CompareResult dto, StringBuilder bw) {
-		
+								   boolean displayCompleteData, CompareResult dto, StringBuilder bw) {
+
 		boolean mismatchDataFound = (mismatchSourceData.size() > 0);
 		long mismatchRowCount = 0;
 
@@ -1090,7 +1285,7 @@ public class CompareService {
 		}
 
 		List<String> keys = new ArrayList<String>(mismatchSourceData.keySet());
-		
+
 		for (final String key : keys) {
 
 			if (mismatchTargetData.containsKey(key)) {
@@ -1124,7 +1319,6 @@ public class CompareService {
 
 		dto.setValueMismatchCount(mismatchRowCount);
 	}
-	
 	/**
 	 * 
 	 * @param mismatchSourceData
@@ -1142,6 +1336,7 @@ public class CompareService {
 			if (!displayCompleteData) {
 
 				bw.append("<tr><td style='vertical-align: top;'><b>Rows did not migrated from Source</b></td><td>");
+				bw.append(" || ");
 			}
 
 			for (final String key : mismatchSourceData.keySet()) {
@@ -1186,6 +1381,7 @@ public class CompareService {
 			if (!displayCompleteData) {
 
 				bw.append("<tr><td style='vertical-align: top;'><b>Additional Rows found in Target</b></td><td>");
+				bw.append(" || ");
 			}
 
 			for (final String key : mismatchTargetData.keySet()) {
@@ -1217,22 +1413,22 @@ public class CompareService {
 	/**
 	 * 
 	 * @param appProperties
-	 * @param sourceConn
-	 * @param targetConn
 	 * @param schemaName
 	 * @param columnList
 	 * @return
 	 */
-	public List<CompareResult> compareSchema(AppProperties appProperties, Connection sourceConn, Connection targetConn,
+	public List<CompareResult> compareSchema(AppProperties appProperties,
 			String schemaName, List<String> columnList) {
 
 		List<CompareResult> tableList = new ArrayList<CompareResult>();
 		List<String> tableNames = new ArrayList<String>();
 
 		ResultSet rs = null;
-
+		Connection sourceConn=null;
+		
 		try {
-
+			sourceConn =DataSource.getInstance().getSourceDBConnection();
+			
 			List<String> ignoreTables = (appProperties.getTableName() != null && !appProperties.getTableName().isEmpty()
 					&& appProperties.isIgnoreTables()) ? Arrays.asList(appProperties.getTableName().split(","))
 					: new ArrayList<String>();
@@ -1256,6 +1452,7 @@ public class CompareService {
 		} finally {
 
 			new JdbcUtil().closeResultSet(rs);
+			JdbcUtil.closeConnection(sourceConn);
 		}
 
 	//	ExecutorService executor = Executors.newFixedThreadPool(10);
@@ -1280,7 +1477,7 @@ public class CompareService {
 			}
 			for (final String key : hashMap.keySet()) {
 				CompareResult dto = hashMap.get(key);*/
-				CompareResult dto = compare(appProperties, sourceConn, targetConn, schemaName, tableName, columnList);
+				CompareResult dto = compare(appProperties, /*sourceConn, targetConn,*/ schemaName, tableName, columnList);
 				//if (dto.getReason() == null && !(dto.getResult() != null && "Completed".equals(dto.getResult())) ) {
 					//dto.setTableName(tableName);
 				if (dto.getReason() == null && !(dto.getResult() != null && "Completed".equals(dto.getResult()))) {
@@ -1290,14 +1487,6 @@ public class CompareService {
 				}
 
 				tableList.add(dto);
-
-	/*			StringBuilder info = new StringBuilder();
-
-				info.append("\n----------------------------------------------------\n");
-				info.append("Finished Comparing Table Name: ");
-				info.append(key);
-				info.append(" in Schema: ");
-				info.append(schemaName);*/
 
 				logger.info(info.toString());
 			}
@@ -1323,5 +1512,17 @@ public class CompareService {
 	    }
 		
 	    return false;		
+	}
+	private String getSuppliedPrimaryKey(AppProperties appProperties) {
+		String pkeys =null;
+		if(appProperties!=null) {
+			String tableName=appProperties.getTableName();
+			if (appProperties.getPrimaryKeyMap() != null
+					&& !appProperties.getPrimaryKeyMap().isEmpty()
+					&& appProperties.getPrimaryKeyMap().get(tableName.toUpperCase()) != null) {
+				pkeys = appProperties.getPrimaryKeyMap().get(tableName.toUpperCase());
+			}
+		}
+		return pkeys;
 	}
 }

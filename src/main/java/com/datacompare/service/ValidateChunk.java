@@ -14,6 +14,16 @@ public class ValidateChunk implements Runnable {
 
     private Map<String, String> targetFailedData;
 
+    public boolean isHasProvidedUniqueKey() {
+        return hasProvidedUniqueKey;
+    }
+
+    public void setHasProvidedUniqueKey(boolean hasProvidedUniqueKey) {
+        this.hasProvidedUniqueKey = hasProvidedUniqueKey;
+    }
+
+    private boolean hasProvidedUniqueKey;
+
     public Map<String, String> getProcessMap() {
         return processMap;
     }
@@ -31,7 +41,7 @@ public class ValidateChunk implements Runnable {
         this.hasNoUniqueKey = hasNoUniqueKey;
     }
 
-
+    public int chunkNum;
 
     /**
      * @return the sourceData
@@ -63,27 +73,26 @@ public class ValidateChunk implements Runnable {
 
 
 
-    public ValidateChunk( Map<String, String> processMap, Map<String, String> sourceFailedData, Map<String, String> targetFailedData,  boolean hasNoUniqueKey) {
+    public ValidateChunk( Map<String, String> processMap, Map<String, String> sourceFailedData, Map<String, String> targetFailedData,  boolean hasNoUniqueKey,boolean hasProvidedUniqueKey,int chunkNum) {
 
         this.processMap = processMap;
         this.hasNoUniqueKey = hasNoUniqueKey;
         this.sourceFailedData = sourceFailedData;
         this.targetFailedData = targetFailedData;
+        this.hasProvidedUniqueKey=hasProvidedUniqueKey;
+        this.chunkNum=chunkNum;
 
-        Thread.currentThread().setName("alidate the  ChunkNo ");
+        Thread.currentThread().setName("validate the  ChunkNo ");
     }
 
     public void run() {
 
-        Thread.currentThread().setName("validate the  ChunkNo ");
+        Thread.currentThread().setName("validate the  ChunkNo "+chunkNum);
 
         long start = System.currentTimeMillis();
 
         Map<String, String> tempSource = new HashMap<String, String>();
         Map<String, String> tempTarget = new HashMap<String, String>();
-
-        List<String> tempSourceFailTuple = new ArrayList<String>();
-        List<String> tempTargetFailTuple = new ArrayList<String>();
 
         finalValidation();
         //finalValidation(targetFailedData, sourceFailedData, hasNoUniqueKey,tempTarget);
@@ -102,93 +111,66 @@ public class ValidateChunk implements Runnable {
         tempSource.clear();
 
 
-        StringBuilder info = new StringBuilder();
-
     }
 
     private void finalValidation( ) {
-        //logger.info("Started the source chunk mismatch");
-        ArrayList list = new ArrayList();
-        for (Map.Entry<String, String> entry : processMap.entrySet()) {
-
-            boolean newRecord = false;
-            String key = entry.getKey();
-            String content = entry.getValue();
-        //    logger.info("FINAL REMOVEAL------KEY--o--" + key);
-         //   logger.info("FINAL REMOVEAL------content--o--" + content);
+        //logger.info("Started the chunk mismatch validation "+chunkNum);
+        int removedCount=0;
             try {
-                if (!hasNoUniqueKey) {
-                    if (key != null && targetFailedData.containsKey(key)) {
-
-                        String dataToCompareContent = targetFailedData.get(key);
-                        int sourceCount = Collections.frequency(processMap.values(), content);
-                        int targetCount = Collections.frequency(targetFailedData.values(), content);
-                        //if it is mismatch
-                        if (sourceCount > 0 && targetCount > 0) {
-                            //if(Collections.frequency(failedEntry.values(), content)<(sourceCount-targetCount)){
-                          //  list.add(key);
-                            String removeKey = getKeyForValue(targetFailedData, content);
-                         //   logger.info("FINAL REMOVEAL------KEY----" + removeKey);
-                            if (removeKey != null) {
-                                targetFailedData.remove(removeKey);
+                if (!hasNoUniqueKey || hasProvidedUniqueKey ) {
+                    for (Map.Entry<String, String> entry : processMap.entrySet()) {
+                        String key = entry.getKey();
+                        String content = entry.getValue();
+                        if (key != null) {
+                            String dataToCompareContent = targetFailedData.get(key);
+                            if (content.equalsIgnoreCase(dataToCompareContent)) {
+                                targetFailedData.remove(key);
                                 sourceFailedData.remove(key);
-                          //      logger.info("FINAL REMOVEAL----------" + content);
+                                removedCount++;
+                            }
+                        }
+                    }
+                }else  if (hasNoUniqueKey) {
+                    for (Map.Entry<String, String> entry : processMap.entrySet()) {
+                        String key = entry.getKey();
+                        String content = entry.getValue();
+                        String dataToCompareContent = targetFailedData.get(key);
+                        if (targetFailedData!=null && targetFailedData.containsValue(content)) {
+                            //if(Collections.frequency(failedEntry.values(), content)<(sourceCount-targetCount)){
+                            // list.add(key);
+                            if( !content.equals(dataToCompareContent)) {
+                                String removeKey = getKeyForValue(targetFailedData, content);
+                                if(removeKey!=null)
+                                targetFailedData.remove(removeKey);
+                            }else
+                            {
+                                targetFailedData.remove(key);
+                            }
+                                sourceFailedData.remove(key);
+                                removedCount++;
                             }
                         }
                     }
 
-                }
-                if (hasNoUniqueKey) {
-                    content = entry.getValue();
-                    int sourceCount = Collections.frequency(processMap.values(), content);
-                    int targetCount = Collections.frequency(targetFailedData.values(), content);
-               //     logger.info("FINAL REMOVEAL------FEQ----" + sourceCount);
-                //    logger.info("FINAL REMOVEAL------FEQ----" + targetCount);
-                    //if it is mismatch
-                    if (sourceCount > 0 && targetCount > 0) {
-                        //if(Collections.frequency(failedEntry.values(), content)<(sourceCount-targetCount)){
-                       // list.add(key);
-                        String removeKey = getKeyForValue(targetFailedData, content);
-                   //     logger.info("FINAL REMOVEAL------KEY----" + removeKey);
-                        if (removeKey != null) {
-                            targetFailedData.remove(removeKey);
-                            sourceFailedData.remove(key);
-                           // logger.info("FINAL REMOVEAL----------" + content);
-                        }
-                    }
-                }
             } catch (Exception e) {
                 logger.error(e.getMessage(), e);
             }
-        }
-        //logger.info("Processed the source chunk mismatch");
+        //logger.info("Processed the source chunk-"+chunkNum+" removed count " +removedCount);
         //removeData(list, data);
     }
 
-    private void removeData(ArrayList list, Map<String, String> data) {
-        //logger.info("started data removal");
-        if (list.size() > 0) {
-            for (int i = 0; i < list.size(); i++) {
-               // logger.info("FINAL REMOVEAL------KEY----" + list.get(i));
-                data.remove(list.get(i));
-               // logger.info("FINAL REMOVEAL----------" + data.get(list.get(i)));
-            }
-        }
-        logger.info("Processed data removal");
-    }
 
     private String getKeyForValue(Map<String, String> targetCountList, String content) {
-        for (Map.Entry<String, String> entry : targetCountList.entrySet()) {
+        if(content!=null) {
+            for (Map.Entry<String, String> entry : targetCountList.entrySet()) {
 
-            boolean newRecord = false;
-            String key = entry.getKey();
-            String value = entry.getValue();
-            if (value.equalsIgnoreCase(content))
-                return key;
+                boolean newRecord = false;
+                String key = entry.getKey();
+                String value = entry.getValue();
+                if (value != null && value.equalsIgnoreCase(content))
+                    return key;
+            }
         }
         return null;
-    }
-
-    public void setProcessMap(Map<String, String> stringStringMap) {
     }
 }

@@ -16,6 +16,8 @@ import com.datacompare.model.TableColumnMetadata;
 import com.datacompare.util.DateUtil;
 import com.datacompare.util.JdbcUtil;
 import com.datacompare.util.MemoryUtil;
+import com.ds.DataSource;
+
 import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.postgresql.largeobject.LargeObject;
@@ -31,6 +33,7 @@ import java.sql.*;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -54,8 +57,22 @@ public class FetchData implements Runnable {
     private Connection connection = null;
 
     private int fetchSize;
+
+
+    private int chunkNum;
     private long rowCount;
     private boolean compareOnlyDate;
+    private boolean isSourceDB;
+
+    public String getPrimaryKeys() {
+        return primaryKeys;
+    }
+
+    public void setPrimaryKeys(String primaryKeys) {
+        this.primaryKeys = primaryKeys;
+    }
+
+    private String primaryKeys;
 
     private Map<String, String> hashMap = null;
     private Map<String, TableColumnMetadata> tableMetadataMap = null;
@@ -68,20 +85,21 @@ public class FetchData implements Runnable {
      * @param sourceDBType
      * @param sql
      * @param chunk
-     * @param connection
      * @param tableMetadata
      * @param sourceTableMetadata
      * @param appProperties
      * @throws Exception
      */
-    public FetchData(String dbType, String sourceDBType, String sql, String chunk, Connection connection,
+    public FetchData(String dbType, String sourceDBType, String sql, String chunk, /*Connection connection,*/ boolean isSourceDB,
                      Map<String, TableColumnMetadata> tableMetadata, Map<String, TableColumnMetadata> sourceTableMetadata,
-                     AppProperties appProperties) throws Exception {
+                     AppProperties appProperties,int chunkNum) throws Exception {
 
         if (!EnumUtils.isValidEnum(DatabaseInfo.dbType.class, dbType))
             throw new Exception(dbType + " not supported.");
-
-        setConnection(connection);
+       
+        this.isSourceDB=isSourceDB;
+        //setConnection(connection);
+        
         setDbType(dbType);
         setSourceDBType(sourceDBType);
         setSql(sql);
@@ -91,8 +109,9 @@ public class FetchData implements Runnable {
         setTableMetadataMap(tableMetadata);
         setSourceTableMetadataMap(sourceTableMetadata);
         setHashMap(new ConcurrentHashMap<String, String>());
-
+        setPrimaryKeys(getSuppliedPrimaryKey(appProperties));
         Thread.currentThread().setName(getDbType() + " " + getChunk());
+        setChunkNum(chunkNum);
 
         //logger.info("\n" + getDbType() + ": SQL Query without chunk: " + getSql());
     }
@@ -115,40 +134,32 @@ public class FetchData implements Runnable {
 
         Statement stmt = null;
         ResultSet rs = null;
-
+        Connection con=null;
         try {
-
+            con=isSourceDB?DataSource.getInstance().getSourceDBConnection():DataSource.getInstance().getTargetDBConnection();
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
             SimpleDateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
             getHashMap().clear();
-
-            stmt = getConnection().createStatement();
+            //stmt = getConnection().createStatement();
+            stmt = con.createStatement();
             long start = System.currentTimeMillis();
             long keySize = 0;
             long valSize = 0;
-
             String query = getSql() + " " + getChunk();
-
             //logger.debug(query);
-
             rs = stmt.executeQuery(query);
-
             rs.setFetchSize(getFetchSize());
-
             while (rs.next()) {
-
                 try {
-
                     String key = rs.getString("key1");
                     StringBuilder value = new StringBuilder();
-
+                    StringBuilder pKeys = new StringBuilder();
                     List<String> colNames = new ArrayList<String>(
                             getSourceTableMetadataMap() != null && !getSourceTableMetadataMap().isEmpty()
                                     ? getSourceTableMetadataMap().keySet() : getTableMetadataMap().keySet());
-
                     for (String colName : colNames) {
-
+                        //Check if it is a provided pumiquekey column
+                        boolean IsAKey= isAnUniqueKey(colName);
                         colName = "POSTGRESQL".equals(getDbType()) ? colName.toLowerCase() : colName.toUpperCase();
 
                         TableColumnMetadata metadata = getTableMetadataMap().get(colName);
@@ -157,13 +168,9 @@ public class FetchData implements Runnable {
                         String columnName=metadata.getColumnName();
                         int noOfDecimals = metadata.getNoOfDecimals();
                         int sourceNoOfDecimals = 0;
-
                         if ("POSTGRESQL".equals(getDbType())) {
-
                             sourceMetadata = getSourceTableMetadataMap().get(metadata.getColumnName().toUpperCase());
-
                             if (sourceMetadata != null) {
-
                                 sourceNoOfDecimals = sourceMetadata.getNoOfDecimals();
                             }
                             // To handle the column names with #
@@ -178,13 +185,20 @@ public class FetchData implements Runnable {
                             long rValue = rs.getLong(columnName);
                             value.append(PIPE_SEPARATOR);
                             value.append(rValue);
+                            if(IsAKey){
+                                pKeys.append(PIPE_SEPARATOR);
+                                pKeys.append(rValue);
+                            }
 
                         } else if (columnType.contains("boolean") || columnType.contains("BOOLEAN")) {
 
                             boolean bValue = rs.getBoolean(columnName);
                             value.append(PIPE_SEPARATOR);
                             value.append(bValue);
-
+                            if(IsAKey){
+                                pKeys.append(PIPE_SEPARATOR);
+                                pKeys.append(bValue);
+                            }
                         } else if (columnType.compareTo("DECIMAL") == 0 || columnType.compareTo("NUMBER") == 0
                                 || columnType.compareTo("numeric") == 0) {
 
@@ -211,6 +225,10 @@ public class FetchData implements Runnable {
 
                                 value.append(PIPE_SEPARATOR);
                                 value.append(df2.format(doub));
+                                if(IsAKey){
+                                    pKeys.append(PIPE_SEPARATOR);
+                                    pKeys.append(doub);
+                                }
 
                             } else {
 
@@ -219,6 +237,10 @@ public class FetchData implements Runnable {
                                     long lValue = rs.getLong(columnName);
                                     value.append(PIPE_SEPARATOR);
                                     value.append(Long.valueOf(lValue).toString());
+                                    if(IsAKey){
+                                        pKeys.append(PIPE_SEPARATOR);
+                                        pKeys.append(Long.valueOf(lValue).toString());
+                                    }
 
                                 } else {
 
@@ -227,6 +249,10 @@ public class FetchData implements Runnable {
                                             && dValue.trim().length() > 0) ? dValue : "0";
                                     value.append(PIPE_SEPARATOR);
                                     value.append(nValue);
+                                    if(IsAKey){
+                                        pKeys.append(PIPE_SEPARATOR);
+                                        pKeys.append(nValue);
+                                    }
                                 }
                             }
 
@@ -244,6 +270,10 @@ public class FetchData implements Runnable {
                                 double doub = rs.getDouble(columnName);
                                 value.append(PIPE_SEPARATOR);
                                 value.append(df2.format(doub));
+                                if(IsAKey){
+                                    pKeys.append(PIPE_SEPARATOR);
+                                    pKeys.append(df2.format(doub));
+                                }
 
                             } else {
 
@@ -253,6 +283,10 @@ public class FetchData implements Runnable {
                                         : "0";
                                 value.append(PIPE_SEPARATOR);
                                 value.append(fValue);
+                                if(IsAKey){
+                                    pKeys.append(PIPE_SEPARATOR);
+                                    pKeys.append(fValue);
+                                }
                             }
 
                         } else if (columnType.contains("char") || columnType.contains("CHAR")) {
@@ -263,6 +297,10 @@ public class FetchData implements Runnable {
                                     : "";
                             value.append(PIPE_SEPARATOR);
                             value.append(cVal);
+                            if(IsAKey){
+                                pKeys.append(PIPE_SEPARATOR);
+                                pKeys.append(cVal);
+                            }
 
                         } else if (columnType.contains("timestamp") || columnType.contains("TIMESTAMP")) {
 
@@ -275,12 +313,20 @@ public class FetchData implements Runnable {
 
                                 value.append(PIPE_SEPARATOR);
                                 value.append(dtStr);
+                                if(IsAKey){
+                                    pKeys.append(PIPE_SEPARATOR);
+                                    pKeys.append(dtStr);
+                                }
 
                             } catch (Exception e) {
 
                                 logger.error(getDbType(), e);
                                 value.append(PIPE_SEPARATOR);
                                 value.append("");
+                                if(IsAKey){
+                                    pKeys.append(PIPE_SEPARATOR);
+                                    pKeys.append("");
+                                }
                             }
 
                         } else if (columnType.contains("DATE") || columnType.contains("date")) {
@@ -294,6 +340,10 @@ public class FetchData implements Runnable {
 
                                 value.append(PIPE_SEPARATOR);
                                 value.append(dtStr);
+                                if(IsAKey){
+                                    pKeys.append(PIPE_SEPARATOR);
+                                    pKeys.append(dtStr);
+                                }
 
                             } catch (Exception e) {
 
@@ -301,6 +351,10 @@ public class FetchData implements Runnable {
 
                                 value.append(PIPE_SEPARATOR);
                                 value.append("");
+                                if(IsAKey){
+                                    pKeys.append(PIPE_SEPARATOR);
+                                    pKeys.append("");
+                                }
                             }
 
                         } else if (
@@ -315,6 +369,10 @@ public class FetchData implements Runnable {
                                     : "";
                             value.append(PIPE_SEPARATOR);
                             value.append(hValue);
+                            if(IsAKey){
+                                pKeys.append(PIPE_SEPARATOR);
+                                pKeys.append(hValue);
+                            }
 
                         } else if (columnType.equalsIgnoreCase("CLOB")) {
                             // Clob data
@@ -324,6 +382,10 @@ public class FetchData implements Runnable {
                                     : "";
                             value.append(PIPE_SEPARATOR);
                             value.append(cValue);
+                            if(IsAKey){
+                                pKeys.append(PIPE_SEPARATOR);
+                                pKeys.append(cValue);
+                            }
 
                         } else {
 
@@ -333,29 +395,50 @@ public class FetchData implements Runnable {
                                     : "";
                             value.append(PIPE_SEPARATOR);
                             value.append(oVal);
+                            if(IsAKey){
+                                pKeys.append(PIPE_SEPARATOR);
+                                pKeys.append(oVal);
+                            }
                         }
                     }
 
                     value.append(PIPE_SEPARATOR);
+                    if(pKeys.length()>0) {
+                        pKeys.append(PIPE_SEPARATOR);
+                    }
 
                     String val = StringUtils.normalizeSpace(value.toString()).trim();
-
+                    String uKeys = StringUtils.normalizeSpace(pKeys.toString()).trim();
+                    if(uKeys!=null && uKeys.length()>0){
+                        key=uKeys;
+                    }
                     if (val != null && val.trim().length() > 0) {
-
                         valSize = valSize + val.getBytes().length;
                         keySize = keySize + key.getBytes().length;
                     }
                     //TODO------
+                   if(getPrimaryKeys()!=null && getPrimaryKeys().length()>0){
+                       if (getHashMap().containsKey(uKeys.trim())) {
+                           int dupNumber = getDuplicateNumber(getHashMap(), uKeys.trim());
+                          // int dupNumber = Collections.frequency(getHashMap().keySet(), uKeys.trim());
+                           String dupKey = uKeys.trim() + "DUP" + dupNumber;
+                           getHashMap().put(dupKey, val);
+                       } else {
+                           getHashMap().put(uKeys.trim(), val);
+                       }
 
-                    if(getHashMap().containsKey(key.trim()))
-                    {
-                     int dupNumber=   getDuplicateNumber(getHashMap(),key.trim());
-                        String dupKey=key.trim()+"DUP"+dupNumber;
-                        getHashMap().put(dupKey, val);
-                    }
-                    else {
-                        getHashMap().put(key.trim(), val);
-                    }
+                   }else {
+                       if (getHashMap().containsKey(key.trim())) {
+                           int dupNumber = getDuplicateNumber(getHashMap(), key.trim());
+                           //int dupNumber = Collections.frequency(getHashMap().keySet(), key.trim());
+                           String dupKey = key.trim() + "DUP" + dupNumber;
+                           getHashMap().put(dupKey, val);
+                       } else {
+                           getHashMap().put(key.trim(), val);
+                       }
+                   }
+
+
 
                 } catch (Exception e) {
 
@@ -397,8 +480,9 @@ public class FetchData implements Runnable {
 
             JdbcUtil jdbcUtil = new JdbcUtil();
 
-            jdbcUtil.closeResultSet(rs);
-            jdbcUtil.closeStatement(stmt);
+            JdbcUtil.closeResultSet(rs);
+            JdbcUtil.closeStatement(stmt);
+            JdbcUtil.closeConnection(con);
             //logger.info("Statement execution completed"+chunk );
         }
     }
@@ -593,6 +677,13 @@ public class FetchData implements Runnable {
         this.sourceTableMetadataMap = sourceTableMetadataMap;
     }
 
+    public int getChunkNum() {
+        return chunkNum;
+    }
+
+    public void setChunkNum(int chunkNum) {
+        this.chunkNum = chunkNum;
+    }
     /**
      * @return the timeTaken
      */
@@ -667,5 +758,33 @@ public class FetchData implements Runnable {
         }
 
         return blobString;
+    }
+
+    private String getSuppliedPrimaryKey(AppProperties appProperties) {
+        String pkeys =null;
+        if(appProperties!=null) {
+            String tableName=appProperties.getTableName();
+            if (appProperties.getPrimaryKeyMap() != null
+                    && !appProperties.getPrimaryKeyMap().isEmpty()
+                    && appProperties.getPrimaryKeyMap().get(tableName.toUpperCase()) != null) {
+                pkeys = appProperties.getPrimaryKeyMap().get(tableName.toUpperCase());
+            }
+        }
+        return pkeys;
+    }
+
+    private boolean isAnUniqueKey( String column) {
+        String id =null;
+        String suppliedPrimaryKey=getPrimaryKeys();
+        if(suppliedPrimaryKey!=null && suppliedPrimaryKey.trim().length()>0){
+            String cols[]=suppliedPrimaryKey.split(",");
+            if(cols!=null &&cols.length>0 ) {
+                for(int i=0; i< cols.length; i++){
+                    if(column!=null && column.equalsIgnoreCase(cols[i].trim()))
+                        return true;
+                }
+            }
+        }
+        return false;
     }
    }
