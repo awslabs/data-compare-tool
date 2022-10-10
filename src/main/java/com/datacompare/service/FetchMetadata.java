@@ -745,7 +745,7 @@ public class FetchMetadata {
 						condition.append(primaryKey).append(" >=").append(startRange).append(" and ").append(primaryKey)
 								.append(" <= ").append(endRange).append(" order by ").append(sortKey);
 					}else{
-						condition.append(primaryKey).append(" > =").append(startRange).append(" and ").append(primaryKey)
+						condition.append(primaryKey).append(" >=").append(startRange).append(" and ").append(primaryKey)
 								.append(" <= ").append(endRange).append(" order by ").append(sortKey);
 					}
 				}
