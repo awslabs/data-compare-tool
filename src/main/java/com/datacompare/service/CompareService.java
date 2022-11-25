@@ -11,11 +11,10 @@
 package com.datacompare.service;
 
 import java.io.FileWriter;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
+import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -88,8 +87,8 @@ public class CompareService {
 	public void executeComparision(AppProperties appProperties) {
 		
 	  	try {
-			
-	  		setConnections(appProperties); 
+			if(!DataSource.getInstance().isPoolInitialized())
+	  		  setConnections(appProperties);
   			
   			if(DataSource.getInstance().isPoolInitialized()) { 
 	  			long rowNo = 1;
@@ -97,76 +96,34 @@ public class CompareService {
   				DateUtil dateUtil = new DateUtil();
   				String executionStartedAt = dateUtil.getExecutionDate(date);
   				String appendDateToFileNames = dateUtil.getAppendDateToFileName(date);
-  				CompareController.reportOutputFolder = appProperties.getOutputFolderPath(); 
-  				
-  				StringBuilder data = new StringBuilder();
-  				
-  	            data.append("<html><head><title>Data Compare Results</title><style>table{border: 1px solid #ddd; border-radius: 13px; border-collapse: collapse;} th, td {border-bottom: 1px solid #ddd;border-collapse: collapse; font-family: Arial; font-size: 10pt;} th, td {padding: 10px;}	th {text-align: left;} table {border-spacing: 5px; width: 100%; background-color: #f1f1c1;	border-color: gray;} table tr:nth-child(even) {background-color: #eee;} table tr:nth-child(odd) {background-color: #fff;} table th {color: white; background-color: black;}	</style></head><body>")
-				.append("<table><thead><tr><th>S.NO</th><th>TABLE</th><th>DETAILS</th><th>EXECUTION</th></tr></thead><tbody>");
-  	            
+  				CompareController.reportOutputFolder = appProperties.getOutputFolderPath();
+
 				List<String> columnList = getColumnList(appProperties.getColumns());
 
 				if (appProperties.getTableName() != null && !appProperties.getTableName().isEmpty()
 						&& !appProperties.isIgnoreTables()) {
-  					
   					String[] tableNameParts = appProperties.getTableName().split(",");
-  					
-  					for (String tableName : tableNameParts) { 
-
+  					for (String tableName : tableNameParts) {
 						CompareResult dto = compare(appProperties, /*getSourceConn(), getTargetConn(),*/
 								appProperties.getSchemaName(), tableName, columnList);
 
-			  			String executedTableName = appProperties.getSchemaName() + "." + tableName;
-			  			
-			  			summary(executedTableName, data, executionStartedAt, rowNo++, columnList, dto, appProperties);
   					}
 		  			
   				} else {
   					
   					String[] schemaParts = appProperties.getSchemaName().split(",");
   					
-  					for (String schemaName : schemaParts) { 
-  						
-						List<CompareResult> dtos = compareSchema(appProperties, /*getSourceConn(), getTargetConn(),*/ schemaName, columnList);
-	  					
-	  					for (CompareResult dto : dtos) {
-							
-				  			String executedTableName = schemaName + "." + dto.getTableName();
-				  			
-	  						summary(executedTableName, data, executionStartedAt, rowNo++, columnList, dto, appProperties);
-	  					}
+  					for (String schemaName : schemaParts) {
+						String[] schemas = schemaName.split(":");
+						if(schemas.length>0)
+						appProperties.setSchemaName(schemas[0]);
+						if(schemas.length>1)
+						appProperties.setTargetSchemaName(schemas[1].toLowerCase());
+						List<CompareResult> dtos = compareSchema(appProperties, /*getSourceConn(), getTargetConn(),*/  columnList);
+
 					}
   				}
 
-				String jobName = appProperties.getJobName();
-				jobName = (jobName != null && !jobName.isEmpty()) ? jobName : "data_comparison_result";
-				String fileName = jobName + "_" + appendDateToFileNames + ".html";
-
-				String summaryReportCsvFileNameWithPath = getSummaryReportCsvFileNameWithPath(appendDateToFileNames, jobName, CompareController.reportOutputFolder);
-				String summaryReportCsvFileName = jobName + "_" + appendDateToFileNames + ".csv";
-
-				data.append("<tr><td><b>")
-						.append("Summary Report In CSV</b>")
-						.append("</td>")
-						.append("<td colspan='6'>")
-						.append("<a href='")
-						.append(summaryReportCsvFileName)
-						.append("'>")
-						.append("View Details in CSV File ")
-						//.append(summaryReportCsvFileNameWithPath)
-						.append("</a>")
-						.append("</td></tr>");
-
-				data.append("</tbody>")
-						.append("</table>")
-						.append("</body>")
-						.append("</html>");
-
-				FileUtil fileWrite = new FileUtil();
-				fileWrite.writeDataToFile(data, fileName, CompareController.reportOutputFolder);
-				CompareController.reportFileName = fileName;
-
-				convertSummaryReportHtmlFileToCsvFile(data, summaryReportCsvFileNameWithPath);
 			} else {
   				
   				logger.info("Either Source or Target DB connection is not established."); 
@@ -185,52 +142,7 @@ public class CompareService {
 		}
 	}
 
-	/**
-	 * 
-	 * @param executedTableName
-	 * @param data
-	 * @param executionStartedAt
-	 * @param rowNo
-	 * @param columnList
-	 * @param dto
-	 * @param appProperties
-	 */
-	private void summary(String executedTableName, StringBuilder data, String executionStartedAt, long rowNo,
-			List<String> columnList, CompareResult dto, AppProperties appProperties) {
 
-		String result = (dto.getResult() != null) ? dto.getResult() : "NA";
-		String timeTaken = new DateUtil().timeDiffFormatted(dto.getTimeTaken());
-		timeTaken = (timeTaken != null) ? timeTaken : "";
-		long sourceTableCount = dto.getRowCountSource();
-		long targetTableCount = dto.getRowCountTarget();
-		long matchedRows = 0;
-		long missingRows = dto.getSourceFailedRowCount();
-		long unmatchedRows = dto.getValueMismatchCount();
-		long invalidRows = dto.getTargetFailedRowCount();
-		String reason = null;
-		
-		if("Detail".equals(appProperties.getReportType())) {
-			
-			matchedRows = sourceTableCount - unmatchedRows - missingRows;
-			reason = (dto.getReason() != null) ? dto.getReason()
-					: ((sourceTableCount == matchedRows && sourceTableCount > 0 && !"Failed".equals(dto.getResult()))
-							? "Data Matched" : "");
-			dto.setReason(reason);
-			dto.setMatchedRowCount(matchedRows);
-			
-		} else if("Basic".equals(appProperties.getReportType())) {	
-			
-			reason = (dto.getReason() != null) ? dto.getReason()
-					: ((sourceTableCount == targetTableCount) ? "Counts Matched" : "Counts Mismatch");
-			dto.setReason(reason);
-		}
-
-		logSummary(dto, appProperties.getReportType());
-
-		prepareSummaryReport(data, appProperties, columnList, dto, rowNo, sourceTableCount, targetTableCount,
-				matchedRows, missingRows, unmatchedRows, invalidRows, executedTableName, result, reason, timeTaken,
-				executionStartedAt);
-	}
 	
 	/**
 	 * 
@@ -267,7 +179,7 @@ public class CompareService {
   			//logger.info("Target DB Connection Details: " + targetConn);
   			
   			//try the pool start
-			DataSource.getInstance().initializePool(sourceDb, targetDb);
+			 DataSource.getInstance().initializePool(sourceDb, targetDb);
 	  		/*Connection ssscon=DataSource.getInstance().getSourceDBConnection();
 	  		logger.info("Successfully Retrieved a connection " + ssscon);
 	  		Connection ssscon2=DataSource.getInstance().getSourceDBConnection();
@@ -280,8 +192,8 @@ public class CompareService {
 	  		ssscon.close();
 	  		ssscon2.close();
 	  		ssscon3.close();
-	  		ssscon4.close();
-	  		logger.info("Successfully closed the connection and put it in pool");*/
+	  		ssscon4.close();*/
+	  		logger.info("Successfully initialized the pool");
 	  		//try the pool end
 	  		
   			
@@ -308,174 +220,30 @@ public class CompareService {
 		//setTargetConn(targetConn); 
 	}
 	
+
 	/**
-	 * 
-	 * @param data
-	 * @param appProperties
-	 * @param columnList
-	 * @param dto
-	 * @param rowNo
-	 * @param sourceTableCount
-	 * @param targetTableCount
-	 * @param matchedRows
-	 * @param missingRows
-	 * @param unmatchedRows
-	 * @param invalidRows
-	 * @param executedTableName
-	 * @param result
-	 * @param reason
-	 * @param timeTaken
-	 * @param executionStartedAt
-	 */
-	private void prepareSummaryReport(StringBuilder data, AppProperties appProperties, List<String> columnList,
-			CompareResult dto, long rowNo, long sourceTableCount, long targetTableCount, long matchedRows,
-			long missingRows, long unmatchedRows, long invalidRows, String executedTableName, String result, String reason,
-			String timeTaken, String executionStartedAt) {
-		
-		data.append("<tr>")
-		.append("<td style='vertical-align: top;'><b>").append(Long.toString(rowNo)).append("</b></td>")
-		.append("<td style='vertical-align: top;'>")
-		.append("<table>")
-		.append("<tr><td><b>Name</b></td><td>").append(executedTableName).append("</td></tr>");
-		
-		if(appProperties.isIgnoreColumns() && !columnList.isEmpty()) {
-			
-			data.append("<tr><td><b>Columns Excluded from Comparison</b></td><td>")
-			.append(columnList.toString()).append("</td></tr>");
-			
-		} else if(!columnList.isEmpty()) {
-			
-			data.append("<tr><td><b>Columns Included for Comparison</b></td><td>")
-			.append(columnList.toString()).append("</td></tr>");
-			
-		} else {
-			
-			data.append("<tr><td><b>Columns</b></td><td>All</td></tr>");
-		}
-		
-		data.append("<tr><td><b>Max Decimals Compared</b></td><td>").append(appProperties.getMaxDecimals()).append("</td></tr>");
-		data.append("<tr><td><b>Max Text Size Compared</b></td><td>").append(appProperties.getMaxTextSize()).append("</td></tr>");
-
-		if (appProperties.isCompareOnlyDate()) {
-
-			data.append("<tr><td><b>Compared Only Date</b></td><td>Yes</td></tr>");
-		}
-
-		data.append("</table>")
-		.append("</td>")
-		.append("<td style='vertical-align: top;'>")
-		.append("<table>")
-		.append("<tr><td><b>Source Table Count</b></td><td>").append(sourceTableCount).append("</td></tr>")
-		.append("<tr><td><b>Target Table Count</b></td><td>").append(targetTableCount).append("</td></tr>");
-		
-		if("Detail".equals(appProperties.getReportType())) {
-			
-			data.append("<tr><td><b>Matched Rows</b></td><td>").append(matchedRows).append("</td></tr>");
-			
-			if(unmatchedRows > 0) {
-				data.append("<tr><td><b>Unmatched Rows</b></td><td>").append(unmatchedRows).append("</td></tr>");
-			}
-			
-			if(missingRows > 0) {
-				data.append("<tr><td><b>Missing Rows</b></td><td>").append(missingRows).append("</td></tr>");
-			}
-			
-			if(invalidRows > 0) {
-				data.append("<tr><td><b>Additional Rows in Target</b></td><td>").append(invalidRows).append("</td></tr>");
-			}
-		}
-		
-		data.append("</table>")
-		.append("</td>")
-		.append("<td style='vertical-align: top;'>")
-		.append("<table>")
-		.append("<tr><td><b>Started at</b></td><td>").append(executionStartedAt).append("</td></tr>")
-		.append("<tr><td><b>Time Taken</b></td><td>").append(timeTaken).append("</td></tr>")
-		.append("<tr><td><b>Status</b></td><td>").append(result).append("</td></tr>")
-		.append("<tr><td><b>Message</b></td><td>").append(reason).append("</td></tr>")
-		;
-
-		if (dto.getFilename() != null && dto.getFilename().trim().endsWith(".html")) {
-
-			data.append("<tr><td><b>Detailed Report</b></td><td>").append("<a href='").append(dto.getFilename())
-					.append("'>View Details</a></td></tr>");
-
-			String detailedReportCsvFileName= getDetailedReportCsvFileName(appProperties.getSchemaName(),dto.getTableName());
-
-			data.append("<tr><td><b>Detailed Report In CSV</b></td><td>").append("<a href='").append(detailedReportCsvFileName)
-					.append("'>View Details in CSV File</a></td></tr>");
-
-		}
-
-		data.append("</table>")
-		.append("</td>")
-		.append("</tr>");
-
-		if (appProperties.getFilter() != null && !appProperties.getFilter().isEmpty()) {
-			data.append("<tr><td ><b>").append(appProperties.getFilterType())
-					.append(" Filter Used</b></td><td colspan='6' >&nbsp;&nbsp;").append(appProperties.getFilter()).append("</td></tr>");
-		}
-	}
-	
-	/**
-	 * 
+	 *
 	 * @param columns
 	 * @return
 	 */
-	private List<String> getColumnList(String columns) { 
-		
+	private List<String> getColumnList(String columns) {
+
 		List<String> columnsList = new ArrayList<String>();
-		
+
 		if(columns != null && !columns.isEmpty()) {
-				
+
 			String[] columnParts = columns.split(",");
-			
+
 			for (String column : columnParts) {
-				
+
 				columnsList.add(column.trim());
 			}
 		}
-		
+
 		return columnsList;
 	}
-	
-	/**
-	 * 
-	 * @param dto
-	 * @param reportType
-	 */
-	private void logSummary(CompareResult dto, String reportType) {
-		
-		StringBuilder info = new StringBuilder();
-		
-		String timeTaken = new DateUtil().timeDiffFormatted(dto.getTimeTaken());
-		
-		info.append("\nSummary of table data comparision");
-		info.append("\n----------------------------------------------------------\n");
-		info.append("\nTotal time taken = "); 
-		info.append(timeTaken);
-		info.append("\nTotal row count in source table = ");
-		info.append(dto.getRowCountSource());
-		info.append("\nTotal row count in target table = ");
-		info.append(dto.getRowCountTarget());
-		info.append("\nResult = ");
-		info.append(dto.getResult());
-		info.append("\nMessage = "); 
-		info.append(dto.getReason());
-		
-		if("Detail".equals(reportType)) {
-			
-			info.append("\nMatched Rows Count = ");
-			info.append(dto.getMatchedRowCount());
-			info.append("\nFailed Row Count = ");
-			info.append(dto.getFailedRowNumber());
-		}
-		
-		info.append("\n----------------------------------------------------------\n");
-		
-		logger.info(info.toString());
-	}
-	
+
+
 	/**
 	 * 
 	 * @param db
@@ -570,13 +338,9 @@ public class CompareService {
 	 * @return
 	 */
 	public CompareResult compare(AppProperties appProperties,
-			String schemaName,String tableName,List<String> columnList) {
-		if("Detail".equals(appProperties.getReportType())) {
+			String schemaName,String tableName,List<String> columnList) throws Exception {
 			return compareDetailData(appProperties, schemaName, tableName, columnList);
-		} else if("Basic".equals(appProperties.getReportType())) {
-			return compareBasicData(appProperties,schemaName, tableName);
-		}
-		return null;
+
 	}
 	
 	/**
@@ -588,8 +352,8 @@ public class CompareService {
 	 * @return
 	 */
 	private CompareResult compareDetailData(AppProperties appProperties,
-			String schemaName, String tableName, List<String> columnList) {
-		
+			String schemaName, String tableName, List<String> columnList) throws Exception {
+
 		String sourceDBType = appProperties.getSourceDBType().toUpperCase();
 		int maxNoofThreads = appProperties.getMaxNoofThreads();
 		boolean displayCompleteData = appProperties.isDisplayCompleteData();
@@ -602,106 +366,64 @@ public class CompareService {
 
         long usedMemory = 0;
 		try {
-			checkIfTableExistsInPg(schemaName.toLowerCase(), tableName.toLowerCase(), "POSTGRESQL"/*, targetConn*/);
+			checkIfTableExistsInPg(appProperties.getTargetSchemaName().toLowerCase(), tableName.toLowerCase(), "POSTGRESQL"/*, targetConn*/);
             long rowCount=0;
-			long sourceRowCount= new FetchMetadata(true).getTotalRecords(/*sourceConn,*/schemaName.toUpperCase(), tableName.toUpperCase(),null);
-			long targetRowCount= new FetchMetadata(false).getTotalRecords(/*targetConn,*/schemaName.toUpperCase(), tableName.toUpperCase(),null);
-            if(sourceRowCount>targetRowCount)
-               rowCount=sourceRowCount;
-			else {
-				rowCount = targetRowCount;
-				additionalrows = targetRowCount-sourceRowCount;
-			}
-			FetchMetadata fetchSourceMetadata = new FetchMetadata(sourceDBType, null, /*sourceConn,true,*/
-					schemaName.toUpperCase(), tableName.toUpperCase(), rowCount, null, null, false, null, columnList, appProperties,true,additionalrows);
-			FetchMetadata fetchTargetMetadata = new FetchMetadata("POSTGRESQL", sourceDBType, /*targetConn, false,*/
-					schemaName.toLowerCase(), tableName.toLowerCase(), rowCount,
-					fetchSourceMetadata.getSortKey(), fetchSourceMetadata.getPrimaryKey(),
-					fetchSourceMetadata.isHasNoUniqueKey(),
-					fetchSourceMetadata.getTableMetadataMap(), columnList, appProperties,false,additionalrows);
-		  	        fetchTargetMetadata.setTargetRowCount(targetRowCount);
-			        fetchSourceMetadata.setTargetRowCount(targetRowCount);
- 			List<String> sourceChunks = fetchSourceMetadata.getChunks();
-			List<String> targetChunks = fetchTargetMetadata.getChunks();
+
+
+			FetchMetadata fetchSourceMetadata = new FetchMetadata(  tableName,null,null,
+					 columnList,
+					 appProperties);
+
 			info.append("Schema: ");
 			info.append(schemaName);
 			info.append(" , Table: ");
 			info.append(tableName);
-			info.append(" , No Of Chunks: ");
-			info.append(sourceChunks.size());
-			logger.info(info.toString());
-			int numChunks = sourceChunks.size();
+
+
 			int i;
 			info = new StringBuilder();
-			info.append("No Of Chunks to run: ");
-			info.append(numChunks);
-			info.append("\n###############################################################\n");
+		   info.append("\n###############################################################\n");
 			logger.info(info.toString());
-			Map<String, String> mismatchSourceData = new ConcurrentHashMap<String, String>();
-			Map<String, String> mismatchTargetData = new ConcurrentHashMap<String, String>();
-			List<String> failTuple = Collections.synchronizedList(new ArrayList<String>());
-			String result = "Completed";
-			List<Long> sourceCountList = Collections.synchronizedList(new ArrayList<Long>());
-			List<Long> targetCountList = Collections.synchronizedList(new ArrayList<Long>());
-			List<Long> sourceTimeTaken = Collections.synchronizedList(new ArrayList<Long>());
-			List<Long> targetTimeTaken = Collections.synchronizedList(new ArrayList<Long>());
 			ExecutorService executor = Executors.newFixedThreadPool(maxNoofThreads);
-			for (i = 0; i < numChunks; i++) {
-				String targetChunk = fetchSourceMetadata.isHasNoUniqueKey()
-						? getTargetChunkWhenNoUniqueKey(sourceChunks.get(i)) : sourceChunks.get(i);
-				ExecuteChunk executeChunk = new ExecuteChunk(sourceDBType, "POSTGRESQL", sourceChunks.get(i),
-						targetChunk, fetchSourceMetadata.getSql(), fetchTargetMetadata.getSql(), i, numChunks,
-						/*sourceConn, targetConn,*/ fetchSourceMetadata.getTableMetadataMap(),
-						fetchTargetMetadata.getTableMetadataMap(), appProperties,fetchSourceMetadata.isPrimeryKeySupplied(appProperties,tableName));
-				executeChunk.setSourceData(mismatchSourceData);
-				executeChunk.setTargetData(mismatchTargetData);
-				executeChunk.setFailTuple(failTuple);
-				executeChunk.setResult(result);
-				executeChunk.setSourceCount(sourceCountList);
-				executeChunk.setTargetCount(targetCountList);
-				executeChunk.setSourceTimeTaken(sourceTimeTaken);
-				executeChunk.setTargetTimeTaken(targetTimeTaken);
-				executeChunk.setHasNoUniqueKey(fetchSourceMetadata.isHasNoUniqueKey());
-				executor.execute(executeChunk);
-			}
-			executor.shutdown();
-			while (!executor.isTerminated()) {
-	        }
-			logger.info("Finished all chunks");
-			logTimeTaken(sourceTimeTaken, targetTimeTaken);
-			dto.setResult(result);
-			dto.setFailTuple(failTuple);
-			info = new StringBuilder();
-			info.append("\n----------------------------------------------------\n");
-			info.append("Finished analyzing the data for ");
-			info.append(schemaName);
-			info.append(".");
-			info.append(tableName);
-			logger.info(info.toString());
-			long sourceCount = getCount(sourceCountList);
-			long targetCount = getCount(targetCountList);
-			logger.info("Size of the source mismatch data before final validation"+ mismatchSourceData.size());
-			logger.info("Size of the target mismatch data before final validation "+ mismatchTargetData.size());
 
-			ExecutorService validationExecutor = Executors.newFixedThreadPool(1);
-			ValidateChunk executeChunk = new ValidateChunk(mismatchSourceData,mismatchSourceData, mismatchTargetData,fetchSourceMetadata.isHasNoUniqueKey(),fetchSourceMetadata.isPrimeryKeySupplied(appProperties,tableName),numChunks+1);
-			validationExecutor.execute(executeChunk);
-			validationExecutor.shutdown();
-			while (!validationExecutor.isTerminated()) {
+			Statement stmt = null;
+			ResultSet rs = null;
+			Connection con=null;
+			try {
+				con =  DataSource.getInstance().getTargetDBConnection() ;
+
+				//stmt = getConnection().createStatement();
+				stmt = con.createStatement();
+				 start = System.currentTimeMillis();
+				long keySize = 0;
+				long valSize = 0;
+				String query = appProperties.getSql();
+				//logger.debug(query);
+				if(query!=null && !query.trim().equals("")) {
+					rs = stmt.executeQuery(query);
+				}
+			} catch (SQLException ex) {
+
+				ex.printStackTrace();
+				logger.error("DB", ex);
+
+			} finally {
+
+				JdbcUtil jdbcUtil = new JdbcUtil();
+
+				JdbcUtil.closeResultSet(rs);
+				JdbcUtil.closeStatement(stmt);
+				JdbcUtil.closeConnection(con);
+				//logger.info("Statement execution completed"+chunk );
 			}
-			dto.setRowCountSource(sourceCount);
-			dto.setRowCountTarget(targetCount);
-			dto.setTableName(tableName);
-			writeDataToFile(fetchSourceMetadata, mismatchSourceData, fetchTargetMetadata, mismatchTargetData, dto,
-					schemaName, displayCompleteData,targetRowCount,appProperties,tableName);
-		} catch (Exception ex) {
-			logger.error(ex.getMessage(), ex);
-			if (dto.getReason() == null) {
-				dto.setReason(ex.getMessage());
-			}
-			dto.setTableName(tableName);
-			dto.setResult("Failed");
+		} catch (SQLException ex) {
+
+			ex.printStackTrace();
+			logger.error("db", ex);
+
 		}
+
+
 		long end = System.currentTimeMillis();
 		long timeTaken = end - start;
 		dto.setTimeTaken(timeTaken/1000 );
@@ -821,61 +543,7 @@ public class CompareService {
 		return count;
 	}
 	
-	/**
-	 * 
-	 * @param appProperties
-	 * @param schemaName
-	 * @param tableName
-	 * @return
-	 */
-	private CompareResult compareBasicData(AppProperties appProperties,
-			String schemaName, String tableName ){
-		String sourceDBType = appProperties.getSourceDBType().toUpperCase();
-		CompareResult result = new CompareResult();
-		long start = System.currentTimeMillis();
-		StringBuilder info = new StringBuilder();
-		// Get the Java runtime
-       // Runtime runtime = Runtime.getRuntime();
-        long usedMemory = 0;
-		try {
-			checkIfTableExistsInPg(schemaName.toLowerCase(), tableName.toLowerCase(), "POSTGRESQL"/*, targetConn*/);
-			FetchMetadata fetchSourceMetadata = new FetchMetadata(sourceDBType, null, /*sourceConn, true,*/
-					schemaName.toUpperCase(), tableName.toUpperCase(), 0, null, null, false, null, null, appProperties,true,0);
-			FetchMetadata fetchTargetMetadata = new FetchMetadata("POSTGRESQL", null, /*targetConn, false,*/
-					schemaName.toLowerCase(), tableName.toLowerCase(), 0, null, null, false, null, null, appProperties,false,0);
-			info = new StringBuilder();
-			info.append("\n----------------------------------------------------\n");
-			info.append("Finished fetching basic the data for ");
-			info.append(schemaName);
-			info.append(".");
-			info.append(tableName);
-			logger.info(info.toString());
-			long sourceTotalRowCount = fetchSourceMetadata.getSourceRowCount();
-			result.setRowCountSource(sourceTotalRowCount);
-			long targetTotalRowCount = fetchTargetMetadata.getTargetRowCount();
-			result.setRowCountTarget(targetTotalRowCount);
-			result.setTableName(tableName);
-			result.setResult("Completed");
-		} catch (Exception ex) {
-			
-			logger.error(ex.getMessage(), ex);
-			
-			if (result.getReason() == null) {
-				
-				result.setReason(ex.getMessage());
-			}
-			
-			result.setTableName(tableName);
-			result.setResult("Failed");
-		} 
 
-		long end = System.currentTimeMillis();
-		long timeTaken = end - start;
-		result.setTimeTaken(timeTaken/1000 );
-		result.setUsedMemory(usedMemory); 
-		
-		return result;
-	}
 	
 	/**
 	 * 
@@ -1413,12 +1081,11 @@ public class CompareService {
 	/**
 	 * 
 	 * @param appProperties
-	 * @param schemaName
 	 * @param columnList
 	 * @return
 	 */
 	public List<CompareResult> compareSchema(AppProperties appProperties,
-			String schemaName, List<String> columnList) {
+			List<String> columnList) throws Exception {
 
 		List<CompareResult> tableList = new ArrayList<CompareResult>();
 		List<String> tableNames = new ArrayList<String>();
@@ -1427,21 +1094,19 @@ public class CompareService {
 		Connection sourceConn=null;
 		
 		try {
-			sourceConn =DataSource.getInstance().getSourceDBConnection();
+			sourceConn =DataSource.getInstance().getTargetDBConnection();
 			
 			List<String> ignoreTables = (appProperties.getTableName() != null && !appProperties.getTableName().isEmpty()
 					&& appProperties.isIgnoreTables()) ? Arrays.asList(appProperties.getTableName().split(","))
 					: new ArrayList<String>();
 
-			String[] types = {"TABLE"};
-			rs = sourceConn.getMetaData().getTables(null, schemaName.toUpperCase(), null, types);
+			String[] types = {"FOREIGN"};
+			rs = sourceConn.getMetaData().getTables(appProperties.getTargetDBName().toLowerCase(), appProperties.getSchemaName().toLowerCase(), null, null);
 
 			while (rs.next()) {
-
 				String tableName = rs.getString("TABLE_NAME");
 
-				if (ignoreTable(ignoreTables, tableName)) continue;
-
+				if (ignoreTable(ignoreTables, tableName) || tableName.toLowerCase().contains("awsdms") || tableName.trim().equals("") || !tableName.trim().startsWith("ppt")) continue;
 				tableNames.add(tableName);
 			}
 
@@ -1465,7 +1130,7 @@ public class CompareService {
 				info.append("Started Comparing Table Name: ");
 				info.append(tableName);
 				info.append(" in Schema: ");
-				info.append(schemaName);
+				info.append(appProperties.getSchemaName());
 				logger.info(info.toString());
 			/*	CompareResult dto = null;
 				CompareTableResults compareTableResults = new CompareTableResults(dto, appProperties, sourceConn, targetConn,
@@ -1477,12 +1142,12 @@ public class CompareService {
 			}
 			for (final String key : hashMap.keySet()) {
 				CompareResult dto = hashMap.get(key);*/
-				CompareResult dto = compare(appProperties, /*sourceConn, targetConn,*/ schemaName, tableName, columnList);
+				CompareResult dto = compare(appProperties, /*sourceConn, targetConn,*/ appProperties.getSchemaName(), tableName, columnList);
 				//if (dto.getReason() == null && !(dto.getResult() != null && "Completed".equals(dto.getResult())) ) {
 					//dto.setTableName(tableName);
 				if (dto.getReason() == null && !(dto.getResult() != null && "Completed".equals(dto.getResult()))) {
 					dto.setTableName(tableName);
-					dto.setReason("Table " + schemaName + "." + tableName + " unable to compare.");
+					dto.setReason("Table " + appProperties.getSchemaName() + "." + tableName + " unable to compare.");
 					dto.setResult("Failed");
 				}
 

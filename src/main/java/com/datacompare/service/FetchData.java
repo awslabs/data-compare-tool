@@ -136,7 +136,7 @@ public class FetchData implements Runnable {
         ResultSet rs = null;
         Connection con=null;
         try {
-            con=isSourceDB?DataSource.getInstance().getSourceDBConnection():DataSource.getInstance().getTargetDBConnection();
+            con = isSourceDB ? DataSource.getInstance().getTargetDBConnection() : DataSource.getInstance().getTargetDBConnection();
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
             SimpleDateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             getHashMap().clear();
@@ -145,347 +145,30 @@ public class FetchData implements Runnable {
             long start = System.currentTimeMillis();
             long keySize = 0;
             long valSize = 0;
-            String query = getSql() + " " + getChunk();
+            String query = getSql();
             //logger.debug(query);
             rs = stmt.executeQuery(query);
-            rs.setFetchSize(getFetchSize());
             while (rs.next()) {
-                try {
-                    String key = rs.getString("key1");
-                    StringBuilder value = new StringBuilder();
-                    StringBuilder pKeys = new StringBuilder();
-                    List<String> colNames = new ArrayList<String>(
-                            getSourceTableMetadataMap() != null && !getSourceTableMetadataMap().isEmpty()
-                                    ? getSourceTableMetadataMap().keySet() : getTableMetadataMap().keySet());
-                    for (String colName : colNames) {
-                        //Check if it is a provided pumiquekey column
-                        boolean IsAKey= isAnUniqueKey(colName);
-                        colName = "POSTGRESQL".equals(getDbType()) ? colName.toLowerCase() : colName.toUpperCase();
 
-                        TableColumnMetadata metadata = getTableMetadataMap().get(colName);
-                        TableColumnMetadata sourceMetadata = null;
-                        String columnType = metadata.getColumnType();
-                        String columnName=metadata.getColumnName();
-                        int noOfDecimals = metadata.getNoOfDecimals();
-                        int sourceNoOfDecimals = 0;
-                        if ("POSTGRESQL".equals(getDbType())) {
-                            sourceMetadata = getSourceTableMetadataMap().get(metadata.getColumnName().toUpperCase());
-                            if (sourceMetadata != null) {
-                                sourceNoOfDecimals = sourceMetadata.getNoOfDecimals();
-                            }
-                            // To handle the column names with #
-                            if(columnName.contains("#")) {
-                                if(!columnName.contains("#\"")) {
-                                //    columnName = "\"" + columnName + "\"";
-                                }
-                            }
-                        }
-                        if (columnType.contains("int") || columnType.contains("INT")) {
-
-                            long rValue = rs.getLong(columnName);
-                            value.append(PIPE_SEPARATOR);
-                            value.append(rValue);
-                            if(IsAKey){
-                                pKeys.append(PIPE_SEPARATOR);
-                                pKeys.append(rValue);
-                            }
-
-                        } else if (columnType.contains("boolean") || columnType.contains("BOOLEAN")) {
-
-                            boolean bValue = rs.getBoolean(columnName);
-                            value.append(PIPE_SEPARATOR);
-                            value.append(bValue);
-                            if(IsAKey){
-                                pKeys.append(PIPE_SEPARATOR);
-                                pKeys.append(bValue);
-                            }
-                        } else if (columnType.compareTo("DECIMAL") == 0 || columnType.compareTo("NUMBER") == 0
-                                || columnType.compareTo("numeric") == 0) {
-
-                            noOfDecimals = (sourceNoOfDecimals > 0) ? sourceNoOfDecimals : noOfDecimals;
-
-                            if (noOfDecimals > 0) {
-
-                                String decimalFormat = (sourceMetadata != null) ? sourceMetadata.getDecimalFormat()
-                                        : metadata.getDecimalFormat();
-
-                                DecimalFormat df2 = new DecimalFormat(decimalFormat);
-                                df2.setGroupingUsed(false);
-                                double doub = 0;
-
-                                if (getDbType().equals("ORACLE") && columnType.compareTo("NUMBER") == 0) {
-
-                                    doub = rs.getDouble(columnName);
-
-                                } else {
-
-                                    BigDecimal bValue = rs.getBigDecimal(columnName);
-                                    doub = (bValue != null) ? bValue.doubleValue() : 0;
-                                }
-
-                                value.append(PIPE_SEPARATOR);
-                                value.append(df2.format(doub));
-                                if(IsAKey){
-                                    pKeys.append(PIPE_SEPARATOR);
-                                    pKeys.append(doub);
-                                }
-
-                            } else {
-
-                                if (getDbType().equals("ORACLE") && columnType.compareTo("NUMBER") == 0) {
-
-                                    long lValue = rs.getLong(columnName);
-                                    value.append(PIPE_SEPARATOR);
-                                    value.append(Long.valueOf(lValue).toString());
-                                    if(IsAKey){
-                                        pKeys.append(PIPE_SEPARATOR);
-                                        pKeys.append(Long.valueOf(lValue).toString());
-                                    }
-
-                                } else {
-
-                                    String dValue = rs.getString(columnName);
-                                    String nValue = (dValue != null && !dValue.equals("null")
-                                            && dValue.trim().length() > 0) ? dValue : "0";
-                                    value.append(PIPE_SEPARATOR);
-                                    value.append(nValue);
-                                    if(IsAKey){
-                                        pKeys.append(PIPE_SEPARATOR);
-                                        pKeys.append(nValue);
-                                    }
-                                }
-                            }
-
-                        } else if (columnType.contains("float") || columnType.contains("FLOAT") || columnType.compareTo("DOUBLE") == 0) {
-
-                            noOfDecimals = (sourceNoOfDecimals > 0) ? sourceNoOfDecimals : noOfDecimals;
-
-                            if (noOfDecimals > 0) {
-
-                                String decimalFormat = (sourceMetadata != null) ? sourceMetadata.getDecimalFormat()
-                                        : metadata.getDecimalFormat();
-
-                                DecimalFormat df2 = new DecimalFormat(decimalFormat);
-                                df2.setGroupingUsed(false);
-                                double doub = rs.getDouble(columnName);
-                                value.append(PIPE_SEPARATOR);
-                                value.append(df2.format(doub));
-                                if(IsAKey){
-                                    pKeys.append(PIPE_SEPARATOR);
-                                    pKeys.append(df2.format(doub));
-                                }
-
-                            } else {
-
-                                String dValue = rs.getString(columnName);
-                                String fValue = (dValue != null && !dValue.equals("null") && dValue.trim().length() > 0)
-                                        ? dValue
-                                        : "0";
-                                value.append(PIPE_SEPARATOR);
-                                value.append(fValue);
-                                if(IsAKey){
-                                    pKeys.append(PIPE_SEPARATOR);
-                                    pKeys.append(fValue);
-                                }
-                            }
-
-                        } else if (columnType.contains("char") || columnType.contains("CHAR")) {
-
-                            String cValue = rs.getString(columnName);
-                            String cVal = (cValue != null && !cValue.equals("null") && cValue.trim().length() > 0)
-                                    ? cValue
-                                    : "";
-                            value.append(PIPE_SEPARATOR);
-                            value.append(cVal);
-                            if(IsAKey){
-                                pKeys.append(PIPE_SEPARATOR);
-                                pKeys.append(cVal);
-                            }
-
-                        } else if (columnType.contains("timestamp") || columnType.contains("TIMESTAMP")) {
-
-                            try {
-
-                                Timestamp timestamp = rs.getTimestamp(columnName);
-
-                                String dtStr = (timestamp != null) ? ((isCompareOnlyDate())
-                                        ? dateFormat.format(timestamp) : dateTimeFormat.format(timestamp)) : "";
-
-                                value.append(PIPE_SEPARATOR);
-                                value.append(dtStr);
-                                if(IsAKey){
-                                    pKeys.append(PIPE_SEPARATOR);
-                                    pKeys.append(dtStr);
-                                }
-
-                            } catch (Exception e) {
-
-                                logger.error(getDbType(), e);
-                                value.append(PIPE_SEPARATOR);
-                                value.append("");
-                                if(IsAKey){
-                                    pKeys.append(PIPE_SEPARATOR);
-                                    pKeys.append("");
-                                }
-                            }
-
-                        } else if (columnType.contains("DATE") || columnType.contains("date")) {
-
-                            try {
-
-                                java.sql.Timestamp date = rs.getTimestamp(columnName);
-
-                                String dtStr = (date != null) ? ((isCompareOnlyDate())
-                                        ? dateFormat.format(date) : dateTimeFormat.format(date)) : "";
-
-                                value.append(PIPE_SEPARATOR);
-                                value.append(dtStr);
-                                if(IsAKey){
-                                    pKeys.append(PIPE_SEPARATOR);
-                                    pKeys.append(dtStr);
-                                }
-
-                            } catch (Exception e) {
-
-                                logger.error(getDbType(), e);
-
-                                value.append(PIPE_SEPARATOR);
-                                value.append("");
-                                if(IsAKey){
-                                    pKeys.append(PIPE_SEPARATOR);
-                                    pKeys.append("");
-                                }
-                            }
-
-                        } else if (
-                                   columnType.equalsIgnoreCase("TEXT")
-                                           || columnType.equalsIgnoreCase("BYTEA")
-                                           || columnType.equalsIgnoreCase("BLOB")){
-
-                            // Binary data as MD5 hash value
-                            byte blobVal[] = rs.getBytes(columnName);
-                            String hValue = (blobVal != null && !blobVal.equals("null") && blobVal.length > 0)
-                                    ? getHash(blobVal)
-                                    : "";
-                            value.append(PIPE_SEPARATOR);
-                            value.append(hValue);
-                            if(IsAKey){
-                                pKeys.append(PIPE_SEPARATOR);
-                                pKeys.append(hValue);
-                            }
-
-                        } else if (columnType.equalsIgnoreCase("CLOB")) {
-                            // Clob data
-							Clob clob  = rs.getClob(columnName);
-                            String cValue = (clob != null && !clob.equals("null"))
-                                    ? getHash(clob.getSubString(1,(int)clob.length()).getBytes())
-                                    : "";
-                            value.append(PIPE_SEPARATOR);
-                            value.append(cValue);
-                            if(IsAKey){
-                                pKeys.append(PIPE_SEPARATOR);
-                                pKeys.append(cValue);
-                            }
-
-                        } else {
-
-                            String oValue = rs.getString(columnName);
-                            String oVal = (oValue != null && !oValue.equals("null") && oValue.trim().length() > 0)
-                                    ? oValue
-                                    : "";
-                            value.append(PIPE_SEPARATOR);
-                            value.append(oVal);
-                            if(IsAKey){
-                                pKeys.append(PIPE_SEPARATOR);
-                                pKeys.append(oVal);
-                            }
-                        }
-                    }
-
-                    value.append(PIPE_SEPARATOR);
-                    if(pKeys.length()>0) {
-                        pKeys.append(PIPE_SEPARATOR);
-                    }
-
-                    String val = StringUtils.normalizeSpace(value.toString()).trim();
-                    String uKeys = StringUtils.normalizeSpace(pKeys.toString()).trim();
-                    if(uKeys!=null && uKeys.length()>0){
-                        key=uKeys;
-                    }
-                    if (val != null && val.trim().length() > 0) {
-                        valSize = valSize + val.getBytes().length;
-                        keySize = keySize + key.getBytes().length;
-                    }
-                    //TODO------
-                   if(getPrimaryKeys()!=null && getPrimaryKeys().length()>0){
-                       if (getHashMap().containsKey(uKeys.trim())) {
-                           int dupNumber = getDuplicateNumber(getHashMap(), uKeys.trim());
-                          // int dupNumber = Collections.frequency(getHashMap().keySet(), uKeys.trim());
-                           String dupKey = uKeys.trim() + "DUP" + dupNumber;
-                           getHashMap().put(dupKey, val);
-                       } else {
-                           getHashMap().put(uKeys.trim(), val);
-                       }
-
-                   }else {
-                       if (getHashMap().containsKey(key.trim())) {
-                           int dupNumber = getDuplicateNumber(getHashMap(), key.trim());
-                           //int dupNumber = Collections.frequency(getHashMap().keySet(), key.trim());
-                           String dupKey = key.trim() + "DUP" + dupNumber;
-                           getHashMap().put(dupKey, val);
-                       } else {
-                           getHashMap().put(key.trim(), val);
-                       }
-                   }
-
-
-
-                } catch (Exception e) {
-
-                    logger.error(getDbType(), e);
-                }
+                String key = rs.getString("key1");
+                StringBuilder value = new StringBuilder();
             }
 
-            logger.debug(getDbType() + " Map Size in bytes " + (keySize + valSize) + " ,Value Size in Bytes "
-                    + valSize + " , Key Size in Bytes " + keySize);
-            new MemoryUtil().displayMemoryInfo();
+                } catch (SQLException ex) {
 
-            long end = System.currentTimeMillis();
+                    ex.printStackTrace();
+                    logger.error(getDbType(), ex);
 
-            long diffInSeconds = (end - start) / 1000;
+                } finally {
 
-            getTimeTaken().add(Long.valueOf(diffInSeconds));
+                    JdbcUtil jdbcUtil = new JdbcUtil();
 
-            String timeTaken = new DateUtil().timeDiffFormatted(diffInSeconds);
-
-            info = new StringBuilder();
-
-            info.append(getDbType());
-            info.append(" CHUNK: ");
-            //info.append(getSql());
-            //info.append(" ");
-            info.append(getChunk());
-            info.append("\n");
-            info.append("Time Taken to fetch this chunk = ");
-            info.append(timeTaken);
-
-            logger.info(info.toString());
-
-        } catch (SQLException ex) {
-
-            ex.printStackTrace();
-            logger.error(getDbType(), ex);
-
-        } finally {
-
-            JdbcUtil jdbcUtil = new JdbcUtil();
-
-            JdbcUtil.closeResultSet(rs);
-            JdbcUtil.closeStatement(stmt);
-            JdbcUtil.closeConnection(con);
-            //logger.info("Statement execution completed"+chunk );
-        }
-    }
+                    JdbcUtil.closeResultSet(rs);
+                    JdbcUtil.closeStatement(stmt);
+                    JdbcUtil.closeConnection(con);
+                    //logger.info("Statement execution completed"+chunk );
+                }
+            }
 
     private int getDuplicateNumber(Map<String, String> hashMap, String key) {
         int cnt=1;

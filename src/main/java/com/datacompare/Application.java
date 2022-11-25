@@ -210,6 +210,7 @@ public class Application implements ApplicationRunner {
     	
 		//Table Details
 		appProperties.setSchemaName(arguments.get("schemaName"));
+		appProperties.setTargetSchemaName(arguments.get("schemaName")!=null && arguments.get("schemaName").split(",").length>1 ? arguments.get("schemaName").split(",")[1]:null);
 		appProperties.setTableName(arguments.get("tableName"));
 		appProperties.setIgnoreTables((FormatUtil.getIntValue(arguments.get("ignoreTables"), 0, 0) == 1) ? true : false);
 		appProperties.setColumns(arguments.get("columns"));

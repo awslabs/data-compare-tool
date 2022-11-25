@@ -80,8 +80,6 @@ public class ExecuteChunk implements Runnable {
 	 * @param targetSql
 	 * @param chunkNo
 	 * @param numberOfChunks
-	 * @param sourceConnection
-	 * @param targetConnection
 	 * @param sourceTableMetadata
 	 * @param targetTableMetadata
 	 * @param appProperties

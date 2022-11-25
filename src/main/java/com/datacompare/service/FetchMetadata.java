@@ -69,69 +69,47 @@ public class FetchMetadata {
 
 	/**
 	 * Function reading the table meta data checking the each columns value
-	 * 
-	 * @param dbType
-	 * @param sourceDBType
-	 * @param schemaName
+	 *
 	 * @param tableName
-	 * @param rowCount
+
 	 * @param sourceSortKey
 	 * @param sourcePrimaryKey
-	 * @param sourceTableMetadataMap
 	 * @param columnList
 	 * @param appProperties
 	 * @throws Exception
 	 */
-	public FetchMetadata(String dbType, String sourceDBType, String schemaName, String tableName,
-			long rowCount, String sourceSortKey, String sourcePrimaryKey, boolean sourceHasNoUniqueKey,
-			Map<String, TableColumnMetadata> sourceTableMetadataMap, List<String> columnList,
-			AppProperties appProperties, boolean isSurceDB,long additionalrows) throws Exception {
-		
-		if (!EnumUtils.isValidEnum(DatabaseInfo.dbType.class, dbType)) throw new Exception(dbType + " not supported.");
-		this.isSourceDB=isSurceDB;
-		if("Detail".equals(appProperties.getReportType())) {
-			
-			fetchDetailData(dbType, sourceDBType, schemaName, tableName, rowCount, sourceSortKey,
-					sourcePrimaryKey, sourceHasNoUniqueKey, sourceTableMetadataMap, columnList, appProperties,additionalrows);
-			
-		} else if("Basic".equals(appProperties.getReportType())) {
-			
-			fetchBasicData( schemaName, tableName, appProperties,isSurceDB);
-		}
+ 	public FetchMetadata(String tableName,
+			String sourceSortKey, String sourcePrimaryKey,
+			 List<String> columnList,
+			AppProperties appProperties) throws Exception {
+
+		//if (!EnumUtils.isValidEnum(DatabaseInfo.dbType.class, dbType)) throw new Exception(dbType + " not supported.");
+		fetchDetailData( columnList, appProperties, tableName,
+				 sourceSortKey,  sourcePrimaryKey);
 	}
 
 	public FetchMetadata() {
 
 	}
-	
 	public FetchMetadata(boolean isSourceDB) {
 		this.isSourceDB=isSourceDB;
 	}
-
 	/**
-	 * 
-	 * @param dbType
-	 * @param sourceDBType
-	 * @param schemaName
-	 * @param tableName
-	 * @param rowCount
-	 * @param sourceSortKey
-	 * @param sourcePrimaryKey
-	 * @param sourceHasNoUniqueKey
-	 * @param sourceTableMetadataMap
+	 *
 	 * @param columnList
 	 * @param appProperties
 	 * @throws Exception
 	 */
-	private void fetchDetailData(String dbType, String sourceDBType,  String schemaName,
-			String tableName, long rowCount, String sourceSortKey, String sourcePrimaryKey, boolean sourceHasNoUniqueKey,
-			Map<String, TableColumnMetadata> sourceTableMetadataMap, List<String> columnList,
-			AppProperties appProperties, long additionalrows) throws Exception {
-		
+	private void fetchDetailData(
+			 List<String> columnList,
+			AppProperties appProperties,String tableName,
+			 String sourceSortKey, String sourcePrimaryKey) throws Exception {
+
 		StringBuilder sortKey = new StringBuilder();
 		StringBuilder primaryKey = new StringBuilder();
 		StringBuilder uniqueKeyCol = new StringBuilder();
-
+		String schemaName= appProperties.getSchemaName();
+		String targetSchemaName= appProperties.getTargetSchemaName();
 		setDbType(dbType);
 		setFetchSize(appProperties.getFetchSize());
 		setMaxDecimals(appProperties.getMaxDecimals());
@@ -139,11 +117,9 @@ public class FetchMetadata {
 
 		Map<Integer, String> primaryKeyMap = new TreeMap<Integer, String>();
 
-		fetchTableColumns(sourceDBType,  schemaName, tableName, columnList, appProperties.isIgnoreColumns());
-		fetchPrimaryColumns( schemaName, tableName, primaryKeyMap, sourceSortKey, sourcePrimaryKey,
-				sourceHasNoUniqueKey, sortKey, primaryKey, uniqueKeyCol,appProperties);
-		prepareQuery( schemaName, tableName, sortKey.toString(), primaryKey.toString(),
-				uniqueKeyCol.toString(), appProperties.getFilter(), appProperties.getFilterType(), rowCount, sourceTableMetadataMap, additionalrows,appProperties);
+		//fetchTableColumns( targetSchemaName, tableName, columnList,appProperties.getTargetDBName());
+		//fetchPrimaryColumns( targetSchemaName, tableName, primaryKeyMap, sourceSortKey, sourcePrimaryKey,false,sortKey,primaryKey,uniqueKeyCol,appProperties.getTargetDBName());
+		prepareQuery( schemaName, targetSchemaName, tableName,  primaryKey.toString(),appProperties);
 	}
 	
 	/**
@@ -166,95 +142,26 @@ public class FetchMetadata {
 
 	/**
 	 *
-	 * @param schemaName
+	 * @param sourceSchemaName
 	 * @param tableName
-	 * @param sortKey
 	 * @param primaryKey
-	 * @param uniqueKeyCol
-	 * @param filter
-	 * @param filterType
-	 * @param rowCount
-	 * @param sourceTableMetadataMap
 	 * @throws SQLException
 	 */
-	private void prepareQuery( String schemaName, String tableName, String sortKey,
-			String primaryKey, String uniqueKeyCol, String filter, String filterType, long rowCount,
-			Map<String, TableColumnMetadata> sourceTableMetadataMap, long additionalrows, AppProperties appProperties) throws SQLException {
-		
-		String query = null;
-		String sortCols = null;
-		String cols = null;
-		
-		switch (getDbType()) {
+	private void prepareQuery( String sourceSchemaName, String targetSchemaName,String tableName,
+			String primaryKey,AppProperties appProperties) throws SQLException {
+		StringBuilder sqlQuery= new StringBuilder();
+		/*if(primaryKey!=null && !primaryKey.equals("")) {
+			sqlQuery.append("select ").append(primaryKey).append(" from ").append(sourceSchemaName).append(".").append(tableName)
+					.append(" except ALL ")
+					.append(" select ").append(primaryKey).append(" from ").append(targetSchemaName).append(".").append(tableName);
+			appProperties.setSql(sqlQuery.toString());*/
 
-		case "POSTGRESQL":
-
-			sortCols = replaceColumnWithHash(getTargetColumns(sourceTableMetadataMap,true));
-
-			cols = replaceColumnWithHash(getTargetColumns(sourceTableMetadataMap,false));
-			uniqueKeyCol=replaceColumnWithHash(uniqueKeyCol);
-			
-			query = "SELECT " + uniqueKeyCol + cols + " FROM " + schemaName + "." + tableName;
+			//SELECT validatetable('ops$ora', 'crtdms', 'ppt_1', 'ppt_1');
+		sqlQuery.append("SELECT validatetable('").append(sourceSchemaName).append("' , '").append(targetSchemaName).append("','").append(tableName).append("','").append(tableName).append("')");
+		appProperties.setSql(sqlQuery.toString());
 
 
-			if(isHasNoUniqueKey()) {
-				
-				String subQuery = "SELECT " + uniqueKeyCol + cols + " FROM (" + "SELECT " + cols + " FROM " + schemaName + "." + tableName + " order by " + sortCols + ") t1";
-				
-				query = "SELECT t2.* FROM (" + subQuery + ") t2";
-			}
-			
-			generateChunksPostgresql(schemaName, tableName, filter);
-			break;
 
-		case "ORACLE":
-
-			sortCols = getSourceColumns(true);
-			cols=getSourceColumns(false);
-			query = "SELECT " + uniqueKeyCol + cols + " FROM " + schemaName + "." + tableName;
-			
-			if(isHasNoUniqueKey()) {
-				
-				String subQuery = "SELECT " + uniqueKeyCol + cols + " FROM (" + "SELECT " + cols + " FROM " + schemaName + "." + tableName  + " order by " + sortCols + ")";
-				
-				query = "SELECT * FROM (" + subQuery +  ")";
-			}
-			generateSourceChunks( schemaName, tableName, sortKey, primaryKey, filter, filterType, sortCols,rowCount,additionalrows,appProperties);
-			break;
-
-		case "SQLSERVER":
-
-			cols = getSourceColumns(false);
-			sortCols=getSourceColumns(true);
-			query = "SELECT " + uniqueKeyCol + cols + " FROM " + schemaName + "." + tableName;
-			//TODO
-			if(isHasNoUniqueKey()) {
-				String subQuery = "SELECT " + uniqueKeyCol + cols + " FROM (" + "SELECT " +  cols + " FROM " + schemaName + "." + tableName + ") t1";
-				query = "SELECT t2.* FROM (" + subQuery + " order by " + sortCols + ") t2";
-			}
-			generateSourceChunks( schemaName, tableName, sortKey, primaryKey, filter, filterType, sortCols,rowCount,additionalrows,appProperties);
-			break;
-		}
-		
-		setSql(query); 
-		
-		logger.info("\n" + getDbType() + ": SQL Query without chunk: " + getSql());
-	}
-
-	private String replaceColumnWithHash(String targetColumns) {
-
-		if(targetColumns!=null && !targetColumns.isEmpty()) {
-			String cols[] = targetColumns.split(",");
-			if (cols != null && cols.length > 0) {
-				for (int i = 0; i < cols.length; i++) {
-					if (cols[i].contains("#")) {
-						String replaceString = "\"" + cols[i] + "\"";
-						targetColumns=	targetColumns.replace(cols[i], replaceString);
-					}
-				}
-			}
-		}
-		return targetColumns;
 	}
 
 	/**
@@ -331,14 +238,14 @@ public class FetchMetadata {
 	 */
 	private void fetchPrimaryColumns( String schemaName, String tableName,
 			Map<Integer, String> primaryKeyMap, String sourceSortKey, String sourcePrimaryKey, boolean sourceHasNoUniqueKey, StringBuilder sortKey,
-			StringBuilder primaryKey, StringBuilder uniqueKeyCol,AppProperties appProperties) throws Exception {
+			StringBuilder primaryKey, StringBuilder uniqueKeyCol, String dbName) throws Exception {
 		if (!sourceHasNoUniqueKey) {
 
 			ResultSet rs = null;
 			Connection connection=null;
 			try {
-				connection=isSourceDB?DataSource.getInstance().getSourceDBConnection():DataSource.getInstance().getTargetDBConnection();
-				rs = connection.getMetaData().getPrimaryKeys(null, schemaName, tableName);
+				connection=DataSource.getInstance().getTargetDBConnection();
+				rs = connection.getMetaData().getPrimaryKeys(dbName, schemaName, tableName);
 
 				while (rs.next()) {
 
@@ -469,21 +376,20 @@ public class FetchMetadata {
 		return colName;
 	}
 	/**
-	 * 
-	 * @param sourceDBType
+	 *
 	 * @param schemaName
 	 * @param tableName
 	 * @param columnList
 	 */
-	private void fetchTableColumns(String sourceDBType,  String schemaName,
-			String tableName, List<String> columnList, boolean ignoreColumns) {
+	private void fetchTableColumns( String schemaName,
+			String tableName, List<String> columnList, String dbName) {
 		
 		Connection connection=null;
 		ResultSet rs = null;
 		
 		try {
-			connection=isSourceDB?DataSource.getInstance().getSourceDBConnection():DataSource.getInstance().getTargetDBConnection();
-			rs = connection.getMetaData().getColumns(null, schemaName, tableName, null);
+			connection=DataSource.getInstance().getTargetDBConnection();
+			rs = connection.getMetaData().getColumns(dbName, schemaName, tableName, null);
 			rs.setFetchSize(getFetchSize());
 
 			while (rs.next()) {
@@ -493,46 +399,21 @@ public class FetchMetadata {
 				String columnType = rs.getString("TYPE_NAME");
 
 				String columnName = rs.getString("COLUMN_NAME");
-				
+
 				String columnSize = rs.getString("COLUMN_SIZE");
 
 				int colSize = (columnSize != null && !columnSize.equals("null")) ? Integer.parseInt(columnSize) : 0;
 
-				if(column(columnList, columnName, ignoreColumns)) continue;
-				
+				//if(column(columnList, columnName)) continue;
+
 				if (binaryColumnType(columnType) || varcharLargeSize(columnType, colSize)) {/*
-					
+
 					*//** In case if source db is Oracle, it will check length for binary column types.
-					 *  If source db is SQLServer, it will check MD5 hash string for binary column types.*//*
-					if("ORACLE".equals(getDbType())) {
-						
-						if(varcharLargeSize(columnType, colSize)) {   
-							
-							col = "LOWER(STANDARD_HASH(NVL(" + columnName
-									+ ",'NULL'), 'MD5')) AS " + columnName;
-						} else {
-							
-							col = "DBMS_LOB.GETLENGTH(" + columnName + ") AS " + columnName;
-						}
-						
-					} else if("POSTGRESQL".equals(getDbType()) && "ORACLE".equals(sourceDBType) && !varcharLargeSize(columnType, colSize)) { 
-						
-						col = "LENGTH(" + columnName + ") as " + columnName;
-						
-					} else if("SQLSERVER".equals(getDbType())) {
-						
-						col = "HashBytes('MD5', COALESCE(" + columnName + ",'NULL')) as " + columnName;
-						
-					} else if("POSTGRESQL".equals(getDbType()) && ("SQLSERVER".equals(sourceDBType) || varcharLargeSize(columnType, colSize))) { 
-						
-						col = "MD5(COALESCE (" + columnName + ",'NULL')) as " + columnName;
-						
-					} else {
-					}*/
+					 *  If source db is SQLServer, it will check MD5 hash string for binary column types.*/
 					col = columnName;
 					//col = "LENGTH(" + columnName + ") as " + columnName;
 				} else {
-					
+
 					col = columnName;
 				}
 
@@ -672,7 +553,7 @@ public class FetchMetadata {
 		}
 		
 		logger.info("Fetch Chunks SQL Query: " + sql.toString());
-		Connection connection=isSourceDB?DataSource.getInstance().getSourceDBConnection():DataSource.getInstance().getTargetDBConnection();
+		Connection connection=isSourceDB?DataSource.getInstance().getTargetDBConnection():DataSource.getInstance().getTargetDBConnection();
 		Statement stmt = connection.createStatement();
 		ResultSet rs = stmt.executeQuery(sql.toString());
         int count=0;
@@ -824,7 +705,7 @@ public class FetchMetadata {
 
 		logger.info("Fetch Chunks SQL Query: " + sql.toString());
 		
-		Connection connection=isSourceDB?DataSource.getInstance().getSourceDBConnection():DataSource.getInstance().getTargetDBConnection();
+		Connection connection=isSourceDB?DataSource.getInstance().getTargetDBConnection():DataSource.getInstance().getTargetDBConnection();
 		Statement stmt = connection.createStatement();
 
 		ResultSet rs = stmt.executeQuery(sql.toString());
@@ -922,7 +803,7 @@ public class FetchMetadata {
 		Long totalRecords = Long.valueOf(0); 
 
 		StringBuilder sql = new StringBuilder();
-		Connection connection=isSourceDB?DataSource.getInstance().getSourceDBConnection():DataSource.getInstance().getTargetDBConnection();
+		Connection connection=isSourceDB?DataSource.getInstance().getTargetDBConnection():DataSource.getInstance().getTargetDBConnection();
 
 		sql.append("SELECT count(*) as totalrec FROM ").append(schemaName).append(".").append(tableName);
 		
@@ -1006,25 +887,7 @@ public class FetchMetadata {
 		return ( (columnType.contains("VARCHAR") || columnType.contains("varchar")) && colSize > getMaxTextSize());
 	}
 
-	/**
-	 * 
-	 * @param columnsList
-	 * @param column
-	 * @param ignoreColumn
-	 * @return
-	 */
-	private boolean column(List<String> columnsList, String column, boolean ignoreColumn) {
 
-		for (String col : columnsList) {
-			
-			if (col.equalsIgnoreCase(column)) {
-
-				return ignoreColumn;
-			}
-	    }
-		
-	    return (!columnsList.isEmpty()) ? !ignoreColumn : false;	
-	}
 
 	/**
 	 * 

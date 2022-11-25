@@ -27,10 +27,11 @@ public class AppProperties {
 	private String tgtDBSecretManagerEndPoint;
 	private String tgtDBSecretName;
 	private String primaryKeys;
+	private String sql;
 	
 	private int connectionPoolMinSize;
 	private int connectionPoolMaxSize;
-	
+
 	public HashMap<String, String> getPrimaryKeyMap() {
 		return primaryKeyMap;
 	}
@@ -57,6 +58,15 @@ public class AppProperties {
 		isSourceDB = sourceDB;
 	}
 
+	public String getSql() {
+		return sql;
+	}
+
+	public void setSql(String sql) {
+		this.sql = sql;
+	}
+
+
 	private int fetchSize;
 
 	private int maxDecimals;
@@ -66,6 +76,8 @@ public class AppProperties {
 	private int maxNoofThreads;
 
 	private String schemaName;
+
+	private String targetSchemaName;
 	
 	private String sourceDBService;
 
@@ -735,6 +747,12 @@ public class AppProperties {
 	public void setConnectionPoolMaxSize(int connectionPoolMaxSize) {
 		this.connectionPoolMaxSize = connectionPoolMaxSize;
 	}
-	
-	
+
+	public String getTargetSchemaName() {
+		return targetSchemaName;
+	}
+
+	public void setTargetSchemaName(String targetSchemaName) {
+		this.targetSchemaName = targetSchemaName;
+	}
 }
