@@ -1,5 +1,5 @@
 
-# Data Compare Tool
+# Data Validation Tool
 
 Table of Contents
 
