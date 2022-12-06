@@ -9,7 +9,10 @@ public class RunDetails {
     private String databaseName;
     private String schemaName;
     private String tableName;
-    private int run;
+    private int schemaRun;
+
+    private int tableRun;
+    private String runId;
     private Date executionDate;
 
     public RunDetails() {
@@ -30,13 +33,22 @@ public class RunDetails {
         this.tableName = tableName;
     }
 
-    public RunDetails(String sourceHostName, String targetHostName, String databaseName, String schemaName, String tableName, int run) {
+    public RunDetails(String sourceHostName, String targetHostName, String databaseName, String schemaName, String tableName, int schemaRun, int tableRun) {
         this.sourceHostName = sourceHostName;
         this.targetHostName = targetHostName;
         this.databaseName = databaseName;
         this.schemaName = schemaName;
         this.tableName = tableName;
-        this.run = run;
+        this.schemaRun = schemaRun;
+        this.tableRun=tableRun;
+    }
+    public RunDetails(String sourceHostName, String targetHostName, String databaseName, String schemaName, String tableName, int schemaRun) {
+        this.sourceHostName = sourceHostName;
+        this.targetHostName = targetHostName;
+        this.databaseName = databaseName;
+        this.schemaName = schemaName;
+        this.tableName = tableName;
+        this.tableRun=tableRun;
     }
 
     @Override
@@ -47,7 +59,8 @@ public class RunDetails {
                 ", databaseName='" + databaseName + '\'' +
                 ", schemaName='" + schemaName + '\'' +
                 ", tableName='" + tableName + '\'' +
-                ", run=" + run +
+                ", schemaRun=" + schemaRun +
+                ", tableRun=" + tableRun +
                 ", executionDate=" + executionDate +
                 '}';
     }
@@ -92,12 +105,20 @@ public class RunDetails {
         this.tableName = tableName;
     }
 
-    public int getRun() {
-        return run;
+    public int getSchemaRun() {
+        return schemaRun;
     }
 
-    public void setRun(int run) {
-        this.run = run;
+    public void setSchemaRun(int schemaRun) {
+        this.schemaRun = schemaRun;
+    }
+
+    public int getTableRun() {
+        return tableRun;
+    }
+
+    public void setTableRun(int tableRun) {
+        this.tableRun = tableRun;
     }
 
     public Date getExecutionDate() {
@@ -106,5 +127,12 @@ public class RunDetails {
 
     public void setExecutionDate(Date executionDate) {
         this.executionDate = executionDate;
+    }
+
+    public String getRunId() {
+        return runId;
+    }
+    public void setRunId(String runId) {
+        this.runId = runId;
     }
 }
