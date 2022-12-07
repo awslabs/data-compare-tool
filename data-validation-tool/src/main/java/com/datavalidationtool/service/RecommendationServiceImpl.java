@@ -178,6 +178,39 @@ public class RecommendationServiceImpl implements RecommendationService {
         return outputRunDetailsList;
     }
 
+    @Override
+    public List<RunDetails> getHostRunDetailsForSelection(DatabaseInfo databaseInfo) throws Exception {
+
+        List<RunDetails> outputRunDetailsList = new ArrayList<>();
+        String query = "SELECT * FROM public.run_details";
+
+        try (Connection dbConn = getConnection(databaseInfo);
+             PreparedStatement pst = dbConn.prepareStatement(query);
+             ResultSet rs = pst.executeQuery()) {
+
+            while (rs.next()) {
+
+                RunDetails runDetails = new RunDetails();
+                runDetails.setSourceHostName(rs.getString("source_host_name"));
+                runDetails.setTargetHostName(rs.getString("target_host_name"));
+                runDetails.setDatabaseName(rs.getString("database_name"));
+                runDetails.setSchemaName(rs.getString("schema_name"));
+                runDetails.setTableName(rs.getString("table_name"));
+                runDetails.setSchemaRun(rs.getInt("schema_run"));
+                runDetails.setTableRun(rs.getInt("table_run"));
+                runDetails.setRunId(rs.getString("run_id"));
+                runDetails.setExecutionDate(rs.getDate("execution_date"));
+
+                outputRunDetailsList.add(runDetails);
+            }
+
+        } catch (SQLException ex) {
+            logger.error("Exception while fetching table details");
+            logger.error(ex.getMessage());
+        }
+        return outputRunDetailsList;
+    }
+
     public List<Integer> getValIdFromValidationTable(RunDetails inputRunDetails_1, DatabaseInfo databaseInfo, String ValidationTableName) throws Exception {
 
         List<Integer> valIdList = new ArrayList<>();

@@ -31,4 +31,7 @@ public interface RecommendationService {
     public int insertRunDetailsRecord(RunDetails inputRunDetails_1, DatabaseInfo databaseInfo) throws Exception;
 
     List<RunDetails> getHostRunDetails(String hostName, DatabaseInfo databaseInfo) throws Exception;
+
+    List<RunDetails> getHostRunDetailsForSelection(DatabaseInfo databaseInfo) throws Exception;
+
 }

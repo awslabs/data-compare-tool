@@ -116,6 +116,22 @@ public class RecommendationController {
     }
 
 
+    //http://localhost:8080/recommendation/api/host-run-details/selection
+    @GetMapping("/host-run-details/selection")
+    public Object getHostRunDetailsSelectionResponse() throws Exception {
+
+        DatabaseInfo databaseInfo = new DatabaseInfo("localhost", 5432,
+                "postgres", null, "postgres", "postgres", false, DatabaseInfo.dbType.POSTGRESQL,
+                true, "/certs/", "changeit");
+
+        List<RunDetails> runDetailBeans = recommendationService.getHostRunDetailsForSelection(databaseInfo);
+
+        if (!runDetailBeans.isEmpty()) {
+            return getRunDetailsSelectionResponse(runDetailBeans);
+        }
+        return runDetailBeans;
+    }
+
     //http://localhost:8080/recommendation/api/host-run-details/custom?sourceHostName=localhost
     @GetMapping("/host-run-details/custom")
     public Object getHostRunDetailsCustomResponse(@RequestParam String sourceHostName) throws Exception {
@@ -127,16 +143,20 @@ public class RecommendationController {
         List<RunDetails> runDetails = recommendationService.getHostRunDetails(sourceHostName, databaseInfo);
 
         if (!runDetails.isEmpty()) {
-            return getRunDetailsCustomResponse(runDetails);
+            return getRunDetailsSelectionResponse(runDetails);
         }
         return runDetails;
     }
 
-    private static RunDetailsResponse getRunDetailsCustomResponse(List<RunDetails> runDetails) {
-        RunDetailsResponse runDetailsResponse = new RunDetailsResponse();
+
+    private static RunDetailsSelectionResponse getRunDetailsSelectionResponse(List<RunDetails> runDetails) {
+
+        RunDetailsSelectionResponse runDetailsSelectionResponse = new RunDetailsSelectionResponse();
+        List<HostDetails> hostDetailsList = new ArrayList<>();
 
         Set<String> uniqueSrcHostNm = runDetails.stream().map(run -> run.getSourceHostName()).collect(Collectors.toSet());
         for (String hostNm : uniqueSrcHostNm) {
+
             HostDetails hostDetails = new HostDetails();
             hostDetails.setHostName(hostNm);
             List<DatabaseDetails> databaseDetailsList = new ArrayList<>();
@@ -172,9 +192,10 @@ public class RecommendationController {
                 databaseDetailsList.add(databaseDetails);
             }
             hostDetails.setDatabaseList(databaseDetailsList);
-            runDetailsResponse.setHostDetails(hostDetails);
+            hostDetailsList.add(hostDetails);
         }
-        return runDetailsResponse;
+        runDetailsSelectionResponse.setHostDetailsList(hostDetailsList);
+        return runDetailsSelectionResponse;
     }
 
     //http://localhost:8080/recommendation/api/run-details/source/val-id?sourceHostName=localhost&targetHostName=localhost&databaseName=ttp
@@ -221,7 +242,7 @@ public class RecommendationController {
 
 
         List<Integer> sourceValIdFromValidationTable = new ArrayList<>();
-        if (runDetails.isPresent()) {
+        if(runDetails.isPresent()) {
             DatabaseInfo valTableDbInfo = new DatabaseInfo("localhost", 5432,
                     "ttp", null, "postgres", "postgres", false, DatabaseInfo.dbType.POSTGRESQL,
                     true, "/certs/", "changeit");
