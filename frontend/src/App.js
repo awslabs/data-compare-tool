@@ -1,29 +1,20 @@
 import logo from "./logo.svg";
 import React from "react";
+import { Route, Routes } from "react-router-dom";
 
 import "./App.css";
-import NestedSelect from "./components/Nestedselect"
 
-import CascadingSelections from "./components/CascadingSelections";
-import SchemaAndTableSelect from "./components/SchemaAndTableSelect";
 import SchemaAndTableSelectCopy from "./components/SchemaAndRunDetailsCopy";
-import RunDetailsTable from "./components/RunDetailsTable";
-
-//import Table from "./components/RunDetailsTableFinal"
-import NewSelect from "./components/Newselect"
-
-
+import Recommendation from "./components/recommendation/Recommendation";
 
 function App() {
   return (
     <div className="App">
-      {/*<CascadingSelections></CascadingSelections>*/}
-{/*<NestedSelect></NestedSelect>*/}
-        <SchemaAndTableSelectCopy></SchemaAndTableSelectCopy>
-        <br/><br/>
-        {/*<Table></Table>*/}
-        {/*<NewSelect></NewSelect>*/}
-{/*        <Example></Example>*/}
+     <Routes>
+     <Route path="/dvt/selection" element={<SchemaAndTableSelectCopy />}></Route>
+     <Route path="/dvt/recommend" element={<Recommendation />}></Route>
+     </Routes>
+       
     </div>
   );
 }

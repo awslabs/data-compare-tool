@@ -9,7 +9,9 @@ import TableCell from "@mui/material/TableCell";
 import TableBody from "@mui/material/TableBody";
 import {Box} from "@mui/material";
 import Button from "@mui/material/Button";
-import {format} from 'date-fns';
+
+import "./recommendation/css/Recommendation.css";
+
 
 const POPULATE_STATE = 'populateState'
 const CLEAR = 'clear'
@@ -328,6 +330,7 @@ function Nestedselect() {
                 name="hostname"
                 options={data1.hostDetailsList}
                 onChange={handleOnHostNameClick}
+                styles={{width:'200px'}}
             />
             <br/>
             {!state.disableDBName && (<>
@@ -398,11 +401,11 @@ function Nestedselect() {
             <br/><br/>
         {state.showTable && (<div>
                 <TableContainer component={Paper} align='center' >
-                    <Table sx={{ minWidth: 900, border:1,borderColor: 'primary.main', borderRadius:2, width:100}} aria-label="simple table">
+                    <Table className="dvttbl" sx={{ minWidth: 900, border:1,borderColor: 'primary.main', borderRadius:2, width:100}} aria-label="simple table">
                         <TableHead>
                             <TableRow>
                                 <TableCell>Sl No.</TableCell>
-                                <TableCell align="right">Table Name</TableCell>
+                                <TableCell>Table Name</TableCell>
                                 <TableCell align="right">Table Run</TableCell>
                                 <TableCell align="right">Run Date</TableCell>
                                 <TableCell align="center">Action</TableCell>
@@ -424,7 +427,7 @@ function Nestedselect() {
                                     {/*    month: "long",*/}
                                     {/*    day: "2-digit"*/}
                                     {/*}).format(row.runDate)}</TableCell>*/}
-                                    <TableCell align="center"><Box><Button variant="contained" color="secondary">Sync</Button>       <Button variant="contained" color="success">Edit</Button></Box></TableCell>
+                                    <TableCell align="center"><Box><Button variant="outlined" color="secondary">Sync</Button> &nbsp;      <Button variant="outlined" color="success">Edit</Button></Box></TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
