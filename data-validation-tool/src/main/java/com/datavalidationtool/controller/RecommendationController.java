@@ -9,16 +9,12 @@ package com.datavalidationtool.controller;
 
 import com.datavalidationtool.model.DatabaseInfo;
 import com.datavalidationtool.model.RunDetails;
-import com.datavalidationtool.model.response.*;
 import com.datavalidationtool.service.RecommendationService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.*;
 
 @RestController
 @RequestMapping("/recommendation/api")
@@ -127,7 +123,7 @@ public class RecommendationController {
         List<RunDetails> runDetailBeans = recommendationService.getHostRunDetailsForSelection(databaseInfo);
 
         if (!runDetailBeans.isEmpty()) {
-            return getRunDetailsSelectionResponse(runDetailBeans);
+            return recommendationService.getRunDetailsSelectionResponse(runDetailBeans);
         }
         return runDetailBeans;
     }
@@ -143,59 +139,69 @@ public class RecommendationController {
         List<RunDetails> runDetails = recommendationService.getHostRunDetails(sourceHostName, databaseInfo);
 
         if (!runDetails.isEmpty()) {
-            return getRunDetailsSelectionResponse(runDetails);
+            return recommendationService.getRunDetailsSelectionResponse(runDetails);
         }
         return runDetails;
     }
 
+    //http://localhost:8080/recommendation/api/source-target/records?sourceHostName=localhost&targetHostName=localhost&databaseName=ttp&schemaName=ops$ora&tableName=ppt12&schemaRun=1&tableRun=2
+    @PostMapping(path = "/source-target/records",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<Integer> getValIdFromValidationTable(@RequestBody RunDetails inputRunDetails) throws Exception {
 
-    private static RunDetailsSelectionResponse getRunDetailsSelectionResponse(List<RunDetails> runDetails) {
 
-        RunDetailsSelectionResponse runDetailsSelectionResponse = new RunDetailsSelectionResponse();
-        List<HostDetails> hostDetailsList = new ArrayList<>();
+        DatabaseInfo runTableDbInfo = new DatabaseInfo("localhost", 5432,
+                "postgres", null, "postgres", "postgres", false, DatabaseInfo.dbType.POSTGRESQL,
+                true, "/certs/", "changeit");
 
-        Set<String> uniqueSrcHostNm = runDetails.stream().map(run -> run.getSourceHostName()).collect(Collectors.toSet());
-        for (String hostNm : uniqueSrcHostNm) {
+        List<RunDetails> runDetailsList = recommendationService.getRunDetailsWithOptional(inputRunDetails, runTableDbInfo);
+        Optional<RunDetails> runDetails = runDetailsList.stream().findFirst();
 
-            HostDetails hostDetails = new HostDetails();
-            hostDetails.setHostName(hostNm);
-            List<DatabaseDetails> databaseDetailsList = new ArrayList<>();
 
-            Set<String> uniqueDbNm = runDetails.stream().filter(rd -> rd.getSourceHostName().equals(hostNm)).map(rd -> rd.getDatabaseName()).collect(Collectors.toSet());
-            for (String dbNm : uniqueDbNm) {
-                Set<String> uniqueSchemaNm = runDetails.stream().filter(rd -> rd.getSourceHostName().equals(hostNm) && rd.getDatabaseName().equals(dbNm)).map(rd -> rd.getSchemaName()).collect(Collectors.toSet());
-                DatabaseDetails databaseDetails = new DatabaseDetails();
-                databaseDetails.setDatabaseName(dbNm);
+        List<Integer> sourceValIdFromValidationTable = new ArrayList<>();
+        if(runDetails.isPresent()) {
+            DatabaseInfo valTableDbInfo = new DatabaseInfo("localhost", 5432,
+                    "ttp", null, "postgres", "postgres", false, DatabaseInfo.dbType.POSTGRESQL,
+                    true, "/certs/", "changeit");
 
-                List<SchemaDetails> schemaDetailsList = new ArrayList<>();
-                for (String schemaNm : uniqueSchemaNm) {
-                    SchemaDetails schemaDetails = new SchemaDetails();
-                    schemaDetails.setSchemaName(schemaNm);
-                    Set<Integer> uniqueSchemaRun = runDetails.stream().filter(rd -> rd.getSourceHostName().equals(hostNm) && rd.getDatabaseName().equals(dbNm) && rd.getSchemaName().equals(schemaNm)).map(rd -> rd.getSchemaRun()).collect(Collectors.toSet());
-                    schemaDetails.setSchemaRun(uniqueSchemaRun.stream().collect(Collectors.toList()));
-
-                    List<TableDetails> tableDetailsList = new ArrayList<>();
-                    Set<String> uniqueTableNm = runDetails.stream().filter(rd -> rd.getSourceHostName().equals(hostNm) && rd.getDatabaseName().equals(dbNm) && rd.getSchemaName().equals(schemaNm)).map(rd -> rd.getTableName()).collect(Collectors.toSet());
-                    for (String tableNm : uniqueTableNm) {
-                        Set<Integer> uniqueTableRun = runDetails.stream().filter(rd -> rd.getSourceHostName().equals(hostNm) && rd.getDatabaseName().equals(dbNm) && rd.getSchemaName().equals(schemaNm) && rd.getTableName().equals(tableNm)).map(rd -> rd.getTableRun()).collect(Collectors.toSet());
-
-                        TableDetails tableDetails = new TableDetails();
-                        tableDetails.setTableName(tableNm);
-                        tableDetails.setTableRun(uniqueTableRun.stream().collect(Collectors.toList()));
-                        tableDetailsList.add(tableDetails);
-                    }
-                    schemaDetails.setTableList(tableDetailsList);
-                    schemaDetailsList.add(schemaDetails);
-
-                }
-                databaseDetails.setSchemaList(schemaDetailsList);
-                databaseDetailsList.add(databaseDetails);
-            }
-            hostDetails.setDatabaseList(databaseDetailsList);
-            hostDetailsList.add(hostDetails);
+            String validationTableName = runDetails.get().getTableName() + "_val";
+            sourceValIdFromValidationTable = recommendationService.getValIdFromValidationTable(runDetails.get(), valTableDbInfo, validationTableName);
         }
-        runDetailsSelectionResponse.setHostDetailsList(hostDetailsList);
-        return runDetailsSelectionResponse;
+        return sourceValIdFromValidationTable;
+
+    }
+
+
+
+    //http://localhost:8080/recommendation/api/source-target/entire-records
+    // Pass below as post request body
+    // ?sourceHostName=localhost&targetHostName=localhost&databaseName=ttp&schemaName=ops$ora&tableName=ppt12&schemaRun=1&tableRun=2
+    @PostMapping(path = "/source-target/entire-records",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<Map<String, Object>> getEntireValidationTable(@RequestBody RunDetails inputRunDetails) throws Exception {
+
+
+        DatabaseInfo runTableDbInfo = new DatabaseInfo("localhost", 5432,
+                "postgres", null, "postgres", "postgres", false, DatabaseInfo.dbType.POSTGRESQL,
+                true, "/certs/", "changeit");
+
+        List<RunDetails> runDetailsList = recommendationService.getRunDetailsWithOptional(inputRunDetails, runTableDbInfo);
+        Optional<RunDetails> runDetails = runDetailsList.stream().findFirst();
+
+
+        List<Map<String, Object>> entireValidationTable = new ArrayList<>();
+        if(runDetails.isPresent()) {
+            DatabaseInfo valTableDbInfo = new DatabaseInfo("localhost", 5432,
+                    "ttp", null, "postgres", "postgres", false, DatabaseInfo.dbType.POSTGRESQL,
+                    true, "/certs/", "changeit");
+
+            String validationTableName = runDetails.get().getTableName() + "_val";
+            entireValidationTable = recommendationService.getEntireValidationTable(runDetails.get(), valTableDbInfo, validationTableName);
+        }
+        return entireValidationTable;
+
     }
 
     //http://localhost:8080/recommendation/api/run-details/source/val-id?sourceHostName=localhost&targetHostName=localhost&databaseName=ttp

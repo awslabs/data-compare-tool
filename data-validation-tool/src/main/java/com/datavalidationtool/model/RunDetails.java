@@ -1,6 +1,7 @@
 package com.datavalidationtool.model;
 
-import java.sql.Date;
+
+import java.util.Date;
 
 public class RunDetails {
 
@@ -13,7 +14,7 @@ public class RunDetails {
 
     private int tableRun;
     private String runId;
-    private Date executionDate;
+    private String executionDate;
 
     public RunDetails() {
     }
@@ -121,11 +122,11 @@ public class RunDetails {
         this.tableRun = tableRun;
     }
 
-    public Date getExecutionDate() {
+    public String getExecutionDate() {
         return executionDate;
     }
 
-    public void setExecutionDate(Date executionDate) {
+    public void setExecutionDate(String executionDate) {
         this.executionDate = executionDate;
     }
 

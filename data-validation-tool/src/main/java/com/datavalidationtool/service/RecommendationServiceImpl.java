@@ -9,14 +9,17 @@ package com.datavalidationtool.service;
 
 import com.datavalidationtool.model.DatabaseInfo;
 import com.datavalidationtool.model.RunDetails;
+import com.datavalidationtool.model.response.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.Date;
+import java.util.stream.Collectors;
 
 @Service
 public class RecommendationServiceImpl implements RecommendationService {
@@ -133,7 +136,7 @@ public class RecommendationServiceImpl implements RecommendationService {
                 runDetails.setSchemaRun(rs.getInt("schema_run"));
                 runDetails.setTableRun(rs.getInt("table_run"));
                 runDetails.setRunId(rs.getString("run_id"));
-                runDetails.setExecutionDate(rs.getDate("execution_date"));
+                runDetails.setExecutionDate(rs.getString("execution_date"));
 
                 outputRunDetailsList.add(runDetails);
             }
@@ -166,7 +169,7 @@ public class RecommendationServiceImpl implements RecommendationService {
                 runDetails.setSchemaRun(rs.getInt("schema_run"));
                 runDetails.setTableRun(rs.getInt("table_run"));
                 runDetails.setRunId(rs.getString("run_id"));
-                runDetails.setExecutionDate(rs.getDate("execution_date"));
+                runDetails.setExecutionDate(rs.getString("execution_date"));
 
                 outputRunDetailsList.add(runDetails);
             }
@@ -199,8 +202,7 @@ public class RecommendationServiceImpl implements RecommendationService {
                 runDetails.setSchemaRun(rs.getInt("schema_run"));
                 runDetails.setTableRun(rs.getInt("table_run"));
                 runDetails.setRunId(rs.getString("run_id"));
-                runDetails.setExecutionDate(rs.getDate("execution_date"));
-
+                runDetails.setExecutionDate(rs.getString("execution_date"));
                 outputRunDetailsList.add(runDetails);
             }
 
@@ -211,6 +213,86 @@ public class RecommendationServiceImpl implements RecommendationService {
         return outputRunDetailsList;
     }
 
+     public RunDetailsSelectionResponse getRunDetailsSelectionResponse(List<RunDetails> runDetails) {
+
+        RunDetailsSelectionResponse runDetailsSelectionResponse = new RunDetailsSelectionResponse();
+        List<HostDetails> hostDetailsList = new ArrayList<>();
+
+        Set<String> uniqueSrcHostNm = runDetails.stream().map(run -> run.getSourceHostName()).collect(Collectors.toSet());
+        for (String hostNm : uniqueSrcHostNm) {
+
+            HostDetails hostDetails = new HostDetails();
+            hostDetails.setHostName(hostNm);
+            List<DatabaseDetails> databaseDetailsList = new ArrayList<>();
+
+            Set<String> uniqueDbNm = runDetails.stream().filter(rd -> rd.getSourceHostName().equals(hostNm)).map(rd -> rd.getDatabaseName()).collect(Collectors.toSet());
+            for (String dbNm : uniqueDbNm) {
+                Set<String> uniqueSchemaNm = runDetails.stream().filter(rd -> rd.getSourceHostName().equals(hostNm) && rd.getDatabaseName().equals(dbNm)).map(rd -> rd.getSchemaName()).collect(Collectors.toSet());
+                DatabaseDetails databaseDetails = new DatabaseDetails();
+                databaseDetails.setDatabaseName(dbNm);
+
+                List<SchemaDetails> schemaDetailsList = new ArrayList<>();
+                for (String schemaNm : uniqueSchemaNm) {
+
+                    Set<RunDetails> uniqueSchemaRunDetails = runDetails.stream().filter(rd -> rd.getSourceHostName().equals(hostNm) && rd.getDatabaseName().equals(dbNm) && rd.getSchemaName().equals(schemaNm)).collect(Collectors.toSet());
+                    Set<RunWithDate> schemaRun = new TreeSet<>();
+                    for(RunDetails uTableRd:uniqueSchemaRunDetails) {
+                        RunWithDate runWithDate = new RunWithDate();
+                        java.util.Date executionDate = convertStrDateToDate(uTableRd.getExecutionDate());
+                        runWithDate.setRun(uTableRd.getTableRun());
+                        runWithDate.setExecutionDate(executionDate);
+                        schemaRun.add(runWithDate);
+                    }
+                    SchemaDetails schemaDetails = new SchemaDetails();
+                    schemaDetails.setSchemaName(schemaNm);
+                    schemaDetails.setSchemaRun(schemaRun);
+
+
+                    List<TableDetails> tableDetailsList = new ArrayList<>();
+                    Set<String> uniqueTableNm = runDetails.stream().filter(rd -> rd.getSourceHostName().equals(hostNm) && rd.getDatabaseName().equals(dbNm) && rd.getSchemaName().equals(schemaNm)).map(rd -> rd.getTableName()).collect(Collectors.toSet());
+                    for (String tableNm : uniqueTableNm) {
+                        Set<RunDetails> uniqueTableRunDetails = runDetails.stream().filter(rd -> rd.getSourceHostName().equals(hostNm) && rd.getDatabaseName().equals(dbNm) && rd.getSchemaName().equals(schemaNm) && rd.getTableName().equals(tableNm)).collect(Collectors.toSet());
+                        Set<RunWithDate> tableRun = new TreeSet<>();
+                        for(RunDetails uTableRd:uniqueTableRunDetails) {
+                            RunWithDate runWithDate = new RunWithDate();
+                            Date executionDate = convertStrDateToDate(uTableRd.getExecutionDate());
+                            runWithDate.setRun(uTableRd.getTableRun());
+                            runWithDate.setExecutionDate(executionDate);
+                            tableRun.add(runWithDate);
+                        }
+                        TableDetails tableDetails = new TableDetails();
+                        tableDetails.setTableName(tableNm);
+                        tableDetails.setTableRun(tableRun);
+
+                        tableDetailsList.add(tableDetails);
+
+                    }
+
+                    schemaDetails.setTableList(tableDetailsList);
+                    schemaDetailsList.add(schemaDetails);
+
+                }
+                databaseDetails.setSchemaList(schemaDetailsList);
+                databaseDetailsList.add(databaseDetails);
+            }
+            hostDetails.setDatabaseList(databaseDetailsList);
+            hostDetailsList.add(hostDetails);
+        }
+        runDetailsSelectionResponse.setHostDetailsList(hostDetailsList);
+        return runDetailsSelectionResponse;
+    }
+
+    private static Date convertStrDateToDate(String strDate) {
+        Date executionDate;
+        try {
+            final String TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
+            final SimpleDateFormat sdf = new SimpleDateFormat(TIME_FORMAT);
+            executionDate = sdf.parse(strDate);
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
+        return executionDate;
+    }
     public List<Integer> getValIdFromValidationTable(RunDetails inputRunDetails_1, DatabaseInfo databaseInfo, String ValidationTableName) throws Exception {
 
         List<Integer> valIdList = new ArrayList<>();
@@ -233,6 +315,55 @@ public class RecommendationServiceImpl implements RecommendationService {
         }
         return valIdList;
     }
+
+    public List<Map<String, Object>> getEntireValidationTable(RunDetails inputRunDetails_1, DatabaseInfo databaseInfo, String ValidationTableName) throws Exception {
+
+        String selectQuery = "SELECT * FROM " + inputRunDetails_1.getSchemaName() + "." + ValidationTableName + " WHERE " +
+                "run_id='" + inputRunDetails_1.getRunId() + "' "
+         //       + "ORDER BY val_id ASC ";
+
+        +"ORDER BY val_id ASC LIMIT 10";
+
+        List<Map<String,Object>> rsKeyValMapList = new ArrayList<>();
+
+        try (Connection dbConn = getConnection(databaseInfo);
+             PreparedStatement pst = dbConn.prepareStatement(selectQuery);){
+
+             ResultSet rs = pst.executeQuery();
+
+            if (rs != null) {
+                // get the resultset metadata
+                ResultSetMetaData rsmd = rs.getMetaData();
+
+                while (rs.next()) {
+
+                    Map<String,Object> rsKeyValMap = new HashMap<>();
+
+                    for (int _iterator = 0; _iterator < rsmd.getColumnCount(); _iterator++) {
+                        // get the SQL column name
+                        String columnName = rsmd.getColumnName(_iterator + 1);
+
+                        // get the value of the SQL column
+                        Object columnValue = rs.getObject(_iterator + 1);
+
+                        rsKeyValMap.put(columnName, columnValue);
+                    }
+                    /*
+                    if(null == rsKeyValMap.get("val_log")){
+                        rsKeyValMapList.add(rsKeyValMap);
+                    }*/
+                    rsKeyValMapList.add(rsKeyValMap);
+                }
+
+            }
+
+        } catch (SQLException ex) {
+            logger.error("Exception while fetching table details");
+            logger.error(ex.getMessage());
+        }
+        return rsKeyValMapList;
+    }
+
 
     public List<RunDetails> getRunDetails(RunDetails inputRunDetails_1, DatabaseInfo databaseInfo) throws Exception {
 
@@ -275,7 +406,7 @@ public class RecommendationServiceImpl implements RecommendationService {
                 runDetails.setSchemaRun(rs.getInt("schema_run"));
                 runDetails.setTableRun(rs.getInt("table_run"));
                 runDetails.setRunId(rs.getString("run_id"));
-                runDetails.setExecutionDate(rs.getDate("execution_date"));
+                runDetails.setExecutionDate(rs.getString("execution_date"));
 
                 outputRunDetailsList.add(runDetails);
             }

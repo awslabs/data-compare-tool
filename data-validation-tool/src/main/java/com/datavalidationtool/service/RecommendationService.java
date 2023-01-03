@@ -9,8 +9,10 @@ package com.datavalidationtool.service;
 
 import com.datavalidationtool.model.DatabaseInfo;
 import com.datavalidationtool.model.RunDetails;
+import com.datavalidationtool.model.response.RunDetailsSelectionResponse;
 
 import java.util.List;
+import java.util.Map;
 
 public interface RecommendationService {
 
@@ -26,7 +28,10 @@ public interface RecommendationService {
 
     public List<Integer> getValIdFromValidationTable(RunDetails inputRunDetails_1, DatabaseInfo databaseInfo, String ValidationTableName) throws Exception;
 
-    public boolean executeDbProcedure(RunDetails inputRunDetails_1, DatabaseInfo databaseInfo) throws Exception;
+    public List<Map<String, Object>> getEntireValidationTable(RunDetails inputRunDetails_1, DatabaseInfo databaseInfo, String ValidationTableName) throws Exception;
+
+
+        public boolean executeDbProcedure(RunDetails inputRunDetails_1, DatabaseInfo databaseInfo) throws Exception;
 
     public int insertRunDetailsRecord(RunDetails inputRunDetails_1, DatabaseInfo databaseInfo) throws Exception;
 
@@ -34,4 +39,5 @@ public interface RecommendationService {
 
     List<RunDetails> getHostRunDetailsForSelection(DatabaseInfo databaseInfo) throws Exception;
 
+    RunDetailsSelectionResponse getRunDetailsSelectionResponse(List<RunDetails> runDetails) ;
 }

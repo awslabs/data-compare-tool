@@ -1,15 +1,14 @@
 package com.datavalidationtool.model.response;
 
 import java.util.List;
+import java.util.Set;
 
 public class SchemaDetails {
 
     String schemaName;
-
-    List<Integer> schemaRun;
+    Set<RunWithDate> schemaRun;
 
     List<TableDetails> tableList;
-
 
     public String getSchemaName() {
         return schemaName;
@@ -17,14 +16,6 @@ public class SchemaDetails {
 
     public void setSchemaName(String schemaName) {
         this.schemaName = schemaName;
-    }
-
-    public List<Integer> getSchemaRun() {
-        return schemaRun;
-    }
-
-    public void setSchemaRun(List<Integer> schemaRun) {
-        this.schemaRun = schemaRun;
     }
 
     public List<TableDetails> getTableList() {
@@ -35,10 +26,12 @@ public class SchemaDetails {
         this.tableList = tableList;
     }
 
-    public SchemaDetails(String schemaName, List<Integer> schemaRun, List<TableDetails> tableList) {
-        this.schemaName = schemaName;
+    public Set<RunWithDate> getSchemaRun() {
+        return schemaRun;
+    }
+
+    public void setSchemaRun(Set<RunWithDate> schemaRun) {
         this.schemaRun = schemaRun;
-        this.tableList = tableList;
     }
 
     public SchemaDetails() {
