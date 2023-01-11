@@ -7,15 +7,14 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TableCell from "@mui/material/TableCell";
 import TableBody from "@mui/material/TableBody";
-import {Box} from "@mui/material";
+import {Box, containerClasses} from "@mui/material";
 import Button from "@mui/material/Button";
-
 import "./recommendation/css/Recommendation.css";
 
 
-const POPULATE_STATE = 'populateState'
+
 const CLEAR = 'clear'
-const POPULATE_CITY = 'populateCity'
+
 
 const POPULATE_DATABASE = 'populateDatabase'
 const POPULATE_SCHEMA = 'populateSchema'
@@ -120,20 +119,20 @@ function reducer(state, action) {
 
         case POPULATE_DATABASE:
             return {
-                ...state, disableDBName: false, loadingDBName: true, disableHostName: true,
+                ...state, disableDBName: false, loadingDBName: false, disableHostName: true,
 
                 dbNamesToBeLoaded: data1.hostDetailsList.find(hostname => hostname.value === action.hostName).databaseList
             }
         case POPULATE_SCHEMA:
             return {
-                ...state, disableSchemaName: false, loadingSchemaName: true,
+                ...state, disableSchemaName: false, loadingSchemaName: false,
 
                 schemaNamesToBeLoaded: data1.hostDetailsList.find(() => hostNameSelected)
                     .databaseList.find(dbname => dbname.value === action.dbName).schemaList //this has to be same in handler
             }
         case POPULATE_SCHEMA_RUN:
             return {
-                ...state, disableSchemaRun: false,  loadingSchemaRun: true,
+                ...state, disableSchemaRun: false,  loadingSchemaRun: false,
 
                 schemaRunsToBeLoaded: data1.hostDetailsList.find(() => hostNameSelected)
                     .databaseList.find(() => dbNameSelected).schemaList.find(schema => schema.value===action.schemaName).schemaRun
@@ -141,7 +140,7 @@ function reducer(state, action) {
             }
         case POPULATE_TABLE:
             return {
-                ...state, disableTableName: false,  loadingTableName: true, showTable: true,
+                ...state, disableTableName: false,  loadingTableName: false,
 
                 tableNamesToBeLoaded: data1.hostDetailsList.find(() => hostNameSelected)
                     .databaseList.find(() => dbNameSelected).schemaList
@@ -149,11 +148,11 @@ function reducer(state, action) {
             }
         case POPULATE_TABLE_RUN:
             return {
-                ...state, disableTableRun: false,  loadingTableRun: true,
+                ...state, disableTableRun: false,  loadingTableRun: false, showTable: true,
 
                 tableRunsToBeLoaded: data1.hostDetailsList.find(() => hostNameSelected)
-                    .databaseList.find(() => dbNameSelected).schemaList.find(() => schemaNameSelected).
-                    tableList.find(tableName => tableName.value===action.tableName).tableRun
+                    .databaseList.find(() => dbNameSelected).schemaList.find(() => schemaNameSelected)
+                    .tableList.find(tableName => tableName.value===action.tableName).tableRun
             }
         case CLEAR:
         default:
@@ -306,7 +305,7 @@ function Nestedselect() {
             obj.slNo=slnumber;
             obj.tableName=data1.hostDetailsList.find(() => hostNameSelected)
                 .databaseList.find(() => dbNameSelected).schemaList.find(() => schemaNameSelected).
-            tableList.find(() => tableNameSelected).tableName;
+                tableList.find(() => tableNameSelected).tableName;
             obj.tableRun = data1.hostDetailsList.find(() => hostNameSelected)
                 .databaseList.find(() => dbNameSelected).schemaList.find(() => schemaNameSelected).
                 tableList.find(() => tableNameSelected).tableRun[i].run;
@@ -319,93 +318,110 @@ function Nestedselect() {
 
     }
 
+
+
+
+
     const [state, dispatch] = useReducer(reducer, initialState)
-    return (<div>
-            <Select
-                isDisabled={state.disableHostName}
-                isLoading={state.loadingDBName}
-                isClearable
-                isSearchable
-                placeholder="Select HostName..."
-                name="hostname"
-                options={data1.hostDetailsList}
-                onChange={handleOnHostNameClick}
-                styles={{width:'200px'}}
-            />
-            <br/>
-            {!state.disableDBName && (<>
-                <Select
-                    isDisabled={state.disableDBName}
-                    isLoading={state.loadingSchemaName}
-                    isClearable
-                    isSearchable
-                    placeholder="Select Database..."
-                    name="database"
-                    options={state.dbNamesToBeLoaded}
-                    onChange={handleOnDBNameClick}
-                />
-                <br/>
-            </>)}
-            {!state.disableSchemaName && (<>
-                <Select
-                    isDisabled={state.disableSchemaName}
-                    isLoading={state.loadingSchemaRun}
-                    isClearable
-                    isSearchable
-                    placeholder="Select Schema..."
-                    name="schema"
-                    options={state.schemaNamesToBeLoaded}
-                    onChange={handleOnSchemaNameClick}
-                />
-                <br/>
-            </>)}
-            {!state.disableSchemaRun && (<>
-                <Select
-                    isDisabled={state.disableSchemaRun}
-                    isLoading={state.loadingTableName}
-                    isClearable
-                    isSearchable
-                    placeholder="Select Schema Run..."
-                    name="schemaRun"
-                    options={state.schemaRunsToBeLoaded}
-                    onChange={handleOnSchemaRunClick}
-                />
-                <br/>
-            </>)}
-            {!state.disableTableName && (<>
-                <Select
-                    isDisabled={state.disableTableName}
-                    isLoading={state.loadingTableRun}
-                    isClearable
-                    isSearchable
-                    placeholder="Select Table..."
-                    name="table"
-                    options={state.tableNamesToBeLoaded}
-                    onChange={handleOnTableClick}
-                />
-                <br/>
-            </>)}
-            {!state.disableTableRun && (<>
-                <Select
-                    isDisabled={state.disableTableRun}
-                    isLoading={false}
-                    isClearable
-                    isSearchable
-                    placeholder="Select Table Run..."
-                    name="tableRun"
-                    options={state.tableRunsToBeLoaded}
-                    onChange={handleOnTableRunClick}
-                />
-                <br/>
-            </>)}
+    return (<div className={containerClasses} style={{align: 'center'}}>
+            <div class= 'parent'>
+                <div class="custContainer child">
+                    <Select
+                        isDisabled={state.disableHostName}
+                        isLoading={state.loadingDBName}
+                        isClearable
+                        isSearchable
+                        placeholder="Select HostName..."
+                        name="hostname"
+                        options={data1.hostDetailsList}
+                        onChange={handleOnHostNameClick}
+
+                    /></div>
+                &nbsp;&nbsp;&nbsp;
+                {!state.disableDBName && (<>
+                    <div class="custContainer child">
+                        <Select
+                            isDisabled={state.disableDBName}
+                            isLoading={state.loadingSchemaName}
+                            isClearable
+                            isSearchable
+                            placeholder="Select Database..."
+                            name="database"
+                            options={state.dbNamesToBeLoaded}
+                            onChange={handleOnDBNameClick}
+                        />
+                    </div>
+                    <br/>
+                </>)}</div>
+            <div className='parent'>
+                {!state.disableSchemaName && (<>
+                    <div className="custContainer child">
+                        <Select
+                            isDisabled={state.disableSchemaName}
+                            isLoading={state.loadingSchemaRun}
+                            isClearable
+                            isSearchable
+                            placeholder="Select Schema..."
+                            name="schema"
+                            options={state.schemaNamesToBeLoaded}
+                            onChange={handleOnSchemaNameClick}
+                        />
+                    </div>
+                    &nbsp;&nbsp;&nbsp;
+                </>)}
+                {!state.disableSchemaRun && (<>
+                    <div className="custContainer child">
+                        <Select
+                            isDisabled={state.disableSchemaRun}
+                            isLoading={state.loadingTableName}
+                            isClearable
+                            isSearchable
+                            placeholder="Select Schema Run..."
+                            name="schemaRun"
+                            options={state.schemaRunsToBeLoaded}
+                            onChange={handleOnSchemaRunClick}
+                        /></div>
+                </>)}
+            </div>
+            <div className='parent'>
+                {!state.disableTableName && (<>
+                    <div className="custContainer child">
+                        <Select
+                            isDisabled={state.disableTableName}
+                            isLoading={state.loadingTableRun}
+                            isClearable
+                            isSearchable
+                            placeholder="Select Table..."
+                            name="table"
+                            options={state.tableNamesToBeLoaded}
+                            onChange={handleOnTableClick}
+                        /></div>
+                    &nbsp;&nbsp;&nbsp;
+                </>)}
+                {!state.disableTableRun && (<>
+                    <div className="custContainer child">
+                        <Select
+                            isDisabled={state.disableTableRun}
+                            isLoading={false}
+                            isClearable
+                            isSearchable
+                            placeholder="Select Table Run..."
+                            name="tableRun"
+                            options={state.tableRunsToBeLoaded}
+                            onChange={handleOnTableRunClick}
+                        />
+                    </div>
+
+                </>)}
+            </div>
             <br/><br/>
-        {state.showTable && (<div>
-                <TableContainer component={Paper} align='center' >
-                    <Table className="dvttbl" sx={{ minWidth: 900, border:1,borderColor: 'primary.main', borderRadius:2, width:100}} aria-label="simple table">
+            {state.showTable && (<div>
+                <TableContainer component={Paper} align='center' className="dvttbl">
+                    <Table sx={{ minWidth: 900, border:1,borderColor: 'primary.main', borderRadius:2, width:100}} aria-label="simple table">
                         <TableHead>
                             <TableRow>
                                 <TableCell>Sl No.</TableCell>
-                                <TableCell>Table Name</TableCell>
+                                <TableCell align="right">Table Name</TableCell>
                                 <TableCell align="right">Table Run</TableCell>
                                 <TableCell align="right">Run Date</TableCell>
                                 <TableCell align="center">Action</TableCell>
@@ -416,18 +432,13 @@ function Nestedselect() {
                                 <TableRow
                                     key={row.slNo}
                                     sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
-                                    <TableCell component="th" scope="row">
+                                    <TableCell  scope="row">
                                         {row.slNo}
                                     </TableCell>
-                                    <TableCell align="right">{row.tableName}</TableCell>
-                                    <TableCell align="right">{row.tableRun}</TableCell>
-                                    <TableCell align="right">{row.runDate}</TableCell>
-                                    {/*<TableCell align="right">{new Intl.DateTimeFormat("en-GB", {*/}
-                                    {/*    year: "numeric",*/}
-                                    {/*    month: "long",*/}
-                                    {/*    day: "2-digit"*/}
-                                    {/*}).format(row.runDate)}</TableCell>*/}
-                                    <TableCell align="center"><Box><Button variant="outlined" color="secondary">Sync</Button> &nbsp;      <Button variant="outlined" color="success">Edit</Button></Box></TableCell>
+                                    <TableCell align="left">{row.tableName}</TableCell>
+                                    <TableCell align="left">{row.tableRun}</TableCell>
+                                    <TableCell align="left">{row.runDate}</TableCell>
+                                    <TableCell align="center"><Box><Button variant="outlined" color="secondary">Sync</Button>  &nbsp;&nbsp;     <Button variant="outlined" color="success">Edit</Button></Box></TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
