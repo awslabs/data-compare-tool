@@ -10,11 +10,12 @@ import Recommendation from "./components/recommendation/Recommendation";
 function App() {
   return (
     <div className="App">
-     <Routes>
-     <Route path="/dvt/selection" element={<SchemaAndTableSelectCopy />}></Route>
-     <Route path="/dvt/recommend" element={<Recommendation />}></Route>
-     </Routes>
-       
+      <Routes>
+        <Route path="/dvt/selection" element={<SchemaAndTableSelectCopy />}></Route>
+        <Route path="/dvt/recommend" element={<Recommendation />}></Route>
+
+        <Route path="*" element={<SchemaAndTableSelectCopy />}></Route>
+      </Routes>
     </div>
   );
 }
