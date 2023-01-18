@@ -324,10 +324,17 @@ public class RecommendationServiceImpl implements RecommendationService {
 
         +"ORDER BY val_id ASC LIMIT 10";
 
+
+        //String tableJoinQuery = getTableJoinQueryForSourceTarget( inputRunDetails_1,  databaseInfo,  ValidationTableName);
+        //System.out.println(" tableJoinQuery ->"+tableJoinQuery );
+
         List<Map<String,Object>> rsKeyValMapList = new ArrayList<>();
 
         try (Connection dbConn = getConnection(databaseInfo);
              PreparedStatement pst = dbConn.prepareStatement(selectQuery);){
+
+            //use below table join query to get source and target records.
+             //PreparedStatement pst = dbConn.prepareStatement(tableJoinQuery);){
 
              ResultSet rs = pst.executeQuery();
 
@@ -347,7 +354,10 @@ public class RecommendationServiceImpl implements RecommendationService {
                         Object columnValue = rs.getObject(_iterator + 1);
 
                         rsKeyValMap.put(columnName, columnValue);
+
+                        //System.out.println(columnName +" :"+columnValue);
                     }
+                    //System.out.println("-------");
                     /*
                     if(null == rsKeyValMap.get("val_log")){
                         rsKeyValMapList.add(rsKeyValMap);
@@ -364,7 +374,54 @@ public class RecommendationServiceImpl implements RecommendationService {
         return rsKeyValMapList;
     }
 
+    public String getTableJoinQueryForSourceTarget(RunDetails inputRunDetails_1, DatabaseInfo databaseInfo, String ValidationTableName) throws Exception {
 
+        String logColsList = "";
+        String selectColumnsQuery = "SELECT val_log FROM " + inputRunDetails_1.getSchemaName() + "." + ValidationTableName + " WHERE " + "run_id='" + inputRunDetails_1.getRunId() + "' " + " and val_type='Log-Cols-List'";
+
+        System.out.println("selectColumnsQuery -> " + selectColumnsQuery);
+        try (Connection dbConn = getConnection(databaseInfo); PreparedStatement pst = dbConn.prepareStatement(selectColumnsQuery); ResultSet rs = pst.executeQuery()) {
+
+            while (rs.next()) {
+                logColsList = rs.getString("val_log");
+            }
+        } catch (SQLException ex) {
+            logger.error("Exception while fetching table details");
+            logger.error(ex.getMessage());
+        }
+
+        String tableJoinQuery = "";
+
+        if (!logColsList.isEmpty()) {
+            String tableJoinClause = " ON ";
+            String selectColumn = "";
+            String[] logColsListSplit = logColsList.split(",");
+            for (int index = 0; index < logColsListSplit.length; index++) {
+                tableJoinClause = tableJoinClause + " val." + logColsListSplit[index] + " = target." + logColsListSplit[index];
+
+
+                selectColumn = selectColumn + " val." + logColsListSplit[index] + " as " + " val_" + logColsListSplit[index];
+                selectColumn = selectColumn + " , ";
+                selectColumn = selectColumn + " target." + logColsListSplit[index] + " as " + " target_" + logColsListSplit[index];
+
+                if (index < logColsListSplit.length - 1) {
+                    tableJoinClause = tableJoinClause + " and ";
+
+                    selectColumn = selectColumn + " , ";
+                }
+
+
+            }
+
+            /*tableJoinQuery= "SELECT * FROM " + inputRunDetails_1.getSchemaName() + "." + ValidationTableName + " val JOIN " +
+                    inputRunDetails_1.getSchemaName() + "." + inputRunDetails_1.getTableName() +" target "+ tableJoinClause+
+                    " where val.run_id='" + inputRunDetails_1.getRunId() + "' ";*/
+
+            tableJoinQuery = "SELECT *, " + selectColumn + " FROM " + inputRunDetails_1.getSchemaName() + "." + ValidationTableName + " val JOIN " + inputRunDetails_1.getSchemaName() + "." + inputRunDetails_1.getTableName() + " target " + tableJoinClause + " where val.run_id='" + inputRunDetails_1.getRunId() + "' ";
+        }
+
+        return tableJoinQuery;
+    }
     public List<RunDetails> getRunDetails(RunDetails inputRunDetails_1, DatabaseInfo databaseInfo) throws Exception {
 
         List<RunDetails> outputRunDetailsList = new ArrayList<>();
