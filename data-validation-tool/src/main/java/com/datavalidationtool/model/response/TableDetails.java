@@ -1,10 +1,12 @@
 package com.datavalidationtool.model.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class TableDetails {
 
     String tableName;

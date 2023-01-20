@@ -11,6 +11,7 @@ import com.datavalidationtool.model.DatabaseInfo;
 import com.datavalidationtool.model.RunDetails;
 import com.datavalidationtool.model.response.RunDetailsSelectionResponse;
 
+import java.sql.Connection;
 import java.util.List;
 import java.util.Map;
 
@@ -40,4 +41,6 @@ public interface RecommendationService {
     List<RunDetails> getHostRunDetailsForSelection(DatabaseInfo databaseInfo) throws Exception;
 
     RunDetailsSelectionResponse getRunDetailsSelectionResponse(List<RunDetails> runDetails) ;
+
+    public Connection getConnection(DatabaseInfo db) throws Exception;
 }

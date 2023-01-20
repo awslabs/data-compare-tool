@@ -1,8 +1,10 @@
 package com.datavalidationtool.model.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import java.util.List;
 import java.util.Set;
-
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class SchemaDetails {
 
     String schemaName;
