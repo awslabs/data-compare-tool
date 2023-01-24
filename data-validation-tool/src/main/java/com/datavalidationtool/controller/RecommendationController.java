@@ -9,6 +9,7 @@ package com.datavalidationtool.controller;
 
 import com.datavalidationtool.model.DatabaseInfo;
 import com.datavalidationtool.model.RunDetails;
+import com.datavalidationtool.model.response.RecommendationResponse;
 import com.datavalidationtool.service.RecommendationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -204,7 +205,38 @@ public class RecommendationController {
 
     }
 
-    //http://localhost:8080/recommendation/api/run-details/source/val-id?sourceHostName=localhost&targetHostName=localhost&databaseName=ttp
+    //http://localhost:8080/recommendation/api/source-target/recommendation
+    // Pass below as post request body
+    // ?sourceHostName=localhost&targetHostName=localhost&databaseName=ttp&schemaName=ops$ora&tableName=ppt12&schemaRun=1&tableRun=2
+
+    @PostMapping(path = "/source-target/recommendation",
+                consumes = MediaType.APPLICATION_JSON_VALUE,
+                produces = MediaType.APPLICATION_JSON_VALUE)
+        RecommendationResponse getRecommendationResponse(@RequestBody RunDetails inputRunDetails) throws Exception {
+
+
+            DatabaseInfo runTableDbInfo = new DatabaseInfo("localhost", 5432,
+                    "postgres", null, "postgres", "postgres", false, DatabaseInfo.dbType.POSTGRESQL,
+                    true, "/certs/", "changeit");
+
+            List<RunDetails> runDetailsList = recommendationService.getRunDetailsWithOptional(inputRunDetails, runTableDbInfo);
+            Optional<RunDetails> runDetails = runDetailsList.stream().findFirst();
+
+
+            RecommendationResponse  recommendationResponse= new RecommendationResponse();
+            if(runDetails.isPresent()) {
+                DatabaseInfo valTableDbInfo = new DatabaseInfo("localhost", 5432,
+                        "ttp", null, "postgres", "postgres", false, DatabaseInfo.dbType.POSTGRESQL,
+                        true, "/certs/", "changeit");
+
+                String validationTableName = runDetails.get().getTableName() + "_val";
+                recommendationResponse = recommendationService.getRecommendationResponse(runDetails.get(), valTableDbInfo, validationTableName);
+            }
+            return recommendationResponse;
+
+        }
+
+        //http://localhost:8080/recommendation/api/run-details/source/val-id?sourceHostName=localhost&targetHostName=localhost&databaseName=ttp
     @GetMapping("/run-details/source/val-id")
     public List<Integer> getValIdFromValidationTable(
             @RequestParam Optional<String> sourceHostName,

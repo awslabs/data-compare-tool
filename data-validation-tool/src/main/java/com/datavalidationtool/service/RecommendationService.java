@@ -9,6 +9,7 @@ package com.datavalidationtool.service;
 
 import com.datavalidationtool.model.DatabaseInfo;
 import com.datavalidationtool.model.RunDetails;
+import com.datavalidationtool.model.response.RecommendationResponse;
 import com.datavalidationtool.model.response.RunDetailsSelectionResponse;
 
 import java.sql.Connection;
@@ -42,5 +43,8 @@ public interface RecommendationService {
 
     RunDetailsSelectionResponse getRunDetailsSelectionResponse(List<RunDetails> runDetails) ;
 
+
     public Connection getConnection(DatabaseInfo db) throws Exception;
+
+    RecommendationResponse getRecommendationResponse(RunDetails runDetails, DatabaseInfo valTableDbInfo, String validationTableName) throws Exception;
 }

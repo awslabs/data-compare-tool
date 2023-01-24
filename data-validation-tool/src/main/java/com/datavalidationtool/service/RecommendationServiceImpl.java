@@ -316,6 +316,7 @@ public class RecommendationServiceImpl implements RecommendationService {
         return valIdList;
     }
 
+
     public List<Map<String, Object>> getEntireValidationTable(RunDetails inputRunDetails_1, DatabaseInfo databaseInfo, String ValidationTableName) throws Exception {
 
         String selectQuery = "SELECT * FROM " + inputRunDetails_1.getSchemaName() + "." + ValidationTableName + " WHERE " +
@@ -325,16 +326,16 @@ public class RecommendationServiceImpl implements RecommendationService {
         +"ORDER BY val_id ASC LIMIT 10";
 
 
-        //String tableJoinQuery = getTableJoinQueryForSourceTarget( inputRunDetails_1,  databaseInfo,  ValidationTableName);
-        //System.out.println(" tableJoinQuery ->"+tableJoinQuery );
+        String tableJoinQuery = getTableJoinQueryForSourceTarget( inputRunDetails_1,  databaseInfo,  ValidationTableName);
+        System.out.println(" tableJoinQuery ->"+tableJoinQuery );
 
         List<Map<String,Object>> rsKeyValMapList = new ArrayList<>();
 
         try (Connection dbConn = getConnection(databaseInfo);
-             PreparedStatement pst = dbConn.prepareStatement(selectQuery);){
+             //PreparedStatement pst = dbConn.prepareStatement(selectQuery);){
 
             //use below table join query to get source and target records.
-             //PreparedStatement pst = dbConn.prepareStatement(tableJoinQuery);){
+             PreparedStatement pst = dbConn.prepareStatement(tableJoinQuery);){
 
              ResultSet rs = pst.executeQuery();
 
@@ -353,7 +354,14 @@ public class RecommendationServiceImpl implements RecommendationService {
                         // get the value of the SQL column
                         Object columnValue = rs.getObject(_iterator + 1);
 
-                        rsKeyValMap.put(columnName, columnValue);
+                        if(rsKeyValMap.containsKey(columnName)){
+                            rsKeyValMap.put("target_"+columnName, columnValue);
+
+                        }else{
+                            rsKeyValMap.put(columnName, columnValue);
+
+                        }
+                        //rsKeyValMap.put(columnName, columnValue);
 
                         //System.out.println(columnName +" :"+columnValue);
                     }
@@ -374,21 +382,92 @@ public class RecommendationServiceImpl implements RecommendationService {
         return rsKeyValMapList;
     }
 
-    public String getTableJoinQueryForSourceTarget(RunDetails inputRunDetails_1, DatabaseInfo databaseInfo, String ValidationTableName) throws Exception {
+    public List<String> getAdminColumnNameOfValTable(){
+        List<String> adminColumnNameOfValTable = new ArrayList<String>();
+        adminColumnNameOfValTable.add("val_id");
+        adminColumnNameOfValTable.add("val_ts");
+        adminColumnNameOfValTable.add("run_id");
+        adminColumnNameOfValTable.add("val_log");
+        adminColumnNameOfValTable.add("val_type");
+        return adminColumnNameOfValTable;
+    }
 
-        String logColsList = "";
-        String selectColumnsQuery = "SELECT val_log FROM " + inputRunDetails_1.getSchemaName() + "." + ValidationTableName + " WHERE " + "run_id='" + inputRunDetails_1.getRunId() + "' " + " and val_type='Log-Cols-List'";
+    public RecommendationResponse getRecommendationResponse(RunDetails inputRunDetails_1, DatabaseInfo databaseInfo, String ValidationTableName) throws Exception {
 
-        System.out.println("selectColumnsQuery -> " + selectColumnsQuery);
-        try (Connection dbConn = getConnection(databaseInfo); PreparedStatement pst = dbConn.prepareStatement(selectColumnsQuery); ResultSet rs = pst.executeQuery()) {
+        String tableJoinQuery = getTableJoinQueryForSourceTarget( inputRunDetails_1,  databaseInfo,  ValidationTableName);
+        System.out.println(" tableJoinQuery ->"+tableJoinQuery );
 
-            while (rs.next()) {
-                logColsList = rs.getString("val_log");
+        List<Map<String,Object>> rsKeyValMapList = new ArrayList<>();
+
+        RecommendationResponse recommendationResponse = new RecommendationResponse();
+        recommendationResponse.setTable(inputRunDetails_1.getSchemaName() + "." + ValidationTableName);
+        recommendationResponse.setCurrentPage(0);
+        recommendationResponse.setPageSize(0);
+        recommendationResponse.setTotalRecords(0);
+        String uniqueColumnFromValTable= getUniqueColumnFromValTable(inputRunDetails_1, databaseInfo, ValidationTableName);
+        if(!uniqueColumnFromValTable.isEmpty()){
+            recommendationResponse.setUniqueColumns(Arrays.asList(uniqueColumnFromValTable.split(",")));
+        }
+        else{
+            recommendationResponse.setUniqueColumns(new ArrayList<>());
+        }
+        List<RecommendationRow> recommendationRowList = new ArrayList<>();
+
+
+        try (Connection dbConn = getConnection(databaseInfo);
+             //PreparedStatement pst = dbConn.prepareStatement(selectQuery);){
+
+             //use below table join query to get source and target records.
+             PreparedStatement pst = dbConn.prepareStatement(tableJoinQuery);){
+
+            ResultSet rs = pst.executeQuery();
+
+            if (rs != null) {
+                // get the resultset metadata
+                ResultSetMetaData rsmd = rs.getMetaData();
+
+                while (rs.next()) {
+
+                    Map<String,Object> rsKeyValMap = new HashMap<>();
+
+                    for (int _iterator = 0; _iterator < rsmd.getColumnCount(); _iterator++) {
+                        // get the SQL column name
+                        String columnName = rsmd.getColumnName(_iterator + 1);
+
+                        // get the value of the SQL column
+                        Object columnValue = rs.getObject(_iterator + 1);
+
+                        if(rsKeyValMap.containsKey(columnName)){
+                            rsKeyValMap.put("target_"+columnName, columnValue);
+
+                        }else{
+                            rsKeyValMap.put(columnName, columnValue);
+                        }
+                        List<String> AdminColumnNameOfValTable=getAdminColumnNameOfValTable();
+                        if(!AdminColumnNameOfValTable.contains(columnName)){
+                            if(rsKeyValMap.containsKey(columnName)){
+                                recommendationRowList.add(new RecommendationRow(columnName, rsKeyValMap.get(columnName),columnValue, rsKeyValMap.get("val_type")));
+                            }
+                        }
+                    }
+                    rsKeyValMapList.add(rsKeyValMap);
+                }
+
             }
+
         } catch (SQLException ex) {
             logger.error("Exception while fetching table details");
             logger.error(ex.getMessage());
         }
+
+        recommendationResponse.setRows(recommendationRowList);
+
+        return recommendationResponse;
+    }
+
+    public String getTableJoinQueryForSourceTarget(RunDetails inputRunDetails_1, DatabaseInfo databaseInfo, String ValidationTableName) throws Exception {
+
+        String logColsList = getUniqueColumnFromValTable(inputRunDetails_1, databaseInfo, ValidationTableName);
 
         String tableJoinQuery = "";
 
@@ -417,11 +496,30 @@ public class RecommendationServiceImpl implements RecommendationService {
                     inputRunDetails_1.getSchemaName() + "." + inputRunDetails_1.getTableName() +" target "+ tableJoinClause+
                     " where val.run_id='" + inputRunDetails_1.getRunId() + "' ";*/
 
-            tableJoinQuery = "SELECT *, " + selectColumn + " FROM " + inputRunDetails_1.getSchemaName() + "." + ValidationTableName + " val JOIN " + inputRunDetails_1.getSchemaName() + "." + inputRunDetails_1.getTableName() + " target " + tableJoinClause + " where val.run_id='" + inputRunDetails_1.getRunId() + "' ";
+            //tableJoinQuery = "SELECT *, " + selectColumn + " FROM " + inputRunDetails_1.getSchemaName() + "." + ValidationTableName + " val JOIN " + inputRunDetails_1.getSchemaName() + "." + inputRunDetails_1.getTableName() + " target " + tableJoinClause + " where val.run_id='" + inputRunDetails_1.getRunId() + "' ";
+            tableJoinQuery = "SELECT * FROM " + inputRunDetails_1.getSchemaName() + "." + ValidationTableName + " val JOIN " + inputRunDetails_1.getSchemaName() + "." + inputRunDetails_1.getTableName() + " target " + tableJoinClause + " where val.run_id='" + inputRunDetails_1.getRunId() + "' ";
         }
 
         return tableJoinQuery;
     }
+
+    private String getUniqueColumnFromValTable(RunDetails inputRunDetails_1, DatabaseInfo databaseInfo, String ValidationTableName) throws Exception {
+        String selectColumnsQuery = "SELECT val_log FROM " + inputRunDetails_1.getSchemaName() + "." + ValidationTableName + " WHERE " + "run_id='" + inputRunDetails_1.getRunId() + "' " + " and val_type='Log-Cols-List'";
+
+        System.out.println("selectColumnsQuery -> " + selectColumnsQuery);
+        String logColsList="";
+        try (Connection dbConn = getConnection(databaseInfo); PreparedStatement pst = dbConn.prepareStatement(selectColumnsQuery); ResultSet rs = pst.executeQuery()) {
+
+            while (rs.next()) {
+                logColsList = rs.getString("val_log");
+            }
+        } catch (SQLException ex) {
+            logger.error("Exception while fetching table details");
+            logger.error(ex.getMessage());
+        }
+        return logColsList;
+    }
+
     public List<RunDetails> getRunDetails(RunDetails inputRunDetails_1, DatabaseInfo databaseInfo) throws Exception {
 
         List<RunDetails> outputRunDetailsList = new ArrayList<>();
