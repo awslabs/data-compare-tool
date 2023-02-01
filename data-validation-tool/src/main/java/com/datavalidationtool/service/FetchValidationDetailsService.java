@@ -5,12 +5,14 @@ import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.secretsmanager.AWSSecretsManager;
 import com.amazonaws.services.secretsmanager.AWSSecretsManagerClientBuilder;
 import com.amazonaws.services.secretsmanager.model.*;
+import com.datavalidationtool.dao.DataSource;
 import com.datavalidationtool.model.AwsSecret;
 import com.datavalidationtool.model.DatabaseInfo;
 import com.datavalidationtool.model.response.DatabaseDetails;
 import com.datavalidationtool.model.response.HostDetails;
 import com.datavalidationtool.model.response.SchemaDetails;
 import com.datavalidationtool.model.response.TableDetails;
+import com.datavalidationtool.util.AWSUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -28,14 +30,17 @@ import java.util.Map;
 public class FetchValidationDetailsService {
 
     @Autowired
-    private Environment env;
+    private AWSUtil awsUtil;
+
+    @Autowired
+    public DataSource dataSource;
 
     @Autowired
     private RecommendationService recommendationService;
 
     public HostDetails getValidationDetails() throws Exception {
 
-        String secret = fetchValidationDetailsFromSSM();
+        String secret = awsUtil.fetchValidationDetailsFromSSM();
         ObjectMapper mapper = new ObjectMapper();
         AwsSecret awsSecret = mapper.readValue(secret, AwsSecret.class);
 
@@ -43,7 +48,8 @@ public class FetchValidationDetailsService {
                 null, awsSecret.getUsername(), awsSecret.getPassword(), false, DatabaseInfo.dbType.POSTGRESQL,
                 true, "/certs/", "changeit");
 
-        Connection conn = recommendationService.getConnection(databaseInfo);
+//        Connection conn = recommendationService.getConnection(databaseInfo);
+        Connection conn = dataSource.getDBConnection();
 //        ResultSet schemas = conn.getMetaData().getSchemas();
 //        while(schemas.next()){
 //           String schemaName = schemas.getString(1);
@@ -88,45 +94,45 @@ public class FetchValidationDetailsService {
         return hostDetails;
     }
 
-    public String fetchValidationDetailsFromSSM(){
+//    public String fetchValidationDetailsFromSSM(){
+////        String secretName = env.getProperty("secretname");
+////        Region region = Region.of(env.getProperty("region"));
 //        String secretName = env.getProperty("secretname");
-//        Region region = Region.of(env.getProperty("region"));
-        String secretName = env.getProperty("secretname");
-        String region = env.getProperty("region");
-
-        String endpoint =("secretsmanager." + region + ".amazonaws.com");
-        AwsClientBuilder.EndpointConfiguration config = new AwsClientBuilder.EndpointConfiguration(endpoint, region);
-        AWSSecretsManagerClientBuilder clientBuilder = AWSSecretsManagerClientBuilder.standard();
-        clientBuilder.setEndpointConfiguration(config);
-        AWSSecretsManager client = clientBuilder.build();
-        String secret = null;
-        ByteBuffer binarySecretData;
-        GetSecretValueRequest getSecretValueRequest = new GetSecretValueRequest().withSecretId(secretName);
-        GetSecretValueResult getSecretValueResponse = null;
-        try {
-            getSecretValueResponse = client.getSecretValue(getSecretValueRequest);
-
-        } catch(ResourceNotFoundException e) {
-            System.out.println("The requested secret " + secretName + " was not found");
-        } catch (InvalidRequestException e) {
-            System.out.println("The request was invalid due to: " + e.getMessage());
-        } catch (InvalidParameterException e) {
-            System.out.println("The request had invalid params: " + e.getMessage());
-        }
-
-        if(getSecretValueResponse != null) {
-            if(getSecretValueResponse.getSecretString() != null) {
-                secret = getSecretValueResponse.getSecretString();
-            }
-            else {
-                binarySecretData = getSecretValueResponse.getSecretBinary();
-            }
-        }
-
-        System.out.println("Secret Name : " + secretName + "\t Secret Value : " + secret + "\n");
-        return secret;
-        //Secret Value : {"username":"postgres","password":"postgres","engine":"postgres","host":"ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com","port":"5432","dbname":"ttp,ttp_1"}
-    }
+//        String region = env.getProperty("region");
+//
+//        String endpoint =("secretsmanager." + region + ".amazonaws.com");
+//        AwsClientBuilder.EndpointConfiguration config = new AwsClientBuilder.EndpointConfiguration(endpoint, region);
+//        AWSSecretsManagerClientBuilder clientBuilder = AWSSecretsManagerClientBuilder.standard();
+//        clientBuilder.setEndpointConfiguration(config);
+//        AWSSecretsManager client = clientBuilder.build();
+//        String secret = null;
+//        ByteBuffer binarySecretData;
+//        GetSecretValueRequest getSecretValueRequest = new GetSecretValueRequest().withSecretId(secretName);
+//        GetSecretValueResult getSecretValueResponse = null;
+//        try {
+//            getSecretValueResponse = client.getSecretValue(getSecretValueRequest);
+//
+//        } catch(ResourceNotFoundException e) {
+//            System.out.println("The requested secret " + secretName + " was not found");
+//        } catch (InvalidRequestException e) {
+//            System.out.println("The request was invalid due to: " + e.getMessage());
+//        } catch (InvalidParameterException e) {
+//            System.out.println("The request had invalid params: " + e.getMessage());
+//        }
+//
+//        if(getSecretValueResponse != null) {
+//            if(getSecretValueResponse.getSecretString() != null) {
+//                secret = getSecretValueResponse.getSecretString();
+//            }
+//            else {
+//                binarySecretData = getSecretValueResponse.getSecretBinary();
+//            }
+//        }
+//
+//        System.out.println("Secret Name : " + secretName + "\t Secret Value : " + secret + "\n");
+//        return secret;
+//        //Secret Value : {"username":"postgres","password":"postgres","engine":"postgres","host":"ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com","port":"5432","dbname":"ttp,ttp_1"}
+//    }
 
 //    public static void getSecret() {
 //
