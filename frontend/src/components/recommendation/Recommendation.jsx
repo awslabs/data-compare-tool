@@ -32,8 +32,7 @@ function Recommendation() {
     if (pageNumber === undefined || pageNumber === null) {
       pageNumber = 1;
     }
-    let url =
-      BACKEND_BASEURL_FETCH + "?table=" + tableName + "&page=" + pageNumber;
+    let url = BACKEND_BASEURL_FETCH + "?table=" + tableName + "&page=" + pageNumber;
     //console.log("fetchData URL is ", url);
     fetch(url)
       .then((response) => {
@@ -90,7 +89,7 @@ function Recommendation() {
     requestParams.headers = { "Content-Type": "text/plain" };
     requestParams.body = JSON.stringify(dataToSubmit);
 
-    //console.log("Data To Submit == ", requestParams);
+    console.log("Data To Submit == ", JSON.stringify(requestParams));
 
     fetch(BACKEND_BASEURL_SUBMIT, requestParams)
       .then((response) => {
@@ -131,16 +130,10 @@ function Recommendation() {
   return (
     <div>
       <div>
-        {successMessage !== null ? (
-          <div className="success-msg">{successMessage}</div>
-        ) : null}
-        {errorMessage !== null ? (
-          <div className="error-msg">{errorMessage}</div>
-        ) : null}
+        {successMessage !== null ? <div className="success-msg">{successMessage}</div> : null}
+        {errorMessage !== null ? <div className="error-msg">{errorMessage}</div> : null}
 
-        {data === null ? (
-          <img style={{ height: 40, width: 40 }} src={loadingimage}></img>
-        ) : null}
+        {data === null ? <img style={{ height: 40, width: 40 }} src={loadingimage}></img> : null}
       </div>
 
       {summaryData.length > 0 ? (
