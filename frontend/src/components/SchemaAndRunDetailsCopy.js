@@ -11,6 +11,7 @@ import { Box, containerClasses } from "@mui/material";
 import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
 import "./recommendation/css/Recommendation.css";
+import {useNavigate} from "react-router-dom";
 
 const CLEAR = "clear";
 
@@ -89,7 +90,7 @@ const data1 = {};
 
 const initialState = {
   disableHostName: false,
-  disableDBName: true,
+  disableDBName: false,
   loadingDBName: false,
   disableSchemaName: true,
   loadingSchemaName: false,
@@ -117,6 +118,10 @@ function reducer(state, action) {
         disableHostName: true,
 
         dbNamesToBeLoaded: data1.hostDetailsList.find((hostname) => hostname.value === action.hostName).databaseList,
+        schemaNamesToBeLoaded:[],
+        schemaRunsToBeLoaded: [],
+        tableNamesToBeLoaded: [],
+        tableRunsToBeLoaded: [],
       };
     case POPULATE_SCHEMA:
       return {
@@ -125,6 +130,10 @@ function reducer(state, action) {
         loadingSchemaName: false,
 
         schemaNamesToBeLoaded: data1.hostDetailsList.find(() => hostNameSelected).databaseList.find((dbname) => dbname.value === action.dbName).schemaList, //this has to be same in handler
+        schemaRunsToBeLoaded: [],
+        tableNamesToBeLoaded: [],
+        tableRunsToBeLoaded: [],
+
       };
     case POPULATE_SCHEMA_RUN:
       return {
@@ -136,6 +145,8 @@ function reducer(state, action) {
           .find(() => hostNameSelected)
           .databaseList.find(() => dbNameSelected)
           .schemaList.find((schema) => schema.value === action.schemaName).schemaRun,
+        tableNamesToBeLoaded: [],
+        tableRunsToBeLoaded: [],
         //this has to be same in handler
       };
     case POPULATE_TABLE:
@@ -148,6 +159,7 @@ function reducer(state, action) {
           .find(() => hostNameSelected)
           .databaseList.find(() => dbNameSelected)
           .schemaList.find((schema) => schema.value === action.schemaName).tableList,
+        tableRunsToBeLoaded: [],
       };
     case POPULATE_TABLE_RUN:
       return {
@@ -346,6 +358,14 @@ function Nestedselect() {
     setTableData(tempArr);
   };
 
+  // @ts-ignore
+  let navigate = useNavigate();
+  const redirectToRecommendation =  (event) => {
+    console.log('event '+event.target.value);
+
+    navigate('/dvt/recommend?table='+event.target.value+'&page=1')
+
+  }
   const [state, dispatch] = useReducer(reducer, initialState);
 
   return (
@@ -453,16 +473,19 @@ function Nestedselect() {
                 {tableData.map((row) => (
                   <TableRow key={row.slNo} sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
                     <TableCell scope="row">{row.slNo}</TableCell>
-                    <TableCell align="left">{row.tableName}</TableCell>
+                    <TableCell className="tablename" align="left">{row.tableName}</TableCell>
                     <TableCell align="left">{row.tableRun}</TableCell>
                     <TableCell align="left">{row.runDate}</TableCell>
                     <TableCell align="center">
                       <Box>
-                        <Button variant="outlined" color="secondary">
+                        <Button variant="outlined" color="secondary" >
                           Sync
                         </Button>{" "}
                         &nbsp;&nbsp;{" "}
-                        <Button variant="outlined" color="success">
+                        <Button variant="outlined" color="success" value={row.tableName}
+                            onClick={redirectToRecommendation}
+
+                        >
                           Edit
                         </Button>
                       </Box>
