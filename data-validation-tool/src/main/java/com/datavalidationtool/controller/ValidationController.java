@@ -22,6 +22,12 @@ public class ValidationController {
     @Autowired
     private FetchValidationDetailsService service;
 
+    @Autowired
+    private  ExcelDataService excelDataService;
+
+    @Autowired
+    private ValidationService validationService;
+
     @GetMapping(value = "/validateDetails")
     public ResponseEntity getValidationScreenDetails() throws Exception {
         var s = service.getValidationDetails();
@@ -29,7 +35,7 @@ public class ValidationController {
     }
     @PostMapping("/compareData")
     public String compareData(@RequestBody ValidationRequest inputRunDetails) throws Exception {
-        ValidationService validationService = new ValidationService();
+        //ValidationService validationService = new ValidationService();
         validationService.validateData(inputRunDetails);
         toolRunning = Boolean.FALSE;
         return "redirect:/result";
@@ -37,7 +43,7 @@ public class ValidationController {
 
     @PostMapping("/exportData")
     public String exportData(@RequestBody ExportDataRequest exportDataRequest) throws Exception {
-        ExcelDataService excelDataService = new ExcelDataService();
+       // ExcelDataService excelDataService = new ExcelDataService();
         excelDataService.createExcel(exportDataRequest);
         toolRunning = Boolean.FALSE;
         return "redirect:/result";

@@ -10,11 +10,18 @@ package com.datavalidationtool.controller;
 import com.datavalidationtool.model.DatabaseInfo;
 import com.datavalidationtool.model.RunDetails;
 import com.datavalidationtool.model.response.RecommendationResponse;
+import com.datavalidationtool.service.ExcelDataService;
 import com.datavalidationtool.service.RecommendationService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.*;
 
 @RestController
@@ -23,6 +30,8 @@ public class RecommendationController {
 
     @Autowired
     RecommendationService recommendationService;
+    @Autowired
+    private ExcelDataService excelDataService;
 
     //http://localhost:8080/recommendation/api/test
     @GetMapping("/test")
@@ -330,5 +339,22 @@ public class RecommendationController {
 
         return recommendationService.insertRunDetailsRecord(inputRunDetails_1, databaseInfo);
     }
+
+    @PostMapping("/upload")
+    public ResponseEntity<?> handleFileUpload(@RequestParam("file") MultipartFile file ) throws IOException {
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        String timeStampStr=timestamp.toString();
+        String fileName = "/Users/amsudan/Desktop/Projects/DataValidation/upload/"+file.getOriginalFilename();
+        String home = System.getProperty("user.home");
+        try {
+            file.transferTo( new File(home + File.separator + "Desktop" + File.separator + "Projects" + File.separator + "DataValidation" + File.separator + "upload" + File.separator + file.getOriginalFilename()));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+        excelDataService.readExcel(fileName);
+        return ResponseEntity.ok("File uploaded successfully.");
+    }
+
 
 }

@@ -2,9 +2,11 @@ package com.datavalidationtool.service;
 
 import com.datavalidationtool.ds.DataSource;
 import com.datavalidationtool.model.ExcelDataRequest;
+import com.datavalidationtool.model.SchemaData;
 import com.datavalidationtool.model.request.ExportDataRequest;
 import com.datavalidationtool.model.request.ValidationRequest;
 import com.datavalidationtool.model.response.HostDetails;
+import com.datavalidationtool.model.response.SchemaDetails;
 import com.datavalidationtool.util.JdbcUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,24 +45,52 @@ public class ExcelDataService {
         StringBuilder toReturn = new StringBuilder();
         try {
             inputStream = new FileInputStream(file);
-            Workbook baeuldungWorkBook = new XSSFWorkbook(inputStream);
-            for (Sheet sheet : baeuldungWorkBook) {
-                toReturn.append("--------------------------------------------------------------------")
-                        .append("~");
-                toReturn.append("Worksheet :")
-                        .append(sheet.getSheetName())
-                        .append("~");
-                toReturn.append("--------------------------------------------------------------------")
-                        .append("~");
+            Workbook recDataExcel = new XSSFWorkbook(inputStream);
+            StringBuilder updatedData=new StringBuilder();
+            for (Sheet sheet : recDataExcel) {
+                int i = 0;
                 int firstRow = sheet.getFirstRowNum();
                 int lastRow = sheet.getLastRowNum();
-                for (int index = firstRow + 1; index <= lastRow; index++) {
-                    Row row = sheet.getRow(index);
-                    toReturn.append("|| ");
+                if (i == 1)
+                    i = 2;
+                if (i == 0) {
+                    for (int index = firstRow + i; index <= lastRow; index++) {
+                        Row row = sheet.getRow(index);
+                        SchemaData details = SchemaData.builder().build();
+
+                        int cellIndex = 0;
+                        for (Cell cell : row) {
+                            String strValue = cell.getStringCellValue();
+                            if (cellIndex == 0)
+                                details.setSourceSchemaName(strValue);
+                            else if (cellIndex == 1)
+                                details.setTableName(strValue);
+                            else if (cellIndex == 2)
+                                details.setRunId(strValue);
+                        }
+                    }
+                } else {
+                    //324,COL1,COL2;325,COL1,COL2,COL3;326,COL1,COL2,COL3,COL4
+                    for (int index = firstRow + i; index <= lastRow; index++) {
+                        Row row = sheet.getRow(index);
+                        int cellIndex = 0;
+                        for (Cell cell : row) {
+                            String strValue = cell.getStringCellValue();
+                            if (cellIndex == 0)
+                                updatedData.append(strValue);
+                              //  details.setSourceSchemaName(strValue);
+                            else if (cellIndex == 1)
+                                updatedData.append(strValue);
+                            else if (cellIndex == 2)
+                                updatedData.append(strValue);
+                        }
+                    }
+
                 }
+                    i++;
             }
             inputStream.close();
-            baeuldungWorkBook.close();
+            recDataExcel.close();
 
         } catch (IOException e) {
             throw e;
@@ -141,8 +171,8 @@ public class ExcelDataService {
            // sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 4));
            // sheet.addMergedRegion(new CellRangeAddress(1, 1, 5, 9));
             // First 2 columns are valId and run Id
-            for (int i = 3; i < noOfColumns; i++) {
-                Cell headerCell = header.createCell(i-3);
+            for (int i = 2; i < noOfColumns; i++) {
+                Cell headerCell = header.createCell(i-2);
                 colName = resultSetMetaData.getColumnName(i);
                 headerCell.setCellValue(colName);
                 headerCell.setCellStyle(headerStyle);
@@ -157,9 +187,9 @@ public class ExcelDataService {
 
             while (excelDataRequest.getResultSet().next() && rowCount < MAX_ROWS_IN_SHEET) {
                 Row row = sheet.createRow(++rowCount);
-                for (int i = 3; i < noOfColumns; i++) {
+                for (int i = 2; i < noOfColumns; i++) {
                     Object field = excelDataRequest.getResultSet().getString(i);
-                    Cell cell = row.createCell(i-3);
+                    Cell cell = row.createCell(i-2);
                     if (field instanceof String) {
                         cell.setCellValue((String) field);
                     } else if (field instanceof Integer) {

@@ -18,11 +18,12 @@ import com.datavalidationtool.util.JdbcUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.datavalidationtool.model.DatabaseInfo.dbType;
+import org.springframework.stereotype.Service;
 
 import java.sql.*;
 import java.util.Date;
 import java.util.*;
-
+@Service
 public class ValidationService {
 	public Logger logger = LoggerFactory.getLogger("CompareService");
 	/**
