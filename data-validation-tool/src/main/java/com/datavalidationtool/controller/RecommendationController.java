@@ -341,7 +341,7 @@ public class RecommendationController {
     }
 
     @PostMapping("/upload")
-    public ResponseEntity<?> handleFileUpload(@RequestParam("file") MultipartFile file ) throws IOException {
+    public ResponseEntity<?> handleFileUpload(@RequestParam("file") MultipartFile file ) throws Exception {
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
         String timeStampStr=timestamp.toString();
         String fileName = "/Users/amsudan/Desktop/Projects/DataValidation/upload/"+file.getOriginalFilename();
@@ -352,7 +352,7 @@ public class RecommendationController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-        excelDataService.readExcel(fileName);
+        excelDataService.processDBUpdates(fileName);
         return ResponseEntity.ok("File uploaded successfully.");
     }
 

@@ -11,4 +11,5 @@ public class ExportDataRequest {
     String schemaName;
     String tableName;
     String runId;
+    String targetSchemaName;
 }

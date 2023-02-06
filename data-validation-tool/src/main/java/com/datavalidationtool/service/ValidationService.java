@@ -220,9 +220,9 @@ public class ValidationService {
 					//cst.setString(5, appProperties.getColumns());
 					//cst.setString(6, appProperties.getFilter());
 					//cst.setString(7, appProperties.getFilter());
-					cst.setString(5, "");
-					cst.setString(6, "");
-					cst.setString(7, "");
+					cst.setString(5, appProperties.getColumns()!=null?appProperties.getColumns():"");
+					cst.setString(6, appProperties.getFilter()!=null?appProperties.getFilter():"");
+					cst.setString(7, appProperties.getFilterType()!=null?appProperties.getFilterType():"");
 					cst.setBoolean(8, appProperties.isCheckAdditionalRows());
 					//cst.registerOutParameter(1, Types.VARCHAR);
 				}
