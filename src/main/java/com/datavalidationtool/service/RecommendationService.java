@@ -15,6 +15,7 @@ import com.datavalidationtool.model.response.RunDetailsSelectionResponse;
 import java.sql.Connection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public interface RecommendationService {
 
@@ -47,4 +48,6 @@ public interface RecommendationService {
     public Connection getConnection(DatabaseInfo db) throws Exception;
 
     RecommendationResponse getRecommendationResponse(RunDetails runDetails, DatabaseInfo valTableDbInfo, String validationTableName) throws Exception;
+    RecommendationResponse getRecommendationResponseV2(Optional<RunDetails> runDetails) throws Exception;
+
 }

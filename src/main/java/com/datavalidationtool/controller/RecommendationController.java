@@ -8,6 +8,7 @@
 package com.datavalidationtool.controller;
 
 import com.datavalidationtool.model.DatabaseInfo;
+import com.datavalidationtool.model.ExcelDataRequest;
 import com.datavalidationtool.model.RunDetails;
 import com.datavalidationtool.model.response.RecommendationResponse;
 import com.datavalidationtool.service.ExcelDataService;
@@ -21,10 +22,13 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.Timestamp;
 import java.util.*;
 @RestController
 @RequestMapping("/dvt")
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 public class RecommendationController {
 
     @Autowired
@@ -55,6 +59,42 @@ public class RecommendationController {
         return runDetailBeans;
     }
 
+
+    @GetMapping(path = "/recommendation/recommendation-data/v1")
+    RecommendationResponse getRecommendationResponseV1(@RequestParam Optional<String> schemaName,
+                                                       @RequestParam Optional<String> tableName,
+                                                       @RequestParam Optional<Integer> schemaRun,
+                                                       @RequestParam Optional<Integer> tableRun,
+                                                       @RequestParam Optional<Integer> page) throws Exception {
+
+
+        DatabaseInfo runTableDbInfo = new DatabaseInfo("localhost", 5432,
+                "postgres", null, "postgres", "postgres", false, DatabaseInfo.dbType.POSTGRESQL,
+                true, "/certs/", "changeit");
+
+        RunDetails inputRunDetails = new RunDetails("ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com",
+                "ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com",
+                "ttp",  "ops$ora", "ppt_3", 1, 1);
+
+                //"ttp",  schemaName.get(), tableName.get(), schemaRun.get(), tableRun.get());
+
+            List<RunDetails> runDetailsList = recommendationService.getRunDetailsWithOptional(inputRunDetails, runTableDbInfo);
+        Optional<RunDetails> runDetails = runDetailsList.stream().findFirst();
+
+
+        RecommendationResponse  recommendationResponse= new RecommendationResponse();
+        if(runDetails.isPresent()) {
+            DatabaseInfo valTableDbInfo = new DatabaseInfo("ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com", 5432,
+                    "ttp", null, "postgres", "postgres", false, DatabaseInfo.dbType.POSTGRESQL,
+                    true, "/certs/", "changeit");
+
+            String validationTableName = runDetails.get().getTableName() + "_val";
+            recommendationResponse = recommendationService.getRecommendationResponse(runDetails.get(), valTableDbInfo, validationTableName);
+        }
+        return recommendationResponse;
+
+    }
+
     //http://localhost:8080/dvt/recommendation/recommendation-data
     // Pass below as post request body
     // ?sourceHostName=localhost&targetHostName=localhost&databaseName=ttp&schemaName=ops$ora&tableName=ppt12&schemaRun=1&tableRun=2
@@ -75,7 +115,7 @@ public class RecommendationController {
 
             RecommendationResponse  recommendationResponse= new RecommendationResponse();
             if(runDetails.isPresent()) {
-                DatabaseInfo valTableDbInfo = new DatabaseInfo("localhost", 5432,
+                DatabaseInfo valTableDbInfo = new DatabaseInfo("ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com", 5432,
                         "ttp", null, "postgres", "postgres", false, DatabaseInfo.dbType.POSTGRESQL,
                         true, "/certs/", "changeit");
 
@@ -85,6 +125,25 @@ public class RecommendationController {
             return recommendationResponse;
 
         }
+
+    @PostMapping(path = "/recommendation/recommendation-data/v2",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    RecommendationResponse getRecommendationResponseV2(@RequestBody RunDetails inputRunDetails) throws Exception {
+
+        DatabaseInfo runTableDbInfo = new DatabaseInfo("localhost", 5432,
+                "postgres", null, "postgres", "postgres", false, DatabaseInfo.dbType.POSTGRESQL,
+                true, "/certs/", "changeit");
+
+        List<RunDetails> runDetailsList = recommendationService.getRunDetailsWithOptional(inputRunDetails, runTableDbInfo);
+        Optional<RunDetails> runDetails = runDetailsList.stream().findFirst();
+
+        RecommendationResponse  recommendationResponse= new RecommendationResponse();
+        if(runDetails.isPresent()) {
+            recommendationResponse = recommendationService.getRecommendationResponseV2(runDetails);
+        }
+        return recommendationResponse;
+    }
 
 
     @GetMapping("/remediation/remediate-data")
