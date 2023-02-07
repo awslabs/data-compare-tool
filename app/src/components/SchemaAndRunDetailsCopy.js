@@ -187,11 +187,13 @@ export let schemaRunSelected = "";
 export let tableNameSelected = "";
 export let tableRunSelected = "";
 
+
+
 function Nestedselect() {
   const [post, setPost] = useState([]);
   const [tableData, setTableData] = useState(data);
-  // const API = 'https://mocki.io/v1/ce5d5ed6-2e31-4265-bf09-eadc2d1b0412';
-  const API = "https://mocki.io/v1/e29d853b-1a21-456d-b8a3-35d5f27da66f";
+   //const API = 'https://mocki.io/v1/e29d853b-1a21-456d-b8a3-35d5f27da66f';
+  const API = 'http://localhost:8090/dvt/recommendation/recommendation-selection';
   const fetchPost = () => {
     fetch(API)
       .then((res) => res.json())
@@ -240,7 +242,11 @@ function Nestedselect() {
 
         console.log("post", { post });
         console.log("data1", data1.hostDetailsList);
-      });
+      })
+      .catch((error) => {
+                   console.log("Error ::", error);
+                   alert(error);
+                 });
   };
   useEffect(() => {
     fetchPost();
@@ -363,8 +369,8 @@ function Nestedselect() {
   const redirectToRecommendation =  (event) => {
     console.log('event '+event.target.value);
 
-    navigate('http://localhost:8090/host-run-details/selection?table='+event.target.value+'&page=1')
-
+    //navigate('http://localhost:8090/host-run-details/selection?table='+event.target.value+'&page=1')
+    navigate('/dvt/recommend?table='+event.target.value+'&page=1')
   }
   const [state, dispatch] = useReducer(reducer, initialState);
 

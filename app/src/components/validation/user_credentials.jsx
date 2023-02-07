@@ -130,7 +130,9 @@ export default function Validation() {
           console.log("An Unexpected Error occured..");
         });
         */
-      navigate("http://localhost:8090/host-run-details/selection", userCred);
+      //navigate("http://localhost:8090/host-run-details/selection", userCred);
+      navigate('/dvt/recommend',userCred);
+
     } else {
       console.log("User details: Invalid" + JSON.stringify(userCred));
     }
