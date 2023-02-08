@@ -112,10 +112,10 @@ const downloadReport =  (event) => {
 let requestParams = { method: "POST", headers: "", body: "" };
         requestParams.headers = { "Content-Type": "application/json" };
         requestParams.body =   JSON.stringify({
-                                              schemaName:event.target.
-                                              targetSchemaName:
-                                              tableName:
-                                              runId : event.target.
+                                             // schemaName:event.target.
+                                             // targetSchemaName:
+                                             // tableName:
+                                             // runId : event.target.
                                    });
         console.log("Data To Submit == ", JSON.stringify(requestParams));
          fetch('http://localhost:8090/validation/exportData', requestParams)

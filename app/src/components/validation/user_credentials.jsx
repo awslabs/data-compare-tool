@@ -85,7 +85,7 @@ export default function Validation() {
 
 
  function handleSubmit () {
- alert(userCred);
+
     //event.preventDefault();
      let requestParams = { method: "POST", headers: "", body: "" };
         requestParams.headers = { "Content-Type": "application/json" };
@@ -103,23 +103,19 @@ export default function Validation() {
                                    });
 
         console.log("Data To Submit == ", JSON.stringify(requestParams));
-         fetch('http://localhost:8090/validation/compareData', requestParams)
+         fetch('http://localhost:8090/dvt/validation/compareData', requestParams)
 
      .then((response) => {
-     alert(response)
              if (response.ok) {
                return response.text();
              }
            })
            .then((resultData) => {
              let msg = resultData !== null ? resultData : "Saved Sucessfully";
-             alert(msg);
              navigate("/dvt/selection");
            })
            .catch((error) => {
              console.log("Error ::", error);
-             alert(error);
-             alert(null);
            });
        }
 
@@ -197,9 +193,6 @@ export default function Validation() {
           console.log("An Unexpected Error occured..");
        })
 
-     // fetch("http://localhost:8090/validation/compareData", userCred);
-        });
-        */
       //navigate("http://localhost:8090/host-run-details/selection", userCred);
       navigate('/dvt/recommend',userCred);
 

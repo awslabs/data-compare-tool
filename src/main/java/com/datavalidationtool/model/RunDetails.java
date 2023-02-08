@@ -1,8 +1,13 @@
 package com.datavalidationtool.model;
 
 
-import java.util.Date;
+import lombok.*;
 
+import java.util.Date;
+@Builder
+@AllArgsConstructor
+@Getter
+@Setter
 public class RunDetails {
 
     private String sourceHostName;
@@ -11,10 +16,12 @@ public class RunDetails {
     private String schemaName;
     private String tableName;
     private int schemaRun;
-
+    private String mismatchType;
     private int tableRun;
     private String runId;
+    private String valId;
     private String executionDate;
+    private String colNames;
 
     public RunDetails() {
     }

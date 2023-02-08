@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @RestController
+@RequestMapping("/dvt")
 public class ValidationController {
     private Boolean toolRunning = Boolean.FALSE;
     public static String reportFileName = "XXX";

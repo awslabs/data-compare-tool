@@ -53,9 +53,11 @@ public class ExcelDataService {
             }
         }
         return "Success";    }
-    private void executeDBCall(SchemaData dbUpdateData) {
+
+    public int executeDBCall(SchemaData dbUpdateData) {
         ResultSet rs = null;
         Connection con=null;
+        int rowsUpdates=0;
         try {
             con =  DataSource.getInstance().getTargetDBConnection() ;
             String dbFunction = "{ call fn_remediate_mismatch_exceptions_dvt2(?,?,?,?,?,?) }";
@@ -72,6 +74,9 @@ public class ExcelDataService {
             cst.setString(5, dbUpdateData.getTableName().replace("_val",""));
             cst.setString(6, dbUpdateData.getTableName().replace("_val",""));
             rs= cst.executeQuery();
+            while(rs.next()) {
+               String rowsUpdates1 = rs.getString(1);
+            }
         } catch (SQLException ex) {
             ex.printStackTrace();
         } catch (Exception e) {
@@ -80,12 +85,14 @@ public class ExcelDataService {
             JdbcUtil jdbcUtil = new JdbcUtil();
             JdbcUtil.closeResultSet(rs);;
         }
+        return rowsUpdates;
 
     }
-    private void executeDBInsertCall(SchemaData dbUpdateData) {
+    public int executeDBInsertCall(SchemaData dbUpdateData) {
 
         ResultSet rs = null;
         Connection con=null;
+        int rowsUpdates=0;
         try {
             con =  DataSource.getInstance().getTargetDBConnection() ;
             String dbFunction = "{ call fn_remediate_missing_exceptions(?,?,?,?,?) }";
@@ -102,6 +109,9 @@ public class ExcelDataService {
                 cst.setString(4, dbUpdateData.getTableName().replace("_val",""));
                 cst.setString(5, dbUpdateData.getDataInsertStr());
                 rs= cst.executeQuery();
+                while(rs.next()) {
+                    String rowsUpdates1 = rs.getString(1);
+                }
         } catch (SQLException ex) {
             ex.printStackTrace();
         } catch (Exception e) {
@@ -110,7 +120,7 @@ public class ExcelDataService {
             JdbcUtil jdbcUtil = new JdbcUtil();
             JdbcUtil.closeResultSet(rs);;
         }
-
+        return rowsUpdates;
     }
 
     public SchemaData readExcel(String filePath) throws IOException {

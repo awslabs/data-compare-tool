@@ -13,6 +13,7 @@ import com.datavalidationtool.model.RunDetails;
 import com.datavalidationtool.model.response.RecommendationResponse;
 import com.datavalidationtool.service.ExcelDataService;
 import com.datavalidationtool.service.RecommendationService;
+import com.datavalidationtool.service.RemediateService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -41,6 +42,8 @@ public class RecommendationController {
     private ExcelDataService excelDataService;
     @Autowired
     ServletContext context;
+    @Autowired
+    RemediateService remediateService;
 
     //http://localhost:8080/recommendation/test
     @GetMapping("/recommendation/test")
@@ -53,8 +56,8 @@ public class RecommendationController {
     @GetMapping("/recommendation/recommendation-selection")
     public Object getHostRunDetailsSelectionResponse() throws Exception {
 
-        DatabaseInfo databaseInfo = new DatabaseInfo("localhost", 5432,
-                "postgres", null, "postgres", "postgres", false, DatabaseInfo.dbType.POSTGRESQL,
+        DatabaseInfo databaseInfo = new DatabaseInfo("ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com", 5432,
+                "ttp", null, "postgres", "postgres", false, DatabaseInfo.dbType.POSTGRESQL,
                 true, "/certs/", "changeit");
 
         List<RunDetails> runDetailBeans = recommendationService.getHostRunDetailsForSelection(databaseInfo);
@@ -159,7 +162,7 @@ public class RecommendationController {
                 "postgres", null, "postgres", "postgres", false, DatabaseInfo.dbType.POSTGRESQL,
                 true, "/certs/", "changeit");
 
-        return recommendationService.insertRunDetailsRecord(inputRunDetails_1, databaseInfo);
+        return remediateService.remediateData(inputRunDetails_1);
     }
 
     @PostMapping("/recommendation/upload")
@@ -168,17 +171,12 @@ public class RecommendationController {
         String timeStampStr=timestamp.toString();
         String fileName = context.getRealPath("upload") + file.getOriginalFilename();
         String home = System.getProperty("user.home");
-        System.out.println("file o name"+file.getOriginalFilename());
-        System.out.println("file name"+file.getName());
-
         try {
-        byte[] bytes = file.getBytes();
-        Path path = Paths.get(fileName);
-        Files.write(path, bytes);
-
-
+       // byte[] bytes = file.getBytes();
+      //  Path path = Paths.get(fileName);
+      //  Files.write(path, bytes);
          //  file.transferTo( new File(home + File.separator + "Desktop" + File.separator + "Projects" + File.separator + "DataValidation" + File.separator + "upload" + File.separator + file.getOriginalFilename()));
-          //  file.transferTo( new File(  "upload" + File.separator + file.getOriginalFilename()));
+            file.transferTo( new File(  fileName));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
