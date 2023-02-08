@@ -12,6 +12,7 @@ import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
 import "./recommendation/css/Recommendation.css";
 import {useNavigate} from "react-router-dom";
+import axios from 'axios';
 import Typography from "@mui/material/Typography";
 
 const CLEAR = "clear";
@@ -556,12 +557,13 @@ function Nestedselect() {
                           Download
                           </Button>
                           {" "}
-                          &nbsp;&nbsp;{" "}
-                           <Button variant="outlined" color="success" value={row.tableRun}
-                            onClick={uploadReport}
-                             >
-                             Upload
-                             </Button>
+                              <input type="file" name="file" variant="outlined" color="success" onChange={handleChange}  />
+                               &nbsp;&nbsp;{" "}
+                                                         <Button variant="outlined" color="success" value={row.tableRun}
+                                                          onClick={handleSubmit}
+                                                           >
+                                                           Upload
+                                                           </Button>
                       </Box>
                     </TableCell>
                   </TableRow>
