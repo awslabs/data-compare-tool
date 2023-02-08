@@ -16,7 +16,6 @@ import dummyInputData from "./dummy_data.json";
 import { FormStatus } from "./static_data";
 import { Link } from "react-router-dom";
 
-
 const initialValue = {
   hostname: "ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com",
   port: "5432",
@@ -30,7 +29,6 @@ const initialValue = {
 };
 
 const reducer = (userCred, action) => {
-alert("dddd")
   switch (action.type) {
     case "update":
       if (["schemaNames", "tableNames", "columnNames"].indexOf(action.payload.key) > -1) {
@@ -200,6 +198,11 @@ export default function Validation() {
        })
 
      // fetch("http://localhost:8090/validation/compareData", userCred);
+        });
+        */
+      //navigate("http://localhost:8090/host-run-details/selection", userCred);
+      navigate('/dvt/recommend',userCred);
+
     } else {
       console.log("User details: Invalid" + JSON.stringify(userCred));
     }

@@ -12,7 +12,7 @@ function App() {
   return (
     <div className="App">
       <Routes>
-        <Route path="http://localhost:8090/host-run-details/selection" element={<SchemaAndTableSelectCopy />}></Route>
+        <Route path="/dvt/selection" element={<SchemaAndTableSelectCopy />}></Route>
         <Route path="/dvt/recommend" element={<Recommendation />}></Route>
         <Route path="http://localhost:8090/compareData" element={<Validation />}></Route>
         <Route path="/dvt/selection" element={<SchemaAndTableSelectCopy />}></Route>

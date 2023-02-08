@@ -1,46 +1,27 @@
 package com.datavalidationtool.model.response;
 
+import java.util.List;
+
 public
 class RecommendationRow {
 
-    String colName;
-    Object srcValue;
-    Object targetValue;
-
     Object recommendationCode;
+    List<RecommendationColumn> columns;
 
     public RecommendationRow() {
     }
 
-    public RecommendationRow(String colName, Object srcValue, Object targetValue, Object recommendationCode) {
-        this.colName = colName;
-        this.srcValue = srcValue;
-        this.targetValue = targetValue;
-        this.recommendationCode=recommendationCode;
+    public RecommendationRow(Object recommendationCode, List<RecommendationColumn> columns) {
+        this.recommendationCode = recommendationCode;
+        this.columns = columns;
     }
 
-    public String getColName() {
-        return colName;
+    public List<RecommendationColumn> getColumns() {
+        return columns;
     }
 
-    public void setColName(String colName) {
-        this.colName = colName;
-    }
-
-    public Object getSrcValue() {
-        return srcValue;
-    }
-
-    public void setSrcValue(Object srcValue) {
-        this.srcValue = srcValue;
-    }
-
-    public Object getTargetValue() {
-        return targetValue;
-    }
-
-    public void setTargetValue(Object targetValue) {
-        this.targetValue = targetValue;
+    public void setColumns(List<RecommendationColumn> columns) {
+        this.columns = columns;
     }
 
     public Object getRecommendationCode() {

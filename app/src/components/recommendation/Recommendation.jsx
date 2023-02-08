@@ -19,6 +19,7 @@ function Recommendation() {
   //alert("Length =" + summaryData.length);
 
   const BACKEND_BASEURL_FETCH = "http://localhost:8080/dvt/recommend";
+  //const BACKEND_BASEURL_FETCH = "http://localhost:8090/dvt/recommendation/recommendation-data/v1";
   const BACKEND_BASEURL_SUBMIT = "http://localhost:8080/dvt/submit";
 
   useEffect(() => {

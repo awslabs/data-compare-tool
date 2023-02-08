@@ -43,7 +43,7 @@ public class RunDetails {
         this.schemaRun = schemaRun;
         this.tableRun=tableRun;
     }
-    public RunDetails(String sourceHostName, String targetHostName, String databaseName, String schemaName, String tableName, int schemaRun) {
+    public RunDetails(String sourceHostName, String targetHostName, String databaseName, String schemaName, String tableName, int tableRun) {
         this.sourceHostName = sourceHostName;
         this.targetHostName = targetHostName;
         this.databaseName = databaseName;
