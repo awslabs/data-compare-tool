@@ -1,4 +1,4 @@
-import React, { useReducer, useEffect, useState } from "react";
+import React, { useReducer, useEffect, ChangeEvent,useState } from "react";
 import Select from "react-select";
 import TableContainer from "@mui/material/TableContainer";
 import Paper from "@mui/material/Paper";
@@ -12,7 +12,7 @@ import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
 import "./recommendation/css/Recommendation.css";
 import {useNavigate} from "react-router-dom";
-
+import axios from 'axios';
 const CLEAR = "clear";
 
 const POPULATE_DATABASE = "populateDatabase";
@@ -86,8 +86,7 @@ let data = [
 //     }]
 // }
 
-const data1 = {};
-
+ const data1 = {};
 const initialState = {
   disableHostName: false,
   disableDBName: false,
@@ -245,6 +244,29 @@ function Nestedselect() {
   const [tableData, setTableData] = useState(data);
    //const API = 'https://mocki.io/v1/e29d853b-1a21-456d-b8a3-35d5f27da66f';
   const API = 'http://localhost:8090/dvt/recommendation/recommendation-selection';
+   const [file, setFile] = useState()
+
+     function handleChange(event) {
+       setFile(event.target.files[0])
+     }
+
+     function handleSubmit(event) {
+       event.preventDefault()
+       const url = 'http://localhost:8090/dvt/recommendation/upload';
+       const formData = new FormData();
+       formData.append('file', file);
+       formData.append('fileName', file.name);
+       const config = {
+         headers: {
+           'content-type': 'multipart/form-data',
+         },
+       };
+       axios.post(url, formData, config).then((response) => {
+         console.log(response.data);
+       });
+
+     }
+
   const fetchPost = () => {
     fetch(API)
       .then((res) => res.json())
@@ -551,12 +573,13 @@ function Nestedselect() {
                           Download
                           </Button>
                           {" "}
-                          &nbsp;&nbsp;{" "}
-                           <Button variant="outlined" color="success" value={row.tableRun}
-                            onClick={uploadReport}
-                             >
-                             Upload
-                             </Button>
+                              <input type="file" name="file" variant="outlined" color="success" onChange={handleChange}  />
+                               &nbsp;&nbsp;{" "}
+                                                         <Button variant="outlined" color="success" value={row.tableRun}
+                                                          onClick={handleSubmit}
+                                                           >
+                                                           Upload
+                                                           </Button>
                       </Box>
                     </TableCell>
                   </TableRow>

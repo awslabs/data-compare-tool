@@ -21,7 +21,8 @@
     "react-table": "^7.8.0",
     "styled-components": "latest",
     "typescript": "^4.9.4",
-    "web-vitals": "^2.1.4"
+    "web-vitals": "^2.1.4",
+    "axios": "^0.24.0"
   },
   "scripts": {
     "start": "react-scripts start",
