@@ -32,6 +32,16 @@ public class ValidationService {
 	 */
 	public void validateData(ValidationRequest validationRequest) {
 	  	try {
+
+			String[] schemaParts = validationRequest.getSourceSchemaName().split(",");
+			for (String schemaName : schemaParts) {
+				String[] schemas = schemaName.split(":");
+				if (schemas.length > 0)
+					validationRequest.setSourceSchemaName(schemas[0]);
+				if (schemas.length > 1)
+					validationRequest.setTargetSchemaName(schemas[1].toLowerCase());
+			}
+
 			if(!DataSource.getInstance().isPoolInitialized())
 	  		  setConnections(validationRequest);
   			if(DataSource.getInstance().isPoolInitialized()) { 
@@ -46,14 +56,7 @@ public class ValidationService {
   					}
 		  			
   				} else {
-  					
-  					String[] schemaParts = validationRequest.getSourceSchemaName().split(",");
   					for (String schemaName : schemaParts) {
-						String[] schemas = schemaName.split(":");
-						if(schemas.length>0)
-							validationRequest.setSourceSchemaName(schemas[0]);
-						if(schemas.length>1)
-							validationRequest.setTargetSchemaName(schemas[1].toLowerCase());
 						compareSchema(validationRequest, /*getSourceConn(), getTargetConn(),*/  null);
 					}
   				}

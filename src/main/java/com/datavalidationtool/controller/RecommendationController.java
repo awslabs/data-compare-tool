@@ -19,8 +19,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.ServletContext;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.util.*;
 @RestController
@@ -31,6 +35,8 @@ public class RecommendationController {
     RecommendationService recommendationService;
     @Autowired
     private ExcelDataService excelDataService;
+    @Autowired
+    ServletContext context;
 
     //http://localhost:8080/recommendation/api/test
     @GetMapping("/test")
@@ -343,11 +349,19 @@ public class RecommendationController {
     public ResponseEntity<?> handleFileUpload(@RequestParam("file") MultipartFile file ) throws Exception {
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
         String timeStampStr=timestamp.toString();
-        String fileName = "/Users/amsudan/Desktop/Projects/DataValidation/upload/"+file.getOriginalFilename();
+        String fileName = context.getRealPath("upload") + file.getOriginalFilename();
         String home = System.getProperty("user.home");
-        try {
-            file.transferTo( new File(home + File.separator + "Desktop" + File.separator + "Projects" + File.separator + "DataValidation" + File.separator + "upload" + File.separator + file.getOriginalFilename()));
+        System.out.println("file o name"+file.getOriginalFilename());
+        System.out.println("file name"+file.getName());
 
+        try {
+        byte[] bytes = file.getBytes();
+        Path path = Paths.get(fileName);
+        Files.write(path, bytes);
+
+
+         //  file.transferTo( new File(home + File.separator + "Desktop" + File.separator + "Projects" + File.separator + "DataValidation" + File.separator + "upload" + File.separator + file.getOriginalFilename()));
+          //  file.transferTo( new File(  "upload" + File.separator + file.getOriginalFilename()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }

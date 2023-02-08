@@ -16,19 +16,21 @@ import dummyInputData from "./dummy_data.json";
 import { FormStatus } from "./static_data";
 import { Link } from "react-router-dom";
 
+
 const initialValue = {
-  hostname: "",
-  port: "",
-  dbname: "",
+  hostname: "ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com",
+  port: "5432",
+  dbname: "ttp",
   usessl: false,
-  username: "",
-  password: "",
-  schemaNames: [],
-  tableNames: [],
-  columnNames: [],
+  username: "postgres",
+  password: "postgres",
+  schemaNames: "ops$ora:crtdms",
+  tableNames: "ppt_100",
+  columnNames: "id",
 };
 
 const reducer = (userCred, action) => {
+alert("dddd")
   switch (action.type) {
     case "update":
       if (["schemaNames", "tableNames", "columnNames"].indexOf(action.payload.key) > -1) {
@@ -38,7 +40,7 @@ const reducer = (userCred, action) => {
         }
         return {
           ...userCred,
-          [action.payload.key]: info.split(","),
+          [action.payload.key]: action.payload.value,
         };
       } else {
         return {
@@ -70,6 +72,73 @@ export default function Validation() {
       payload: { key: event.target.name, value: event.target.name === "usessl" ? !userCred.usessl : event.target.value },
     });
   };
+
+  const handleSubmit1 = () => {
+     fetch('http://localhost:8090/validation/compareData', {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        })
+          .then(res => res.json())
+          .then(response => {
+            window.location.href = `${response.logoutUrl}?id_token_hint=${response.idToken}`
+              + `&post_logout_redirect_uri=${window.location.origin}`;
+          });
+      }
+
+
+ function handleSubmit () {
+ alert(userCred);
+    //event.preventDefault();
+     let requestParams = { method: "POST", headers: "", body: "" };
+        requestParams.headers = { "Content-Type": "application/json" };
+        requestParams.body =   JSON.stringify({
+
+                                               targetSchemaName : userCred.schemaNames,
+                                               sourceSchemaName : userCred.schemaNames,
+                                               targetDBName : userCred.dbname,
+                                               targetHost : userCred.hostname,
+                                               targetPort : userCred.port,
+                                               targetUserName :userCred.username,
+                                               targetUserPassword :userCred.password,
+                                               tableName : userCred.tableNames,
+                                               columns: userCred.columnNames
+                                   });
+
+        console.log("Data To Submit == ", JSON.stringify(requestParams));
+         fetch('http://localhost:8090/validation/compareData', requestParams)
+
+     .then((response) => {
+     alert(response)
+             if (response.ok) {
+               return response.text();
+             }
+           })
+           .then((resultData) => {
+             let msg = resultData !== null ? resultData : "Saved Sucessfully";
+             alert(msg);
+             navigate("/dvt/selection");
+           })
+           .catch((error) => {
+             console.log("Error ::", error);
+             alert(error);
+             alert(null);
+           });
+       }
+
+/*async handleInput(event) {
+    event.preventDefault();
+    const {item} = this.state;
+
+    await fetch('http://localhost:8090/validation/compareData' + (item.id ? '/' + item.id : ''), {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(item),
+    });
+    this.props.history.push('/dvt/selection');
+}*/
 
   useEffect(() => {
     const makeApiCall = async () => {
@@ -103,7 +172,7 @@ export default function Validation() {
         targetPort: userCred.port,
         targetUserName: userCred.username,
         targetUserPassword: userCred.password,
-        tableName: userCred.tableNames[0],
+        tableName: userCred.tableNames,
       };
 
       var fetchContent = {
@@ -114,8 +183,8 @@ export default function Validation() {
         },
         body: JSON.stringify(params),
       };
-      /*
-      let url = "URL_TO_LOAD_DATA";
+
+      let url = "http://localhost:8090/validation/compareData";
       fetch(url, fetchContent)
         .then((response) => {
           if (response.ok) {
@@ -128,15 +197,15 @@ export default function Validation() {
         })
         .catch((error) => {
           console.log("An Unexpected Error occured..");
-        });
-        */
-      navigate("http://localhost:8090/host-run-details/selection", userCred);
+       })
+
+     // fetch("http://localhost:8090/validation/compareData", userCred);
     } else {
       console.log("User details: Invalid" + JSON.stringify(userCred));
     }
-  }, [isEntireFormValid]);
+   }, [isEntireFormValid]);
 
-  function handleSubmit() {
+  function handleSubmitold() {
     setIsEntireFormValid(null);
     if (ifFormTouched === FormStatus.UNTOUCHED) {
       setIfFormTouched(FormStatus.MODIFIED);
@@ -164,7 +233,9 @@ export default function Validation() {
       type: "reset",
     });
   }
-
+ const handleRecomm = () => {
+        navigate("/dvt/selection");
+    }
   return (
     <div>
       <Grid item xs={12}>
@@ -269,8 +340,8 @@ export default function Validation() {
               name="schemaNames"
               label="Schema Names"
               variant="outlined"
-              value={userCred.schemaNames.join()}
-              error={userCred.schemaNames.length === 0 && ifFormTouched === FormStatus.MODIFIED}
+              value={userCred.schemaNames}
+              error={userCred.schemaNames === '' && ifFormTouched === FormStatus.MODIFIED}
               onChange={handleInput}
             />
           </Grid>
@@ -282,8 +353,8 @@ export default function Validation() {
               name="tableNames"
               label="Table Names"
               variant="outlined"
-              value={userCred.tableNames.join()}
-              error={userCred.tableNames.length === 0 && ifFormTouched === FormStatus.MODIFIED}
+              value={userCred.tableNames}
+              error={userCred.tableNames === '' && ifFormTouched === FormStatus.MODIFIED}
               onChange={handleInput}
             />
           </Grid>
@@ -295,8 +366,8 @@ export default function Validation() {
               name="columnNames"
               label="Column Names"
               variant="outlined"
-              value={userCred.columnNames.join()}
-              error={userCred.columnNames.length === 0 && ifFormTouched === FormStatus.MODIFIED}
+              value={userCred.columnNames}
+              error={userCred.columnNames === '' && ifFormTouched === FormStatus.MODIFIED}
               onChange={handleInput}
             />
           </Grid>
@@ -304,13 +375,13 @@ export default function Validation() {
           <Grid item md={6}>
             <Stack direction="row" spacing={2} style={{ justifyContent: "space-evenly" }}>
               <Button color="secondary" variant="contained" onClick={handleSubmit}>
-                Submit
+                Compare
               </Button>
               <Button color="success" variant="contained" onClick={handleReset}>
                 Reset
               </Button>
-              <Button color="primary" variant="contained">
-                Compare
+              <Button color="primary" variant="contained" onClick={handleRecomm}>
+                Recommendation
               </Button>
                  <Link to="/dvt/selection">Recommendation</Link>
 

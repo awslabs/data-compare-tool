@@ -13,6 +13,7 @@ public class SchemaData {
     private String tableName;
     private String runId;
     private String dataUpdateStr;
+    private String dataInsertStr;
     private String columnNames;
     private boolean missingPresent;
     private boolean mismatchPresent;

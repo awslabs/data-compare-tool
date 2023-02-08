@@ -107,7 +107,60 @@ const initialState = {
   tableRunsToBeLoaded: [],
   showTable: false,
 };
+const downloadReport =  (event) => {
+    console.log('event '+event.target.value);
+let requestParams = { method: "POST", headers: "", body: "" };
+        requestParams.headers = { "Content-Type": "application/json" };
+        requestParams.body =   JSON.stringify({
+                                              schemaName:event.target.
+                                              targetSchemaName:
+                                              tableName:
+                                              runId : event.target.
+                                   });
+        console.log("Data To Submit == ", JSON.stringify(requestParams));
+         fetch('http://localhost:8090/validation/exportData', requestParams)
 
+     .then((response) => {
+     alert(response)
+             if (response.ok) {
+               return response.text();
+             }
+           })
+           .then((resultData) => {
+             let msg = resultData !== null ? resultData : "Saved Sucessfully";
+           })
+           .catch((error) => {
+             console.log("Error ::", error);
+           });
+       }
+
+       function uploadReport () {
+
+           //event.preventDefault();
+            let requestParams = { method: "POST", headers: "", body: "" };
+               requestParams.headers = { "Content-Type": "application/json" };
+               requestParams.body =   JSON.stringify({
+
+                                                    //  targetSchemaName : userCred.schemaNames,
+
+                                          });
+
+               console.log("Data To Submit == ", JSON.stringify(requestParams));
+                fetch('http://localhost:8090//recommendation/api/upload', requestParams)
+
+            .then((response) => {
+            alert(response)
+                    if (response.ok) {
+                      return response.text();
+                    }
+                  })
+                  .then((resultData) => {
+                    let msg = resultData !== null ? resultData : "Saved Sucessfully";
+                  })
+                  .catch((error) => {
+                    console.log("Error ::", error);
+                  });
+              }
 function reducer(state, action) {
   switch (action.type) {
     case POPULATE_DATABASE:
@@ -364,7 +417,6 @@ function Nestedselect() {
     console.log('event '+event.target.value);
 
     navigate('http://localhost:8090/host-run-details/selection?table='+event.target.value+'&page=1')
-
   }
   const [state, dispatch] = useReducer(reducer, initialState);
 
@@ -484,10 +536,22 @@ function Nestedselect() {
                         &nbsp;&nbsp;{" "}
                         <Button variant="outlined" color="success" value={row.tableName}
                             onClick={redirectToRecommendation}
-
                         >
                           Edit
                         </Button>
+                        {" "} &nbsp;&nbsp;{" "}
+                         <Button variant="outlined" color="success" value={row.tableRun}
+                         onClick={downloadReport}
+                          >
+                          Download
+                          </Button>
+                          {" "}
+                          &nbsp;&nbsp;{" "}
+                           <Button variant="outlined" color="success" value={row.tableRun}
+                            onClick={uploadReport}
+                             >
+                             Upload
+                             </Button>
                       </Box>
                     </TableCell>
                   </TableRow>

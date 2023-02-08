@@ -9,11 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 @RestController
 public class ValidationController {
     private Boolean toolRunning = Boolean.FALSE;
@@ -33,14 +31,14 @@ public class ValidationController {
         var s = service.getValidationDetails();
         return new ResponseEntity(s, HttpStatus.ACCEPTED);
     }
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping("validation/compareData")
     public String compareData(@RequestBody ValidationRequest inputRunDetails) throws Exception {
-        //ValidationService validationService = new ValidationService();
-        validationService.validateData(inputRunDetails);
+        ValidationService validationService = new ValidationService();validationService.validateData(inputRunDetails);
         toolRunning = Boolean.FALSE;
         return "redirect:/result";
     }
-
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping("validation/exportData")
     public String exportData(@RequestBody ExportDataRequest exportDataRequest) throws Exception {
        // ExcelDataService excelDataService = new ExcelDataService();

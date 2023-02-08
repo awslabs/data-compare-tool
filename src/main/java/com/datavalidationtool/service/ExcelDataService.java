@@ -100,7 +100,7 @@ public class ExcelDataService {
                 cst.setString(2, dbUpdateData.getTargetSchemaName());
                 cst.setString(3, dbUpdateData.getTableName().replace("_val",""));
                 cst.setString(4, dbUpdateData.getTableName().replace("_val",""));
-                cst.setString(5, dbUpdateData.getDataUpdateStr());
+                cst.setString(5, dbUpdateData.getDataInsertStr());
                 rs= cst.executeQuery();
         } catch (SQLException ex) {
             ex.printStackTrace();
@@ -151,7 +151,8 @@ public class ExcelDataService {
                     }
                 } else if(i==2){
                     int dataRowNumber=0;
-                    String strValue="";
+                    String strUpdateValue="";
+                    String strInsertValue="";
                     //324,COL1,COL2;325,COL1,COL2,COL3;326,COL1,COL2,COL3,COL4
                     for (int index = firstRow+2; index <= lastRow; index++) {
                         Row row = sheet.getRow(index);
@@ -164,16 +165,16 @@ public class ExcelDataService {
                                 if(cellIndex==1) {
                                     String cellValue = cell.getStringCellValue();
                                     if(cellValue.startsWith("MISSING")) {
-                                        strValue =strValue+cellValue0 ;
+                                        strInsertValue =strInsertValue+cellValue0 ;
                                         if(index<lastRow) {
-                                            strValue = strValue + ";";
+                                            strInsertValue = strInsertValue + ";";
                                         }
                                         details.setMissingPresent(true);
                                     }
                                     else if(cellValue.startsWith("MISMATCH")) {
-                                        strValue =strValue+cellValue0 + ","+details.getColumnNames();
+                                        strUpdateValue =strUpdateValue+cellValue0 + ","+details.getColumnNames();
                                         if(index<lastRow) {
-                                            strValue = strValue + ";";
+                                            strUpdateValue = strUpdateValue + ";";
                                         }
                                         details.setMismatchPresent(true);
                                     }
@@ -183,7 +184,8 @@ public class ExcelDataService {
                                 }
 
                             }
-                    details.setDataUpdateStr(strValue);
+                    details.setDataUpdateStr(strUpdateValue);
+                    details.setDataInsertStr(strInsertValue);
                         }
                    i++;
                     }
@@ -240,22 +242,22 @@ public class ExcelDataService {
             ffCell0.setCellValue("Columns");
             Cell ffCell1 = fifthRow.createCell(1);
             ffCell1.setCellValue(getColumnNames(resultSetMetaData,noOfColumns));
-
             createExcelSheet(workbook,rowCount,noOfColumns,excelDataRequest,resultSetMetaData,"Mismatch Data",1);
             excelDataRequest.getResultSet().beforeFirst();
             createExcelSheet(workbook,rowCount,noOfColumns,excelDataRequest,resultSetMetaData,"Recommendation Data",2);
             //Current record details.
             try (POIFSFileSystem fs = new POIFSFileSystem()) {
-
                 EncryptionInfo info = new EncryptionInfo(EncryptionMode.agile);
                 Encryptor encryptor = info.getEncryptor();
                 encryptor.confirmPassword("Password1@");
                 // Write out the encrypted version
-                try (FileOutputStream outputStream = new FileOutputStream("/Users/amsudan/Desktop/Projects/DataValidation/awslab/"+tableName + ".xlsx")) {
+                try (FileOutputStream outputStream = new FileOutputStream("reports/"+tableName + ".xlsx")) {
+                //try (FileOutputStream outputStream = new FileOutputStream("/Users/amsudan/Desktop/Projects/DataValidation/awslab/"+tableName + ".xlsx")) {
                     workbook.write(outputStream);
                     outputStream.flush();
                     outputStream.close();
-                    try (OPCPackage opc = OPCPackage.open("/Users/amsudan/Desktop/Projects/DataValidation/awslab/"+tableName + ".xlsx", PackageAccess.READ_WRITE);
+                    try (OPCPackage opc = OPCPackage.open("reports/"+tableName + ".xlsx", PackageAccess.READ_WRITE);
+                  //  try (OPCPackage opc = OPCPackage.open("/Users/amsudan/Desktop/Projects/DataValidation/awslab/"+tableName + ".xlsx", PackageAccess.READ_WRITE);
                          OutputStream os = encryptor.getDataStream(fs)) {
                         opc.save(os);
                     } catch (IOException | InvalidFormatException e) {
@@ -266,8 +268,6 @@ public class ExcelDataService {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-
-
             }
 
         }
