@@ -135,14 +135,21 @@ public class RecommendationController {
 
         }
 
-    @PostMapping(path = "/recommendation/recommendation-data/v2",
-            consumes = MediaType.APPLICATION_JSON_VALUE,
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    RecommendationResponse getRecommendationResponseV2(@RequestBody RunDetails inputRunDetails) throws Exception {
+    @GetMapping(path = "/recommendation/recommendation-data/v2")
+    RecommendationResponse getRecommendationResponseV2(@RequestParam Optional<String> schemaName,
+                                                       @RequestParam Optional<String> table,
+                                                       @RequestParam Optional<Integer> schemaRun,
+                                                       @RequestParam Optional<Integer> tableRun,
+                                                       @RequestParam Optional<Integer> page) throws Exception {
+
 
         DatabaseInfo runTableDbInfo = new DatabaseInfo("localhost", 5432,
                 "postgres", null, "postgres", "postgres", false, DatabaseInfo.dbType.POSTGRESQL,
                 true, "/certs/", "changeit");
+
+        RunDetails inputRunDetails = new RunDetails("ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com",
+                "ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com",
+                "ttp",  "ops$ora", table.get().toString(), 1, 1);
 
         List<RunDetails> runDetailsList = recommendationService.getRunDetailsWithOptional(inputRunDetails, runTableDbInfo);
         Optional<RunDetails> runDetails = runDetailsList.stream().findFirst();

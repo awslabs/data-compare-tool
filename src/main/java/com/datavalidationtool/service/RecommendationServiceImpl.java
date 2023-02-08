@@ -12,10 +12,15 @@ import com.datavalidationtool.model.DatabaseInfo;
 import com.datavalidationtool.model.ExcelDataRequest;
 import com.datavalidationtool.model.RunDetails;
 import com.datavalidationtool.model.response.*;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFFont;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.math.BigInteger;
 import java.sql.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -240,7 +245,7 @@ public class RecommendationServiceImpl implements RecommendationService {
                     Set<RunWithDate> schemaRun = new TreeSet<>();
                     for(RunDetails uTableRd:uniqueSchemaRunDetails) {
                         RunWithDate runWithDate = new RunWithDate();
-                        java.util.Date executionDate = convertStrDateToDate(uTableRd.getExecutionDate());
+                        Date executionDate = convertStrDateToDate(uTableRd.getExecutionDate());
                         runWithDate.setRun(uTableRd.getTableRun());
                         runWithDate.setExecutionDate(executionDate);
                         schemaRun.add(runWithDate);
@@ -391,6 +396,8 @@ public class RecommendationServiceImpl implements RecommendationService {
         adminColumnNameOfValTable.add("run_id");
         adminColumnNameOfValTable.add("val_log");
         adminColumnNameOfValTable.add("val_type");
+        adminColumnNameOfValTable.add("exception_rank");
+        //adminColumnNameOfValTable.add("exception_status");
         return adminColumnNameOfValTable;
     }
 
@@ -698,26 +705,88 @@ public class RecommendationServiceImpl implements RecommendationService {
         RecommendationResponse recommendationResponse = new RecommendationResponse();
 
 
-        ExcelDataRequest excelDataRequest =ExcelDataRequest.builder().runId(runDetails.get().getRunId()).schemaName(runDetails.get().getSchemaName()).tableName(runDetails.get().getTableName()).build();
-        ResultSet resultSet = getResultSet(excelDataRequest,recommendationResponse);
+        ExcelDataRequest excelDataRequest = ExcelDataRequest.builder().runId(runDetails.get().getRunId()).schemaName(runDetails.get().getSchemaName()).tableName(runDetails.get().getTableName()).build();
+        ResultSet resultSet = getResultSet(excelDataRequest, recommendationResponse);
         ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
         String tableName = resultSetMetaData.getTableName(1);
         String schemaName = excelDataRequest.getSchemaName();
 
-        //int noOfColumns = resultSetMetaData.getColumnCount();
-        int rowCount = 0;
 
-        recommendationResponse.setTable(schemaName+"."+tableName);
-        recommendationResponse.setCurrentPage(0);
-        recommendationResponse.setPageSize(0);
-        recommendationResponse.setTotalRecords(0);
+        recommendationResponse.setTable(schemaName + "." + tableName);
+        recommendationResponse.setCurrentPage(1);
+        recommendationResponse.setPageSize(10);
+        int rowCount = 0;
         List<RecommendationRow> recommendationRowList = new ArrayList<>();
 
+        if (resultSet != null) {
+            ResultSetMetaData rsmd = resultSet.getMetaData();
+            Map<Object, Map<String, Object>> srcValueMap = new HashMap<>();
+            Map<Object, Map<String, Object>> tgtValueMap = new HashMap<>();
+            while (resultSet.next()) {
 
+                Map<String, Object> rsKeyValMap = new HashMap<>();
+                for (int index = 0; index < rsmd.getColumnCount(); index++) {
+                    // get the SQL column name
+                    String columnName = rsmd.getColumnName(index + 1);
+
+                    // get the value of the SQL column
+                    Object columnValue = resultSet.getObject(index + 1);
+                    rsKeyValMap.put(columnName, columnValue);
+                }
+
+                if ("Mismatch_src".equalsIgnoreCase(resultSet.getObject(3).toString()) ||
+                        "Missing".equalsIgnoreCase(resultSet.getObject(3).toString())) {
+                    srcValueMap.put(resultSet.getObject(4), rsKeyValMap);
+                } else if ("Mismatch_trg".equalsIgnoreCase(resultSet.getObject(3).toString())) {
+                    tgtValueMap.put(resultSet.getObject(4), rsKeyValMap);
+                }
+            }
+            List<String> AdminColumnNameOfValTable = getAdminColumnNameOfValTable();
+
+            for (Object srcKey : srcValueMap.keySet()) {
+
+                rowCount++;
+                List<RecommendationColumn> recommendationColumns = new ArrayList<>();
+                Object recommendationCode = 1;
+
+
+                Map<String, Object> srcValue = srcValueMap.get(srcKey);
+                Map<String, Object> tgtValue = new HashMap<>();
+
+                if (tgtValueMap.containsKey(srcKey)) {
+                    tgtValue = tgtValueMap.get(srcKey);
+                }
+
+                for (Object srcColumns : srcValue.keySet()) {
+                    if (!AdminColumnNameOfValTable.contains(srcColumns.toString())) {
+                        if (tgtValue.containsKey(srcColumns)) {
+                            recommendationColumns.add(new RecommendationColumn(srcColumns.toString(), srcValue.get(srcColumns), tgtValue.get(srcColumns)));
+                        } else {
+                            recommendationColumns.add(new RecommendationColumn(srcColumns.toString(), srcValue.get(srcColumns), ""));
+
+                        }
+                    }
+
+                    if ("exception_status".equalsIgnoreCase(srcColumns.toString())) {
+                        if ("Mismatch_src".equalsIgnoreCase(srcValue.get(srcColumns).toString())) {
+                            recommendationCode = 2;
+                        } else if ("Missing".equalsIgnoreCase(srcValue.get(srcColumns).toString())) {
+                            recommendationCode = 1;
+                        } else if ("Mismatch_trg".equalsIgnoreCase(srcValue.get(srcColumns).toString())) {
+                            recommendationCode = 3;
+                        }
+                    }
+                }
+                recommendationRowList.add(new RecommendationRow(recommendationCode, recommendationColumns));
+            }
+        }
+        recommendationResponse.setTotalRecords(rowCount);
         recommendationResponse.setRows(recommendationRowList);
 
         return recommendationResponse;
     }
+
+
 
     private ResultSet getResultSet(ExcelDataRequest excelDataRequest, RecommendationResponse recommendationResponse) throws Exception {
         ResultSet rs=null;
@@ -736,7 +805,7 @@ public class RecommendationServiceImpl implements RecommendationService {
             DatabaseMetaData meta = con.getMetaData();
             rs = meta.getPrimaryKeys(null, excelDataRequest.getSchemaName(), excelDataRequest.getTableName());
             ResultSet rs1=meta.getColumns(null,excelDataRequest.getSchemaName(),excelDataRequest.getTableName(),null);
-            java.util.ArrayList list = new java.util.ArrayList<String>();
+            ArrayList list = new ArrayList<String>();
             while (rs.next()) {
                 //pk = rs.getString("COLUMN_NAME");
                 pk = rs.getString(4);
