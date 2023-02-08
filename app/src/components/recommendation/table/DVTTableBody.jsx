@@ -22,6 +22,18 @@ function DVTTableBody(props) {
     columnsDsiplayLimit = props.cols.length < 5 ? props.cols.length : 5;
   }
 
+  const showMismatchType = (val) =>{
+    console.log(val);
+    switch(val){
+      case 1:
+        return "missing_trgt";
+      case 2:
+        return "mismatch";
+      case 3:
+        return "missing_src";
+    }
+  }
+
   function getRows() {
     let tableRows = [];
     rows.map((eachRow, rowIndex) => {
@@ -54,7 +66,7 @@ function DVTTableBody(props) {
               </TableCell>
             ) : null
           )}
-
+          <TableCell >{showMismatchType(eachRow.recommendationCode)}</TableCell>
           <TableCell style={{ width: "1%" }} key={2 * columnsDsiplayLimit + 1}>
             <Button
               value={rowIndex}

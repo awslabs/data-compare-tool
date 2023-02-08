@@ -51,6 +51,10 @@ function DVTTableHeader(props) {
         );
       }
     });
+
+    columnArr.push(
+        <TableCell>MismatchType</TableCell>
+    );
     if (columns.length >= columnsDsiplayLimit) {
       columnArr.push(
         <TableCell key={2 * columnsDsiplayLimit + 1} style={{ width: "1%" }}>

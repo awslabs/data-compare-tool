@@ -12,6 +12,7 @@ import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
 import "./recommendation/css/Recommendation.css";
 import {useNavigate} from "react-router-dom";
+import Typography from "@mui/material/Typography";
 
 const CLEAR = "clear";
 
@@ -426,9 +427,13 @@ function Nestedselect() {
   const [state, dispatch] = useReducer(reducer, initialState);
 
   return (
+     <div>
+       <Grid item xs={12}>
+         <Typography variant="h5">Recommendation Details</Typography>
+       </Grid>
     <Box mt={2} mx={10}>
       <Grid container spacing={2} columnSpacing={{ xs: 2 }}>
-        <Grid item xs={12}>
+        <Grid item xs={6}>
           <Select
             isDisabled={state.disableHostName}
             isLoading={state.loadingDBName}
@@ -441,7 +446,7 @@ function Nestedselect() {
           />
         </Grid>
         {!state.disableDBName && (
-          <Grid item xs={12}>
+          <Grid item xs={6}>
             <Select
               isDisabled={state.disableDBName}
               isLoading={state.loadingSchemaName}
@@ -455,7 +460,7 @@ function Nestedselect() {
           </Grid>
         )}
         {!state.disableSchemaName && (
-          <Grid item xs={6}>
+          <Grid item xs={3}>
             <Select
               isDisabled={state.disableSchemaName}
               isLoading={state.loadingSchemaRun}
@@ -469,7 +474,7 @@ function Nestedselect() {
           </Grid>
         )}
         {!state.disableSchemaRun && (
-          <Grid item xs={6}>
+          <Grid item xs={3}>
             <Select
               isDisabled={state.disableSchemaRun}
               isLoading={state.loadingTableName}
@@ -483,7 +488,7 @@ function Nestedselect() {
           </Grid>
         )}
         {!state.disableTableName && (
-          <Grid item xs={6}>
+          <Grid item xs={3}>
             <Select
               isDisabled={state.disableTableName}
               isLoading={state.loadingTableRun}
@@ -497,7 +502,7 @@ function Nestedselect() {
           </Grid>
         )}
         {!state.disableTableRun && (
-          <Grid item xs={6}>
+          <Grid item xs={3}>
             <Select
               isDisabled={state.disableTableRun}
               isLoading={false}
@@ -567,6 +572,7 @@ function Nestedselect() {
         </div>
       )}
     </Box>
+      </div>
   );
 }
 
