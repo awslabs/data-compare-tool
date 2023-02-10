@@ -143,8 +143,8 @@ public class RecommendationController {
                                                        @RequestParam Optional<Integer> page) throws Exception {
 
 
-        DatabaseInfo runTableDbInfo = new DatabaseInfo("localhost", 5432,
-                "postgres", null, "postgres", "postgres", false, DatabaseInfo.dbType.POSTGRESQL,
+        DatabaseInfo runTableDbInfo = new DatabaseInfo("ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com", 5432,
+                "ppt", null, "postgres", "postgres", false, DatabaseInfo.dbType.POSTGRESQL,
                 true, "/certs/", "changeit");
 
         RunDetails inputRunDetails = new RunDetails("ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com",
