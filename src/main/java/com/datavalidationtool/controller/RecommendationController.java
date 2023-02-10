@@ -77,13 +77,13 @@ public class RecommendationController {
                                                        @RequestParam Optional<Integer> page) throws Exception {
 
 
-        DatabaseInfo runTableDbInfo = new DatabaseInfo("localhost", 5432,
-                "postgres", null, "postgres", "postgres", false, DatabaseInfo.dbType.POSTGRESQL,
+        DatabaseInfo runTableDbInfo = new DatabaseInfo("ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com", 5432,
+                "ttp", null, "postgres", "postgres", false, DatabaseInfo.dbType.POSTGRESQL,
                 true, "/certs/", "changeit");
 
         RunDetails inputRunDetails = new RunDetails("ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com",
                 "ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com",
-                "ttp",  "ops$ora", "ppt_3", 1, 1);
+                "ttp",  "ops$ora", "ppt_50", 1, 1);
 
                 //"ttp",  schemaName.get(), tableName.get(), schemaRun.get(), tableRun.get());
 
@@ -114,8 +114,8 @@ public class RecommendationController {
         RecommendationResponse getRecommendationResponse(@RequestBody RunDetails inputRunDetails) throws Exception {
 
 
-            DatabaseInfo runTableDbInfo = new DatabaseInfo("localhost", 5432,
-                    "postgres", null, "postgres", "postgres", false, DatabaseInfo.dbType.POSTGRESQL,
+            DatabaseInfo runTableDbInfo = new DatabaseInfo("ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com", 5432,
+                    "ttp", null, "postgres", "postgres", false, DatabaseInfo.dbType.POSTGRESQL,
                     true, "/certs/", "changeit");
 
             List<RunDetails> runDetailsList = recommendationService.getRunDetailsWithOptional(inputRunDetails, runTableDbInfo);

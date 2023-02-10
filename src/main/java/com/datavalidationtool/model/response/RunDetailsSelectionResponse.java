@@ -1,23 +1,16 @@
 package com.datavalidationtool.model.response;
 
+import lombok.*;
+
 import java.util.List;
 
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
 public class RunDetailsSelectionResponse {
 
     List<HostDetails> hostDetailsList;
 
-    public List<HostDetails> getHostDetailsList() {
-        return hostDetailsList;
-    }
-
-    public void setHostDetailsList(List<HostDetails> hostDetailsList) {
-        this.hostDetailsList = hostDetailsList;
-    }
-
-    public RunDetailsSelectionResponse(List<HostDetails> hostDetailsList) {
-        this.hostDetailsList = hostDetailsList;
-    }
-
-    public RunDetailsSelectionResponse() {
-    }
 }
