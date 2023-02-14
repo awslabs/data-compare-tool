@@ -48,6 +48,6 @@ public interface RecommendationService {
     public Connection getConnection(DatabaseInfo db) throws Exception;
 
     RecommendationResponse getRecommendationResponse(RunDetails runDetails, DatabaseInfo valTableDbInfo, String validationTableName) throws Exception;
-    RecommendationResponse getRecommendationResponseV2(Optional<RunDetails> runDetails) throws Exception;
+    RecommendationResponse getRecommendationResponseV2(RunDetails runDetails) throws Exception;
 
 }

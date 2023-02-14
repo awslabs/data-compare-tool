@@ -20,14 +20,45 @@ function Recommendation() {
 
   const BACKEND_BASEURL_FETCH = "http://localhost:8080/dvt/recommend";
   //const BACKEND_BASEURL_FETCH = "http://localhost:8090/dvt/recommendation/recommendation-data/v1";
-  const BACKEND_BASEURL_SUBMIT = "http://localhost:8080/dvt/submit";
+  const BACKEND_BASEURL_SUBMIT = "http://localhost:8090/dvt/remediation/remediate-data";
 
   useEffect(() => {
     console.log("Entered useEffect");
-    let table = searchParams.get("table");
+    let table = searchParams.get("tableName");
+    let schemaName = searchParams.get("schemaName");
+    let runId = searchParams.get("runId");
     let pageNumber = searchParams.get("page");
-    fetchData(table, pageNumber);
+    //fetchData(table, pageNumber);
+    fetchRecData(table,schemaName, runId, pageNumber);
   }, [searchParams]);
+function fetchRecData(tableName,schemaName, runId, pageNumber)
+{
+   let requestParams = { method: "POST", headers: "", body: "" };
+        requestParams.headers = { "Content-Type": "application/json" };
+        requestParams.body =   JSON.stringify({
+                                               schemaName : schemaName,
+                                               runId: runId,
+                                               tableName : tableName,
+                                   });
+        console.log("Data To Submit == ", JSON.stringify(requestParams));
+         fetch('http://localhost:8090/dvt/recommendation/recommendation-data/v2', requestParams)
+     .then((response) => {
+            if (response.ok) {
+              return response.json();
+            }
+          })
+          .then((data) => {
+            console.log("Data is.......> ", data);
+            data.runId=runId;
+            setData(data);
+            setSuccessMessage(null);
+            setErrorMessage(null);
+            setSummaryData([]);
+          })
+          .catch((error) => {
+            setErrorMessage("An Unexpected Error occured..");
+          })
+}
 
   function fetchData(tableName, pageNumber) {
     if (pageNumber === undefined || pageNumber === null) {
@@ -69,7 +100,17 @@ function Recommendation() {
     setSuccessMessage(null);
     setSummaryData([]);
   }
-
+  const showMismatchType = (val) =>{
+    console.log(val);
+    switch(val){
+      case 1:
+        return "missing_trgt";
+      case 2:
+        return "mismatch";
+      case 3:
+        return "missing_src";
+    }
+  }
   function summaryContinueHandler() {
     setSummaryData([]);
 
@@ -78,20 +119,30 @@ function Recommendation() {
     summaryData.map((eachRow, rowIndex) => {
       let eachRowToSubmit = [];
       eachRow.columns.map((eachCol, colIndex) => {
-        let eachEntry = { column: "", value: "" };
+        let eachEntry = { column: "", value: "", valId:"",exceptionType:"" };
         eachEntry.column = eachCol.colName;
         eachEntry.value = eachCol.targetValue;
-        eachRowToSubmit.push(eachEntry);
+         eachEntry.valId = eachRow.valId;
+         eachEntry.exceptionType=showMismatchType(eachRow.recommendationCode);
+        dataToSubmit.push(eachEntry);
       });
-      dataToSubmit.push(eachRowToSubmit);
+         console.log(" valid......in",eachRow)
+         console.log(" valid......in",showMismatchType(eachRow.recommendationCode))
+      //dataToSubmit.push(eachRowToSubmit);
     });
 
     let requestParams = { method: "POST", headers: "", body: "" };
-    requestParams.headers = { "Content-Type": "text/plain" };
-    requestParams.body = JSON.stringify(dataToSubmit);
+    requestParams.headers = { "Content-Type": "application/json" };
+    //requestParams.body = JSON.stringify(dataToSubmit);
+    let requestBody = { runId: "", tableName: "", schemaName:"",exceptionType:"", columnDetails:"" };
 
-    console.log("Data To Submit == ", JSON.stringify(requestParams));
-
+    requestBody.runId=data.runId;
+    requestBody.tableName=data.table;
+    requestBody.schemaName="";
+    requestBody.exceptionType="";
+    requestBody.columnDetails=dataToSubmit;
+    requestParams.body=JSON.stringify(requestBody)
+    console.log(" request ",requestParams.body)
     fetch(BACKEND_BASEURL_SUBMIT, requestParams)
       .then((response) => {
         if (response.ok) {

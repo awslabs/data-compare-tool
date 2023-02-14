@@ -13,6 +13,7 @@ package com.datavalidationtool.service;
 
 import com.datavalidationtool.ds.DataSource;
 import com.datavalidationtool.model.DatabaseInfo;
+import com.datavalidationtool.model.RunDetails;
 import com.datavalidationtool.model.request.ValidationRequest;
 import com.datavalidationtool.util.JdbcUtil;
 import org.slf4j.Logger;
@@ -30,9 +31,10 @@ public class ValidationService {
 	 * 
 	 * @param validationRequest
 	 */
-	public void validateData(ValidationRequest validationRequest) {
-	  	try {
-
+	public String validateData(ValidationRequest validationRequest) {
+		String runId="";
+		try {
+            boolean isSchemaLevel=false;
 			String[] schemaParts = validationRequest.getSourceSchemaName().split(",");
 			for (String schemaName : schemaParts) {
 				String[] schemas = schemaName.split(":");
@@ -52,12 +54,12 @@ public class ValidationService {
 						&& !validationRequest.isIgnoreTables()) {
   					String[] tableNameParts = validationRequest.getTableName().split(",");
   					for (String tableName : tableNameParts) {
-						validate(validationRequest,tableName, null);
+						runId=validate(validationRequest,tableName, null);
   					}
 		  			
   				} else {
   					for (String schemaName : schemaParts) {
-						compareSchema(validationRequest, /*getSourceConn(), getTargetConn(),*/  null);
+						 runId= compareSchema(validationRequest, /*getSourceConn(), getTargetConn(),*/  null);
 					}
   				}
 			} else {
@@ -68,9 +70,59 @@ public class ValidationService {
 	  	} finally {
 	  		JdbcUtil jdbcUtil = new JdbcUtil();
 		}
+    return runId;
 	}
+	public RunDetails getCurrentRunInfo(ValidationRequest appProperties) throws Exception {
+		RunDetails runDetails = new RunDetails();
+		String query = "SELECT max(schema_run), max(table_run) FROM public.run_details where target_host_name=? and database_name=? and schema_name=? and table_name=?";
 
+		try {
+			Connection dbConn= DataSource.getInstance().getTargetDBConnection();
+			PreparedStatement pst = dbConn.prepareStatement(query);
+			pst.setString(1,appProperties.getTargetHost());
+			pst.setString(2,appProperties.getTargetDBName());
+			pst.setString(3,appProperties.getSourceSchemaName());
+			pst.setString(4,appProperties.getTableName());
+			ResultSet rs = pst.executeQuery();
+			while (rs.next()) {
+				runDetails.setSchemaRun(rs.getInt(1)+1);
+				if(appProperties.getTableName()==null || appProperties.getTableName().isBlank()) {
+					runDetails.setTableRun(rs.getInt(2) + 1);
+				}else{
+					runDetails.setTableRun(0);
+				}
+			}
 
+		} catch (SQLException ex) {
+			logger.error("Exception while fetching table details");
+			logger.error(ex.getMessage());
+		}
+		return runDetails;
+	}
+	public List<RunDetails> addRunDetailsForSelection(RunDetails runDetails) throws Exception {
+
+		List<RunDetails> outputRunDetailsList = new ArrayList<>();
+		String query = "insert into public.run_details(source_host_name,target_host_name,database_name,schema_name,table_name,schema_run,table_run,run_id,execution_date) values(?,?,?,?,?,?,?,?,?)";
+		try {
+			Connection dbConn= DataSource.getInstance().getTargetDBConnection();
+			PreparedStatement pst = dbConn.prepareStatement(query);
+			pst.setString(1,runDetails.getSourceHostName());
+			pst.setString(2,runDetails.getTargetHostName());
+			pst.setString(3,runDetails.getDatabaseName());
+			pst.setString(4,runDetails.getSchemaName());
+			pst.setString(5,runDetails.getTableName());
+			pst.setInt(6,runDetails.getSchemaRun());
+			pst.setInt(7,runDetails.getTableRun());
+			pst.setString(8,runDetails.getRunId());
+			pst.setTimestamp(9,runDetails.getExecutionTime());
+			int count= pst.executeUpdate();
+            logger.info("added run details count",count);
+		} catch (SQLException ex) {
+			logger.error("Exception while adding table details");
+			logger.error(ex.getMessage());
+		}
+		return outputRunDetailsList;
+	}
 	
 	/**
 	 * 
@@ -181,11 +233,12 @@ public class ValidationService {
 	 * @param columnList
 	 * @return
 	 */
-	private void validate(ValidationRequest appProperties,
+	private String validate(ValidationRequest appProperties,
 			 String tableName, List<String> columnList) throws Exception {
 
 		long start = System.currentTimeMillis();
 		StringBuilder info = new StringBuilder();
+		String runId="";
         long usedMemory = 0;
 		try {
 			checkIfTableExistsInPg(appProperties.getTargetSchemaName().toLowerCase(), tableName.toLowerCase(), "POSTGRESQL"/*, targetConn*/);
@@ -201,6 +254,7 @@ public class ValidationService {
 			Statement stmt = null;
 			ResultSet rs = null;
 			Connection con=null;
+
 			try {
 				con =  DataSource.getInstance().getTargetDBConnection() ;
 				//stmt = getConnection().createStatement();
@@ -230,10 +284,25 @@ public class ValidationService {
 					//cst.registerOutParameter(1, Types.VARCHAR);
 				}
 				rs= cst.executeQuery();
-				logger.error("DB", rs.getRow());
-				//String result=rs.getString(1);
-				//logger.info("Result.." +result);
-				//logger.debug(query);
+				while(rs.next()) {
+					String result = rs.getString(1);
+					logger.info("DB", result);
+					if(result.contains("Validation complete for Run Id")) {
+						runId = result.substring(27, 59);
+					}
+				}
+				if(!runId.isBlank()) {
+					RunDetails runDetails = getCurrentRunInfo(appProperties);
+					runDetails.setRunId(runId);
+					runDetails.setSourceHostName(appProperties.getTargetHost());
+					runDetails.setTargetHostName(appProperties.getTargetHost());
+					runDetails.setDatabaseName(appProperties.getTargetDBName());
+					runDetails.setSchemaName(appProperties.getSourceSchemaName());
+					runDetails.setTableName(appProperties.getTableName());
+					Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+					runDetails.setExecutionTime(timestamp);
+					addRunDetailsForSelection(runDetails);
+				}
 			} catch (SQLException ex) {
 
 				ex.printStackTrace();
@@ -262,7 +331,7 @@ public class ValidationService {
 		info.append(".");
 		info.append(tableName);
 		logger.info(info.toString());
-
+		return runId;
 	}
 		public List<Map<String, String>> splitMap( Map<String, String> original, long max) {
 			int counter = 0;
@@ -317,11 +386,12 @@ public class ValidationService {
 	 * @param columnList
 	 * @return
 	 */
-	public void compareSchema(ValidationRequest appProperties,
+	public String compareSchema(ValidationRequest appProperties,
 			List<String> columnList) throws Exception {
 		List<String> tableNames = new ArrayList<String>();
 		ResultSet rs = null;
 		Connection sourceConn=null;
+		String runId="";
 		try {
 			sourceConn =DataSource.getInstance().getTargetDBConnection();
 			List<String> ignoreTables = (appProperties.getTableName() != null && !appProperties.getTableName().isEmpty()
@@ -343,10 +413,11 @@ public class ValidationService {
 		if (!tableNames.isEmpty()) {
 			for (String tableName : tableNames) {
 				StringBuilder info = new StringBuilder();
-				validate(appProperties,  tableName, columnList);
+				runId= validate(appProperties,  tableName, columnList);
 				logger.info(info.toString());
 			}
 		}
+		return runId;
 	}
 	
 	/**

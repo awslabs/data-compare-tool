@@ -67,7 +67,7 @@ function DVTTableHeader(props) {
   }
 
   const test1 = (val) => {
-    alert("test1 val is" + val);
+    //alert("test1 val is" + val);
   };
 
   let columHeaders = getColumnHeaderArray();

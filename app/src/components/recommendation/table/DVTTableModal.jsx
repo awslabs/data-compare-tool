@@ -24,7 +24,7 @@ function DVTTableModal(props) {
   const [validationMessage, setValidationMessage] = useState("");
 
   useEffect(() => {
-    console.log("Inside useEffect ");
+    console.log("Inside useEffect ... ", props.modalDetailsData);
     setModalDetailsData(props.modalDetailsData);
   }, [props.modalDetailsData]);
 

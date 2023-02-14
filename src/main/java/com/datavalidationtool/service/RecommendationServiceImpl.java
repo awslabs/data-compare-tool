@@ -12,15 +12,10 @@ import com.datavalidationtool.model.DatabaseInfo;
 import com.datavalidationtool.model.ExcelDataRequest;
 import com.datavalidationtool.model.RunDetails;
 import com.datavalidationtool.model.response.*;
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFFont;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.math.BigInteger;
 import java.sql.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -92,7 +87,6 @@ public class RecommendationServiceImpl implements RecommendationService {
 
         List<RunDetails> outputRunDetailsList = new ArrayList<>();
         String query = null;
-
         String whereQueryCondition = "";
 
         String queryWithOptionalParam = "SELECT * FROM public.run_details";
@@ -220,6 +214,26 @@ public class RecommendationServiceImpl implements RecommendationService {
         return outputRunDetailsList;
     }
 
+    public RunDetails getCurrentRunInfo() throws Exception {
+        RunDetails runDetails = new RunDetails();
+        String query = "SELECT max(schema_run), max(table_run) FROM public.run_details";
+
+        try {
+            Connection dbConn= DataSource.getInstance().getTargetDBConnection();
+             PreparedStatement pst = dbConn.prepareStatement(query);
+             ResultSet rs = pst.executeQuery();
+            while (rs.next()) {
+                runDetails.setSchemaRun(rs.getInt(1));
+                runDetails.setTableRun(rs.getInt(2));
+            }
+
+        } catch (SQLException ex) {
+            logger.error("Exception while fetching table details");
+            logger.error(ex.getMessage());
+        }
+        return runDetails;
+    }
+
      public RunDetailsSelectionResponse getRunDetailsSelectionResponse(List<RunDetails> runDetails) {
 
         RunDetailsSelectionResponse runDetailsSelectionResponse = new RunDetailsSelectionResponse();
@@ -249,6 +263,9 @@ public class RecommendationServiceImpl implements RecommendationService {
                         runWithDate.setRun(uTableRd.getTableRun());
                         runWithDate.setExecutionDate(executionDate);
                         schemaRun.add(runWithDate);
+                        runWithDate.setRunId(uTableRd.getRunId());
+                        runWithDate.setTableName(uTableRd.getTableName());
+                        runWithDate.setSchemaName(uTableRd.getSchemaName());
                     }
                     SchemaDetails schemaDetails = new SchemaDetails();
                     schemaDetails.setSchemaName(schemaNm);
@@ -266,6 +283,9 @@ public class RecommendationServiceImpl implements RecommendationService {
                             runWithDate.setRun(uTableRd.getTableRun());
                             runWithDate.setExecutionDate(executionDate);
                             tableRun.add(runWithDate);
+                            runWithDate.setRunId(uTableRd.getRunId());
+                            runWithDate.setTableName(uTableRd.getTableName());
+                            runWithDate.setSchemaName(uTableRd.getSchemaName());
                         }
                         TableDetails tableDetails = new TableDetails();
                         tableDetails.setTableName(tableNm);
@@ -288,6 +308,8 @@ public class RecommendationServiceImpl implements RecommendationService {
         runDetailsSelectionResponse.setHostDetailsList(hostDetailsList);
         return runDetailsSelectionResponse;
     }
+
+
 
     private static Date convertStrDateToDate(String strDate) {
         Date executionDate;
@@ -397,6 +419,7 @@ public class RecommendationServiceImpl implements RecommendationService {
         adminColumnNameOfValTable.add("val_log");
         adminColumnNameOfValTable.add("val_type");
         adminColumnNameOfValTable.add("exception_rank");
+        adminColumnNameOfValTable.add("exception_status");
         //adminColumnNameOfValTable.add("exception_status");
         return adminColumnNameOfValTable;
     }
@@ -474,7 +497,7 @@ public class RecommendationServiceImpl implements RecommendationService {
                         recommendationCode=3;
                     }
 
-                    recommendationRowList.add(new RecommendationRow(recommendationCode,recommendationColumns));
+                    recommendationRowList.add(new RecommendationRow(recommendationCode,recommendationColumns,rs.getInt(2)));
                     rsKeyValMapList.add(rsKeyValMap);
                 }
 
@@ -701,72 +724,61 @@ public class RecommendationServiceImpl implements RecommendationService {
     }
 
 
-    public RecommendationResponse getRecommendationResponseV2(Optional<RunDetails> runDetails) throws Exception {
+    public RecommendationResponse getRecommendationResponseV2(RunDetails runDetails) throws Exception {
         RecommendationResponse recommendationResponse = new RecommendationResponse();
-
-
-        ExcelDataRequest excelDataRequest = ExcelDataRequest.builder().runId(runDetails.get().getRunId()).schemaName(runDetails.get().getSchemaName()).tableName(runDetails.get().getTableName()).build();
+        ExcelDataRequest excelDataRequest = ExcelDataRequest.builder().runId(runDetails.getRunId()).schemaName(runDetails.getSchemaName()).tableName(runDetails.getTableName()).build();
         ResultSet resultSet = getResultSet(excelDataRequest, recommendationResponse);
         ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
         String tableName = resultSetMetaData.getTableName(1);
         String schemaName = excelDataRequest.getSchemaName();
-
-
         recommendationResponse.setTable(schemaName + "." + tableName);
         recommendationResponse.setCurrentPage(1);
         recommendationResponse.setPageSize(10);
         int rowCount = 0;
         List<RecommendationRow> recommendationRowList = new ArrayList<>();
-
         if (resultSet != null) {
             ResultSetMetaData rsmd = resultSet.getMetaData();
             Map<Object, Map<String, Object>> srcValueMap = new HashMap<>();
             Map<Object, Map<String, Object>> tgtValueMap = new HashMap<>();
+            Map<Object, Integer> valIdMap = new HashMap<>();
+            int valId=0;
             while (resultSet.next()) {
-
                 Map<String, Object> rsKeyValMap = new HashMap<>();
                 for (int index = 0; index < rsmd.getColumnCount(); index++) {
                     // get the SQL column name
                     String columnName = rsmd.getColumnName(index + 1);
-
                     // get the value of the SQL column
                     Object columnValue = resultSet.getObject(index + 1);
+                  // if(columnName!=null && !columnName.equalsIgnoreCase("exception_status"))
                     rsKeyValMap.put(columnName, columnValue);
                 }
-
+                valIdMap.put(resultSet.getObject(4),Integer.valueOf(resultSet.getString(2)));
                 if ("Mismatch_src".equalsIgnoreCase(resultSet.getObject(3).toString()) ||
                         "Missing".equalsIgnoreCase(resultSet.getObject(3).toString())) {
                     srcValueMap.put(resultSet.getObject(4), rsKeyValMap);
                 } else if ("Mismatch_trg".equalsIgnoreCase(resultSet.getObject(3).toString())) {
                     tgtValueMap.put(resultSet.getObject(4), rsKeyValMap);
                 }
+
             }
             List<String> AdminColumnNameOfValTable = getAdminColumnNameOfValTable();
-
             for (Object srcKey : srcValueMap.keySet()) {
-
                 rowCount++;
                 List<RecommendationColumn> recommendationColumns = new ArrayList<>();
                 Object recommendationCode = 1;
-
-
                 Map<String, Object> srcValue = srcValueMap.get(srcKey);
                 Map<String, Object> tgtValue = new HashMap<>();
-
                 if (tgtValueMap.containsKey(srcKey)) {
                     tgtValue = tgtValueMap.get(srcKey);
                 }
-
                 for (Object srcColumns : srcValue.keySet()) {
                     if (!AdminColumnNameOfValTable.contains(srcColumns.toString())) {
                         if (tgtValue.containsKey(srcColumns)) {
                             recommendationColumns.add(new RecommendationColumn(srcColumns.toString(), srcValue.get(srcColumns), tgtValue.get(srcColumns)));
                         } else {
                             recommendationColumns.add(new RecommendationColumn(srcColumns.toString(), srcValue.get(srcColumns), ""));
-
                         }
                     }
-
                     if ("exception_status".equalsIgnoreCase(srcColumns.toString())) {
                         if ("Mismatch_src".equalsIgnoreCase(srcValue.get(srcColumns).toString())) {
                             recommendationCode = 2;
@@ -777,16 +789,13 @@ public class RecommendationServiceImpl implements RecommendationService {
                         }
                     }
                 }
-                recommendationRowList.add(new RecommendationRow(recommendationCode, recommendationColumns));
+                recommendationRowList.add(new RecommendationRow(recommendationCode, recommendationColumns,valIdMap.get(srcKey)));
             }
         }
         recommendationResponse.setTotalRecords(rowCount);
         recommendationResponse.setRows(recommendationRowList);
-
         return recommendationResponse;
     }
-
-
 
     private ResultSet getResultSet(ExcelDataRequest excelDataRequest, RecommendationResponse recommendationResponse) throws Exception {
         ResultSet rs=null;
@@ -803,7 +812,7 @@ public class RecommendationServiceImpl implements RecommendationService {
             StringBuilder stb=new StringBuilder();
             boolean firstCol=true;
             DatabaseMetaData meta = con.getMetaData();
-            rs = meta.getPrimaryKeys(null, excelDataRequest.getSchemaName(), excelDataRequest.getTableName());
+            rs = meta.getPrimaryKeys(null, excelDataRequest.getSchemaName(), excelDataRequest.getTableName().toString());
             ResultSet rs1=meta.getColumns(null,excelDataRequest.getSchemaName(),excelDataRequest.getTableName(),null);
             ArrayList list = new ArrayList<String>();
             while (rs.next()) {

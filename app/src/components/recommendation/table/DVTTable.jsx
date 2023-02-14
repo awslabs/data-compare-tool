@@ -32,8 +32,15 @@ function DVTTable(props) {
   const navigate = useNavigate();
 
   console.log("Entered DVTTable ", selectedRows.length);
-  //alert("DVTTable");
+  console.log("Entered DVTTable Data", setmodalDetailsData);
 
+  //alert("DVTTable");
+  function redirectToValidation(event) {
+    navigate('dvt');
+              }
+    function redirectToRecommendation(event) {
+   navigate('/dvt/selection');
+            }
   function isUnsavedDataExist() {
     return data["unsavedRows"] !== undefined && data["unsavedRows"].length > 0
       ? true
@@ -140,6 +147,7 @@ function DVTTable(props) {
   function getColumns() {
     let cols = [];
     if (data.rows !== null && data.rows.length > 0) {
+      console.log("complete data",data);
       const row = data.rows[0];
       row.columns.map((eachColum) => {
         cols.push(eachColum.colName);
@@ -212,7 +220,13 @@ function DVTTable(props) {
       <div style={{ marginTop: 20, marginBottom: 10 }}>
         <Button variant="contained" onClick={saveHandler}>
           Save
-        </Button>
+        </Button> &nbsp;&nbsp;{" "}
+         <Button color="primary" variant="contained" onClick={redirectToValidation}>
+            Compare
+          </Button> &nbsp;&nbsp;{" "}
+         <Button color="secondary" variant="contained" onClick={redirectToRecommendation}>
+             Recommendation
+           </Button> &nbsp;&nbsp;{" "}
       </div>
       <DVTTablePaginator
         dataFetchHandler={fetchDataHandler}

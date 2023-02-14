@@ -2,6 +2,7 @@ import * as React from "react";
 import { useEffect, useState } from "react";
 import Button from "@mui/material/Button";
 import DVTTablePaginatorConfirmModal from "./DVTTablePaginatorConfirmModal";
+import {useNavigate} from "react-router-dom";
 
 function DVTTablePaginator(props) {
   const [currentPage, setCurrentPage] = useState(
@@ -12,10 +13,9 @@ function DVTTablePaginator(props) {
     useState(false);
 
   const [actionIdentifier, setActionIdentifier] = useState(null);
-
+ let navigate = useNavigate();
   //let buttonIdentifier = null;
   // alert("Paginator " + props.currentPageNumber);
-
   function next() {
     setActionIdentifier("next");
     let nextPageNumber = currentPage;
@@ -73,6 +73,7 @@ function DVTTablePaginator(props) {
         <Button disabled={isNextDisabled()} onClick={next}>
           Next
         </Button>
+
       </div>
       <div>
         <DVTTablePaginatorConfirmModal

@@ -3,6 +3,7 @@ package com.datavalidationtool.model;
 
 import lombok.*;
 
+import java.sql.Timestamp;
 import java.util.Date;
 @Builder
 @AllArgsConstructor
@@ -22,6 +23,7 @@ public class RunDetails {
     private String valId;
     private String executionDate;
     private String colNames;
+    private Timestamp executionTime;
 
     public RunDetails() {
     }

@@ -12,7 +12,7 @@ import Button from "@mui/material/Button";
 function DVTTableBody(props) {
   const rows = props.rows;
   let columnsDsiplayLimit = null;
-
+console.log(" in tableBody",props);
   if (props.columnsDsiplayLimit !== undefined) {
     columnsDsiplayLimit =
       props.cols.length < props.columnsDsiplayLimit

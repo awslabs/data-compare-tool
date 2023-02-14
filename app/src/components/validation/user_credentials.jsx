@@ -57,11 +57,9 @@ const reducer = (userCred, action) => {
 
 export default function Validation() {
   const [userCred, dispatch] = useReducer(reducer, initialValue);
-
   const [loadDefaultData, setLoadDefaultData] = useState(false);
   const [ifFormTouched, setIfFormTouched] = useState(FormStatus.UNTOUCHED);
   const [isEntireFormValid, setIsEntireFormValid] = useState(false);
-
   const navigate = useNavigate();
 
   const handleInput = (event) => {
@@ -85,12 +83,10 @@ export default function Validation() {
 
 
  function handleSubmit () {
-
     //event.preventDefault();
      let requestParams = { method: "POST", headers: "", body: "" };
         requestParams.headers = { "Content-Type": "application/json" };
         requestParams.body =   JSON.stringify({
-
                                                targetSchemaName : userCred.schemaNames,
                                                sourceSchemaName : userCred.schemaNames,
                                                targetDBName : userCred.dbname,
@@ -101,7 +97,6 @@ export default function Validation() {
                                                tableName : userCred.tableNames,
                                                columns: userCred.columnNames
                                    });
-
         console.log("Data To Submit == ", JSON.stringify(requestParams));
          fetch('http://localhost:8090/dvt/validation/compareData', requestParams)
 
@@ -111,10 +106,12 @@ export default function Validation() {
              }
            })
            .then((resultData) => {
-             let msg = resultData !== null ? resultData : "Saved Sucessfully";
+             let msg = (resultData !== null || resultData!=='')? resultData : "Something went wrong, please try again";
+             alert(msg);
              navigate("/dvt/selection");
            })
            .catch((error) => {
+            alert("Something went wrong, please try again");
              console.log("Error ::", error);
            });
        }
@@ -379,9 +376,6 @@ export default function Validation() {
               <Button color="primary" variant="contained" onClick={handleRecomm}>
                 Recommendation
               </Button>
-                 <Link to="/dvt/selection">Recommendation</Link>
-
-
             </Stack>
           </Grid>
           <Grid item md={3}></Grid>

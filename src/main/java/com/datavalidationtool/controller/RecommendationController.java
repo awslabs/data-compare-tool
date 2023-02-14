@@ -10,6 +10,8 @@ package com.datavalidationtool.controller;
 import com.datavalidationtool.model.DatabaseInfo;
 import com.datavalidationtool.model.ExcelDataRequest;
 import com.datavalidationtool.model.RunDetails;
+import com.datavalidationtool.model.request.RecommendationRequest;
+import com.datavalidationtool.model.request.RemediateRequest;
 import com.datavalidationtool.model.response.RecommendationResponse;
 import com.datavalidationtool.service.ExcelDataService;
 import com.datavalidationtool.service.RecommendationService;
@@ -23,9 +25,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.ServletContext;
 import java.io.File;
-import java.io.IOException;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -135,55 +134,45 @@ public class RecommendationController {
 
         }
 
-    @GetMapping(path = "/recommendation/recommendation-data/v2")
-    RecommendationResponse getRecommendationResponseV2(@RequestParam Optional<String> schemaName,
-                                                       @RequestParam Optional<String> table,
-                                                       @RequestParam Optional<Integer> schemaRun,
-                                                       @RequestParam Optional<Integer> tableRun,
-                                                       @RequestParam Optional<Integer> page) throws Exception {
+    @PostMapping(path = "/recommendation/recommendation-data/v2")
+    RecommendationResponse getRecommendationResponseV2(@RequestBody RecommendationRequest recRequest) throws Exception {
 
 
         DatabaseInfo runTableDbInfo = new DatabaseInfo("ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com", 5432,
                 "ttp", null, "postgres", "postgres", false, DatabaseInfo.dbType.POSTGRESQL,
                 true, "/certs/", "changeit");
 
-        RunDetails inputRunDetails = new RunDetails("ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com",
+       /* RunDetails inputRunDetails = new RunDetails("ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com",
                 "ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com",
                 "ttp",  "ops$ora", table.get().toString(), 1, 1);
 
         List<RunDetails> runDetailsList = recommendationService.getRunDetailsWithOptional(inputRunDetails, runTableDbInfo);
-        Optional<RunDetails> runDetails = runDetailsList.stream().findFirst();
-
+        Optional<RunDetails> runDetails = runDetailsList.stream().findFirst();*/
+        RunDetails runDetails=RunDetails.builder().runId(recRequest.getRunId()).tableName(recRequest.getTableName()).schemaName(recRequest.getSchemaName()).build();
         RecommendationResponse  recommendationResponse= new RecommendationResponse();
-        if(runDetails.isPresent()) {
+        if(runDetails!=null) {
             recommendationResponse = recommendationService.getRecommendationResponseV2(runDetails);
         }
         return recommendationResponse;
     }
 
 
-    @GetMapping("/remediation/remediate-data")
-    public int insertRunDetailsRecord() throws Exception {
-        RunDetails inputRunDetails_1 = new RunDetails("localhost", "localhost", "postgres", "public", "company", 5);
-        DatabaseInfo databaseInfo = new DatabaseInfo("localhost", 5432,
-                "postgres", null, "postgres", "postgres", false, DatabaseInfo.dbType.POSTGRESQL,
-                true, "/certs/", "changeit");
-
-        return remediateService.remediateData(inputRunDetails_1);
+    @PostMapping("/remediation/remediate-data")
+    public int insertRunDetailsRecord(@RequestBody RemediateRequest remediateRequest) throws Exception {
+        return remediateService.remediateData(remediateRequest);
     }
 
     @PostMapping("/recommendation/upload")
     public ResponseEntity<?> handleFileUpload(@RequestParam("file") MultipartFile file ) throws Exception {
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-        String timeStampStr=timestamp.toString();
-        String fileName = context.getRealPath("upload") + file.getOriginalFilename();
-        String home = System.getProperty("user.home");
+        String timeStampStr=timestamp.toString().replace(" ","");
+        String fileName = file.getOriginalFilename() ;//context.getContextPath()+ File.separator+ "upload"+File.separator+file.getOriginalFilename();
         try {
-       // byte[] bytes = file.getBytes();
-      //  Path path = Paths.get(fileName);
-      //  Files.write(path, bytes);
-         //  file.transferTo( new File(home + File.separator + "Desktop" + File.separator + "Projects" + File.separator + "DataValidation" + File.separator + "upload" + File.separator + file.getOriginalFilename()));
-            file.transferTo( new File(  fileName));
+            byte[] bytes = file.getBytes();
+              Path path = Paths.get(fileName);
+              Files.write(path, bytes);
+          // file.transferTo( new File(  fileName.replace(".xlsx", timeStampStr.substring(0,18)+".xlsx")));
+            //file.transferTo( new File(  fileName));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }

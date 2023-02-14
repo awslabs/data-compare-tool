@@ -57,34 +57,41 @@ public class ExcelDataService {
     public int executeDBCall(SchemaData dbUpdateData) {
         ResultSet rs = null;
         Connection con=null;
-        int rowsUpdates=0;
-        try {
-            con =  DataSource.getInstance().getTargetDBConnection() ;
-            String dbFunction = "{ call fn_remediate_mismatch_exceptions_dvt2(?,?,?,?,?,?) }";
-            CallableStatement cst = null ;
+            int rowsUpdates = 0;
             try {
-                cst = con.prepareCall(dbFunction);
-            } catch (SQLException e) {
+                if (!DataSource.getInstance().isPoolInitialized()){
+                    JdbcUtil.setConnections(ValidationRequest.builder().targetHost("ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com").targetPort(5432).targetDBName("ttp").targetUserName("postgres").targetUserPassword("postgres").connectionPoolMaxSize(3).connectionPoolMinSize(1).build());
+                }
+                if (DataSource.getInstance().isPoolInitialized()) {
+                    con = DataSource.getInstance().getTargetDBConnection();
+                    String dbFunction = "{ call fn_remediate_mismatch_exceptions_dvt2(?,?,?,?,?,?) }";
+                    CallableStatement cst = null;
+                    try {
+                        cst = con.prepareCall(dbFunction);
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                    cst.setString(1, dbUpdateData.getRunId());
+                    cst.setString(2, dbUpdateData.getDataUpdateStr());
+                    cst.setString(3, dbUpdateData.getSourceSchemaName());
+                    cst.setString(4, dbUpdateData.getTargetSchemaName());
+                    cst.setString(5, dbUpdateData.getTableName().replace("_val","").substring(dbUpdateData.getTableName().indexOf(".")+1));
+                    cst.setString(6, dbUpdateData.getTableName().replace("_val","").substring(dbUpdateData.getTableName().indexOf(".")+1));
+                    rs = cst.executeQuery();
+                    while (rs.next()) {
+                        String rowsUpdates1 = rs.getString(1);
+                    }
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            } catch (Exception e) {
                 e.printStackTrace();
+            } finally {
+                JdbcUtil jdbcUtil = new JdbcUtil();
+                JdbcUtil.closeResultSet(rs);
+                ;
             }
-            cst.setString(1, dbUpdateData.getRunId());
-            cst.setString(2, dbUpdateData.getDataUpdateStr());
-            cst.setString(3, dbUpdateData.getSourceSchemaName());
-            cst.setString(4, dbUpdateData.getTargetSchemaName());
-            cst.setString(5, dbUpdateData.getTableName().replace("_val",""));
-            cst.setString(6, dbUpdateData.getTableName().replace("_val",""));
-            rs= cst.executeQuery();
-            while(rs.next()) {
-               String rowsUpdates1 = rs.getString(1);
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            JdbcUtil jdbcUtil = new JdbcUtil();
-            JdbcUtil.closeResultSet(rs);;
-        }
+
         return rowsUpdates;
 
     }
@@ -94,24 +101,29 @@ public class ExcelDataService {
         Connection con=null;
         int rowsUpdates=0;
         try {
-            con =  DataSource.getInstance().getTargetDBConnection() ;
-            String dbFunction = "{ call fn_remediate_missing_exceptions(?,?,?,?,?) }";
-            CallableStatement cst = null ;
-            try {
-                cst = con.prepareCall(dbFunction);
-            } catch (SQLException e) {
-                e.printStackTrace();
+            if (!DataSource.getInstance().isPoolInitialized()){
+                JdbcUtil.setConnections(ValidationRequest.builder().targetHost("ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com").targetPort(5432).targetDBName("ttp").targetUserName("postgres").targetUserPassword("postgres").connectionPoolMaxSize(3).connectionPoolMinSize(1).build());
             }
+            if (DataSource.getInstance().isPoolInitialized()) {
+                con = DataSource.getInstance().getTargetDBConnection();
+                String dbFunction = "{ call fn_remediate_missing_exceptions(?,?,?,?,?) }";
+                CallableStatement cst = null;
+                try {
+                    cst = con.prepareCall(dbFunction);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
 
                 cst.setString(1, dbUpdateData.getSourceSchemaName());
                 cst.setString(2, dbUpdateData.getTargetSchemaName());
-                cst.setString(3, dbUpdateData.getTableName().replace("_val",""));
-                cst.setString(4, dbUpdateData.getTableName().replace("_val",""));
+                cst.setString(3, dbUpdateData.getTableName().replace("_val","").substring(dbUpdateData.getTableName().indexOf(".")+1));
+                cst.setString(4, dbUpdateData.getTableName().replace("_val","").substring(dbUpdateData.getTableName().indexOf(".")+1));
                 cst.setString(5, dbUpdateData.getDataInsertStr());
-                rs= cst.executeQuery();
-                while(rs.next()) {
+                rs = cst.executeQuery();
+                while (rs.next()) {
                     String rowsUpdates1 = rs.getString(1);
                 }
+            }
         } catch (SQLException ex) {
             ex.printStackTrace();
         } catch (Exception e) {
@@ -132,9 +144,7 @@ public class ExcelDataService {
             Workbook recDataExcel = new XSSFWorkbook(inputStream);
             StringBuilder updatedData=new StringBuilder();
             int i = 0;
-
             for (Sheet sheet : recDataExcel) {
-
                 int firstRow = sheet.getFirstRowNum();
                 int lastRow = sheet.getLastRowNum();
                 if (i == 0) {
@@ -154,7 +164,6 @@ public class ExcelDataService {
                                     details.setRunId(strValue);
                                 else if (index == 4)
                                     details.setColumnNames(strValue);
-
                             }
                             cellIndex++;
                         }
@@ -174,6 +183,7 @@ public class ExcelDataService {
                                     }
                                 if(cellIndex==1) {
                                     String cellValue = cell.getStringCellValue();
+                                    //_remediate_missing_exceptions(‘ops$ora’,‘crtdms’,‘ppt_100’,‘ppt_100’,‘433;434;435’)
                                     if(cellValue.startsWith("MISSING")) {
                                         strInsertValue =strInsertValue+cellValue0 ;
                                         if(index<lastRow) {
@@ -181,6 +191,7 @@ public class ExcelDataService {
                                         }
                                         details.setMissingPresent(true);
                                     }
+                                    //fn_remediate_mismatch_exceptions_dvt2(‘a888c0794d9aba2991ecf5d0830a26af’,’440,id,transaction,country;439,id,transaction,country;438,id,transaction,country;437,id,transaction,country;’,’ops$ora’,‘crtdms’,‘ppt_100’,‘ppt_100’)
                                     else if(cellValue.startsWith("MISMATCH")) {
                                         strUpdateValue =strUpdateValue+cellValue0 + ","+details.getColumnNames();
                                         if(index<lastRow) {
@@ -261,7 +272,9 @@ public class ExcelDataService {
                 Encryptor encryptor = info.getEncryptor();
                 encryptor.confirmPassword("Password1@");
                 // Write out the encrypted version
-                try (FileOutputStream outputStream = new FileOutputStream("reports/"+tableName + ".xlsx")) {
+                Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+                String timeStampStr=timestamp.toString().replace(" ","");
+                try (FileOutputStream outputStream = new FileOutputStream("reports/"+tableName +"_"+timeStampStr.substring(0,18)+ ".xlsx")) {
                 //try (FileOutputStream outputStream = new FileOutputStream("/Users/amsudan/Desktop/Projects/DataValidation/awslab/"+tableName + ".xlsx")) {
                     workbook.write(outputStream);
                     outputStream.flush();
@@ -344,7 +357,6 @@ public class ExcelDataService {
 
         XSSFSheet sheet = workbook.createSheet(sheetName);
         Row topHeader = sheet.createRow(++rowCount);
-
         Row header = sheet.createRow(++rowCount);
         CellStyle headerStyle = workbook.createCellStyle();
         headerStyle.setFillForegroundColor(IndexedColors.LIGHT_YELLOW.getIndex());
@@ -419,9 +431,7 @@ public class ExcelDataService {
             }
             //Target data
             if (valType != null && valType.startsWith("MISMATCH_")) {
-                if (sheetNum == 1) {
-                    excelDataRequest.getResultSet().next();
-                }
+
                 for (int i = 4; i < noOfColumns; i++) {
                     Object field = excelDataRequest.getResultSet().getString(i);
                     Cell cell = row.createCell(noOfColumns - 6 + i);
@@ -441,30 +451,32 @@ public class ExcelDataService {
                     } else
                         cell.setCellValue((String) field);
                 }
-                if (sheetNum == 2) {
+                //This is to avoid the two SRC and TRG mismatch records
+                if (sheetNum == 2 || sheetNum==1) {
                     excelDataRequest.getResultSet().next();
                 }
 
             } else {
-
-                for (int i = 4; i < noOfColumns; i++) {
-                    Object field = excelDataRequest.getResultSet().getString(i);
-                    Cell cell = row.createCell(noOfColumns - 6 + i);
-                    cell.setCellStyle(mismatchStyle);
-                    if (field instanceof String) {
-                        cell.setCellValue((String) field);
-                    } else if (field instanceof Integer) {
-                        cell.setCellValue((Integer) field);
-                    } else if (field instanceof Long) {
-                        cell.setCellValue((Long) field);
-                    } else if (field instanceof Boolean) {
-                        cell.setCellValue((Boolean) field);
-                    } else if (field instanceof Character) {
-                        cell.setCellValue((Character) field);
-                    } else if (field instanceof BigInteger) {
-                        cell.setCellValue(String.valueOf((BigInteger) field));
-                    } else
-                        cell.setCellValue((String) field);
+                if(sheetNum==2) {
+                    for (int i = 4; i < noOfColumns; i++) {
+                        Object field = excelDataRequest.getResultSet().getString(i);
+                        Cell cell = row.createCell(noOfColumns - 6 + i);
+                        cell.setCellStyle(mismatchStyle);
+                        if (field instanceof String) {
+                            cell.setCellValue((String) field);
+                        } else if (field instanceof Integer) {
+                            cell.setCellValue((Integer) field);
+                        } else if (field instanceof Long) {
+                            cell.setCellValue((Long) field);
+                        } else if (field instanceof Boolean) {
+                            cell.setCellValue((Boolean) field);
+                        } else if (field instanceof Character) {
+                            cell.setCellValue((Character) field);
+                        } else if (field instanceof BigInteger) {
+                            cell.setCellValue(String.valueOf((BigInteger) field));
+                        } else
+                            cell.setCellValue((String) field);
+                    }
                 }
             }
         }

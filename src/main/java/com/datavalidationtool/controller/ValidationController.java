@@ -35,14 +35,16 @@ public class ValidationController {
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping("validation/compareData")
     public String compareData(@RequestBody ValidationRequest inputRunDetails) throws Exception {
-        ValidationService validationService = new ValidationService();validationService.validateData(inputRunDetails);
+        ValidationService validationService = new ValidationService();
+        String runId=validationService.validateData(inputRunDetails);
         toolRunning = Boolean.FALSE;
-        return "redirect:/result";
+        return runId;
     }
     @CrossOrigin(origins = "*", allowedHeaders = "*")
-    @PostMapping("validation/exportData")
-    public String exportData(@RequestBody ExportDataRequest exportDataRequest) throws Exception {
+    @GetMapping("validation/exportData")
+    public String exportData(@RequestParam String runId,@RequestParam String tableName,@RequestParam String schemaName) throws Exception {
        // ExcelDataService excelDataService = new ExcelDataService();
+        ExportDataRequest exportDataRequest=ExportDataRequest.builder().runId(runId).schemaName(schemaName).tableName(tableName).build();
         excelDataService.createExcel(exportDataRequest);
         toolRunning = Boolean.FALSE;
         return "redirect:/result";

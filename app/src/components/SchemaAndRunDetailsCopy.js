@@ -1,4 +1,4 @@
-import React, { useReducer, useEffect, useState } from "react";
+import React, { useReducer, useEffect,file, setFile, useState } from "react";
 import Select from "react-select";
 import TableContainer from "@mui/material/TableContainer";
 import Paper from "@mui/material/Paper";
@@ -14,6 +14,8 @@ import "./recommendation/css/Recommendation.css";
 import {useNavigate} from "react-router-dom";
 import axios from 'axios';
 import Typography from "@mui/material/Typography";
+import Stack from "@mui/material/Stack";
+import { Link } from "react-router-dom";
 
 const CLEAR = "clear";
 
@@ -22,7 +24,6 @@ const POPULATE_SCHEMA = "populateSchema";
 const POPULATE_SCHEMA_RUN = "populateSchemaRun";
 const POPULATE_TABLE = "populateTable";
 const POPULATE_TABLE_RUN = "populateTableRun";
-
 let data = [
   {
     slNo: 1,
@@ -108,20 +109,19 @@ const initialState = {
   tableNamesToBeLoaded: [],
   tableRunsToBeLoaded: [],
   showTable: false,
+
 };
 const downloadReport =  (event) => {
-    console.log('event '+event.target.value);
-let requestParams = { method: "POST", headers: "", body: "" };
+let requestParams = { method: "GET", headers: "", body: "" };
         requestParams.headers = { "Content-Type": "application/json" };
-        requestParams.body =   JSON.stringify({
+      //  requestParams.body =   JSON.stringify({
                                              // schemaName:event.target.
                                              // targetSchemaName:
                                              // tableName:
                                              // runId : event.target.
-                                   });
+                                 //  });
         console.log("Data To Submit == ", JSON.stringify(requestParams));
-         fetch('http://localhost:8090/validation/exportData', requestParams)
-
+        fetch('http://localhost:8090/dvt/validation/exportData?runId='+event.target.value)
      .then((response) => {
      alert(response)
              if (response.ok) {
@@ -135,21 +135,16 @@ let requestParams = { method: "POST", headers: "", body: "" };
              console.log("Error ::", error);
            });
        }
-
+  //
        function uploadReport () {
 
            //event.preventDefault();
             let requestParams = { method: "POST", headers: "", body: "" };
                requestParams.headers = { "Content-Type": "application/json" };
                requestParams.body =   JSON.stringify({
-
-                                                    //  targetSchemaName : userCred.schemaNames,
-
                                           });
-
                console.log("Data To Submit == ", JSON.stringify(requestParams));
-                fetch('http://localhost:8090//recommendation/api/upload', requestParams)
-
+                fetch('http://localhost:8090/dvt/recommendation/upload', requestParams)
             .then((response) => {
             alert(response)
                     if (response.ok) {
@@ -247,12 +242,38 @@ function Nestedselect() {
   const [tableData, setTableData] = useState(data);
    //const API = 'https://mocki.io/v1/e29d853b-1a21-456d-b8a3-35d5f27da66f';
   const API = 'http://localhost:8090/dvt/recommendation/recommendation-selection';
+  const [file, setFile] = useState()
+
+       function handleChange(event) {
+         setFile(event.target.files[0])
+       }
+        function redirectToValidation(event) {
+       navigate('dvt');
+              }
+
+       function handleSubmit(event) {
+         event.preventDefault()
+         const url = 'http://localhost:8090/dvt/recommendation/upload';
+         const formData = new FormData();
+         formData.append('file', file);
+         formData.append('fileName', file.name);
+         const config = {
+           headers: {
+             'content-type': 'multipart/form-data',
+           },
+         };
+         axios.post(url, formData, config).then((response) => {
+           console.log(response.data);
+           navigate("/dvt/selection");
+         });
+
+       }
   const fetchPost = () => {
     fetch(API)
       .then((res) => res.json())
       .then((res) => {
+      console.log("data....",res);
         setPost(res.hostDetailsList);
-
         data1.hostDetailsList = res.hostDetailsList;
         for (let i = 0, len = data1.hostDetailsList.length; i < len; i++) {
           data1.hostDetailsList[i].label = data1.hostDetailsList[i].hostName;
@@ -366,6 +387,14 @@ function Nestedselect() {
           .find(() => hostNameSelected)
           .databaseList.find(() => dbNameSelected)
           .schemaList.find((schema) => schema.value === schemaNameSelected).tableList[i].tableRun[j].executionDate;
+        obj.runId = data1.hostDetailsList
+                  .find(() => hostNameSelected)
+                  .databaseList.find(() => dbNameSelected)
+                  .schemaList.find((schema) => schema.value === schemaNameSelected).tableList[i].tableRun[j].runId;
+        obj.schemaName = data1.hostDetailsList
+                  .find(() => hostNameSelected)
+                  .databaseList.find(() => dbNameSelected)
+                  .schemaList.find((schema) => schema.value === schemaNameSelected).tableList[i].tableRun[j].schemaName;
         console.log("random", obj);
         tempArr.push(obj);
       }
@@ -412,6 +441,17 @@ function Nestedselect() {
         .databaseList.find(() => dbNameSelected)
         .schemaList.find(() => schemaNameSelected)
         .tableList.find(() => tableNameSelected).tableRun[i].executionDate;
+      obj.runId = data1.hostDetailsList
+             .find(() => hostNameSelected)
+             .databaseList.find(() => dbNameSelected)
+             .schemaList.find(() => schemaNameSelected)
+             .tableList.find(() => tableNameSelected).tableRun[i].runId;
+      obj.schemaName = data1.hostDetailsList
+             .find(() => hostNameSelected)
+             .databaseList.find(() => dbNameSelected)
+             .schemaList.find(() => schemaNameSelected)
+             .tableList.find(() => tableNameSelected).tableRun[i].schemaName;
+              console.log("random", obj);
       tempArr.push(obj);
     }
     setTableData(tempArr);
@@ -421,8 +461,34 @@ function Nestedselect() {
   let navigate = useNavigate();
   const redirectToRecommendation =  (event) => {
     console.log('event '+event.target.value);
+    navigate('/dvt/recommend?runId='+event.target.value+'&page=1')
+    //event.preventDefault();
+    /* let requestParams = { method: "POST", headers: "", body: "" };
+        requestParams.headers = { "Content-Type": "application/json" };
+        requestParams.body =   JSON.stringify({
+                                               schemaName : 'ops$ora',
+                                               runId: '1874d6b164bfee40ecb60067a96063f0',
+                                               tableName : event.target.value,
+                                   });
 
-    navigate('http://localhost:8090/host-run-details/selection?table='+event.target.value+'&page=1')
+        console.log("Data To Submit == ", JSON.stringify(requestParams));
+         fetch('http://localhost:8090/dvt/recommendation/recommendation-data/v2', requestParams)
+
+     .then((response) => {
+             if (response.ok) {
+               return response.text();
+             }
+           })
+           .then((resultData) => {
+             let msg = resultData !== null ? resultData : "Saved Sucessfully";
+              navigate('/dvt/recommend?tableName='+event.target.value+'&runId=1874d6b164bfee40ecb60067a96063f0&schemaName=ops$ora&page=1')
+           })
+           .catch((error) => {
+             console.log("Error ::", error);
+           });
+
+
+*/
 
   }
   const [state, dispatch] = useReducer(reducer, initialState);
@@ -541,29 +607,21 @@ function Nestedselect() {
                     <TableCell align="left">{row.runDate}</TableCell>
                     <TableCell align="center">
                       <Box>
-                        <Button variant="outlined" color="secondary" >
+                        <Button variant="outlined" color="secondary"  onClick={redirectToValidation}>
                           Sync
                         </Button>{" "}
                         &nbsp;&nbsp;{" "}
-                        <Button variant="outlined" color="success" value={row.tableName}
+                        <Button variant="outlined" color="success" value={row.runId+'&schemaName='+row.schemaName+'&tableName='+row.tableName}
                             onClick={redirectToRecommendation}
                         >
-                          Edit
+                          Remediate
                         </Button>
                         {" "} &nbsp;&nbsp;{" "}
-                         <Button variant="outlined" color="success" value={row.tableRun}
+                         <Button variant="outlined" color="success" value={row.runId+'&schemaName='+row.schemaName+'&tableName='+row.tableName}
                          onClick={downloadReport}
                           >
                           Download
                           </Button>
-                          {" "}
-                              <input type="file" name="file" variant="outlined" color="success" onChange={handleChange}  />
-                               &nbsp;&nbsp;{" "}
-                                                         <Button variant="outlined" color="success" value={row.tableRun}
-                                                          onClick={handleSubmit}
-                                                           >
-                                                           Upload
-                                                           </Button>
                       </Box>
                     </TableCell>
                   </TableRow>
@@ -573,6 +631,21 @@ function Nestedselect() {
           </TableContainer>
         </div>
       )}
+ <Grid item xs={3}>
+                      <Stack direction="row"  justifyContent="center" alignItems="center" spacing={2}>
+                        <Button color="secondary" variant="contained" onClick={redirectToValidation}>
+                          Compare
+                        </Button>
+                        <Button color="success" variant="contained" >
+                          Reset
+                        </Button>
+                       <Box sx={{ border: 1, borderColor: "primary.main", borderRadius: 1 }}>
+                       <input type="file" name="file" variant="outlined" color="success"  onChange={handleChange} />
+                                                     &nbsp;&nbsp;{" "}
+                        <Button vcolor="primary" variant="contained" onClick={handleSubmit}>Upload</Button>
+                        </Box>
+                      </Stack>
+           </Grid>
     </Box>
       </div>
   );

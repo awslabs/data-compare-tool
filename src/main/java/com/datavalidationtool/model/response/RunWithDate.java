@@ -7,6 +7,35 @@ public class RunWithDate implements Comparable{
     int run;
     Date executionDate;
 
+    public String getRunId() {
+        return runId;
+    }
+
+    public void setRunId(String runId) {
+        this.runId = runId;
+    }
+
+    public String getSchemaName() {
+        return schemaName;
+    }
+
+    public void setSchemaName(String schemaName) {
+        this.schemaName = schemaName;
+    }
+
+    String runId;
+    String schemaName;
+
+    public String getTableName() {
+        return tableName;
+    }
+
+    public void setTableName(String tableName) {
+        this.tableName = tableName;
+    }
+
+    String tableName;
+
     public int getRun() {
         return run;
     }
