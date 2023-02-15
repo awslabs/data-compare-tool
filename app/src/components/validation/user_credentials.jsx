@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useReducer } from "react";
 import { useNavigate } from "react-router-dom";
-
 import FormGroup from "@mui/material/FormGroup";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Box from "@mui/material/Box";
@@ -15,6 +14,8 @@ import Divider from "@mui/material/Divider";
 import dummyInputData from "./dummy_data.json";
 import { FormStatus } from "./static_data";
 import { Link } from "react-router-dom";
+import LoadingSpinner from "../LoadingSpinner";
+import "../styles.css";
 
 const initialValue = {
   hostname: "ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com",
@@ -56,6 +57,8 @@ const reducer = (userCred, action) => {
 };
 
 export default function Validation() {
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const [userCred, dispatch] = useReducer(reducer, initialValue);
   const [loadDefaultData, setLoadDefaultData] = useState(false);
   const [ifFormTouched, setIfFormTouched] = useState(FormStatus.UNTOUCHED);
@@ -84,6 +87,7 @@ export default function Validation() {
 
  function handleSubmit () {
     //event.preventDefault();
+    setIsLoading(true);
      let requestParams = { method: "POST", headers: "", body: "" };
         requestParams.headers = { "Content-Type": "application/json" };
         requestParams.body =   JSON.stringify({
@@ -106,11 +110,14 @@ export default function Validation() {
              }
            })
            .then((resultData) => {
+           setIsLoading(false);
              let msg = (resultData !== null || resultData!=='')? resultData : "Something went wrong, please try again";
              alert(msg);
              navigate("/dvt/selection");
            })
            .catch((error) => {
+           setErrorMessage("Unable to validate the data");
+           setIsLoading(false);
             alert("Something went wrong, please try again");
              console.log("Error ::", error);
            });
@@ -367,7 +374,7 @@ export default function Validation() {
           <Grid item md={3}></Grid>
           <Grid item md={6}>
             <Stack direction="row" spacing={2} style={{ justifyContent: "space-evenly" }}>
-              <Button color="secondary" variant="contained" onClick={handleSubmit}>
+              <Button color="secondary" variant="contained" onClick={handleSubmit} disabled={isLoading}>
                 Compare
               </Button>
               <Button color="success" variant="contained" onClick={handleReset}>
@@ -377,9 +384,15 @@ export default function Validation() {
                 Recommendation
               </Button>
             </Stack>
+
           </Grid>
           <Grid item md={3}></Grid>
+
+         <Grid item md={5}></Grid>
+        <Grid item md={2}>{isLoading ? <LoadingSpinner /> : ""}</Grid>
+        <Grid item md={4}></Grid>
         </Grid>
+
       </Box>
     </div>
   );

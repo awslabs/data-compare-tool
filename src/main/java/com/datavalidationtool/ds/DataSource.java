@@ -61,7 +61,7 @@ public class DataSource {
 					sourceDS.setMaximumPoolSize(srcDatabasebInfo.getConnectionPoolMaxSize());
 				}
 
-
+				sourceDS.setIdleTimeout(0);
 				logger.info("Sucessfully created Source DB Connection Pool...");
 				logger.info("Source DB Pool Min Size=" + sourceDS.getMinimumIdle() + ", MaxSize=" + sourceDS.getMaximumPoolSize());
 			}
@@ -81,6 +81,7 @@ public class DataSource {
 			if(targetDatabasebInfo.getConnectionPoolMaxSize()!=0) {
 				targetDS.setMaximumPoolSize(targetDatabasebInfo.getConnectionPoolMaxSize());
 			}
+			targetDS.setIdleTimeout(0);
 			logger.info("Target DB Pool Min Size="+targetDS.getMinimumIdle()+", MaxSize="+targetDS.getMaximumPoolSize());
 
 			this.isPoolInitialized = true;

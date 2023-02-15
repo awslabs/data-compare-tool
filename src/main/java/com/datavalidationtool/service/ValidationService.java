@@ -85,11 +85,13 @@ public class ValidationService {
 			pst.setString(4,appProperties.getTableName());
 			ResultSet rs = pst.executeQuery();
 			while (rs.next()) {
-				runDetails.setSchemaRun(rs.getInt(1)+1);
+				// If it is a schema run
 				if(appProperties.getTableName()==null || appProperties.getTableName().isBlank()) {
 					runDetails.setTableRun(rs.getInt(2) + 1);
+					runDetails.setSchemaRun(0);
 				}else{
-					runDetails.setTableRun(0);
+					runDetails.setSchemaRun(rs.getInt(1)+1);
+					runDetails.setTableRun(rs.getInt(2) + 1);
 				}
 			}
 
@@ -288,7 +290,7 @@ public class ValidationService {
 					String result = rs.getString(1);
 					logger.info("DB", result);
 					if(result.contains("Validation complete for Run Id")) {
-						runId = result.substring(27, 59);
+						runId = result.substring(31, 63);
 					}
 				}
 				if(!runId.isBlank()) {

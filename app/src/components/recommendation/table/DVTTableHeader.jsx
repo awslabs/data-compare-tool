@@ -53,7 +53,7 @@ function DVTTableHeader(props) {
     });
 
     columnArr.push(
-        <TableCell>MismatchType</TableCell>
+        <TableCell>Exception Status</TableCell>
     );
     if (columns.length >= columnsDsiplayLimit) {
       columnArr.push(

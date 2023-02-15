@@ -16,7 +16,8 @@ import axios from 'axios';
 import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
 import { Link } from "react-router-dom";
-
+import LoadingSpinner from "./LoadingSpinner";
+import "./styles.css";
 const CLEAR = "clear";
 
 const POPULATE_DATABASE = "populateDatabase";
@@ -90,7 +91,6 @@ let data = [
 // }
 
 const data1 = {};
-
 const initialState = {
   disableHostName: false,
   disableDBName: false,
@@ -111,53 +111,7 @@ const initialState = {
   showTable: false,
 
 };
-const downloadReport =  (event) => {
-let requestParams = { method: "GET", headers: "", body: "" };
-        requestParams.headers = { "Content-Type": "application/json" };
-      //  requestParams.body =   JSON.stringify({
-                                             // schemaName:event.target.
-                                             // targetSchemaName:
-                                             // tableName:
-                                             // runId : event.target.
-                                 //  });
-        console.log("Data To Submit == ", JSON.stringify(requestParams));
-        fetch('http://localhost:8090/dvt/validation/exportData?runId='+event.target.value)
-     .then((response) => {
-     alert(response)
-             if (response.ok) {
-               return response.text();
-             }
-           })
-           .then((resultData) => {
-             let msg = resultData !== null ? resultData : "Saved Sucessfully";
-           })
-           .catch((error) => {
-             console.log("Error ::", error);
-           });
-       }
-  //
-       function uploadReport () {
 
-           //event.preventDefault();
-            let requestParams = { method: "POST", headers: "", body: "" };
-               requestParams.headers = { "Content-Type": "application/json" };
-               requestParams.body =   JSON.stringify({
-                                          });
-               console.log("Data To Submit == ", JSON.stringify(requestParams));
-                fetch('http://localhost:8090/dvt/recommendation/upload', requestParams)
-            .then((response) => {
-            alert(response)
-                    if (response.ok) {
-                      return response.text();
-                    }
-                  })
-                  .then((resultData) => {
-                    let msg = resultData !== null ? resultData : "Saved Sucessfully";
-                  })
-                  .catch((error) => {
-                    console.log("Error ::", error);
-                  });
-              }
 function reducer(state, action) {
   switch (action.type) {
     case POPULATE_DATABASE:
@@ -236,22 +190,21 @@ export let schemaNameSelected = "";
 export let schemaRunSelected = "";
 export let tableNameSelected = "";
 export let tableRunSelected = "";
-
 function Nestedselect() {
+  const [isLoading, setIsLoading] = useState(false);
   const [post, setPost] = useState([]);
   const [tableData, setTableData] = useState(data);
    //const API = 'https://mocki.io/v1/e29d853b-1a21-456d-b8a3-35d5f27da66f';
   const API = 'http://localhost:8090/dvt/recommendation/recommendation-selection';
   const [file, setFile] = useState()
-
-       function handleChange(event) {
-         setFile(event.target.files[0])
-       }
-        function redirectToValidation(event) {
-       navigate('dvt');
-              }
-
-       function handleSubmit(event) {
+function handleChange(event) {
+    setFile(event.target.files[0])
+    }
+function redirectToValidation(event) {
+   navigate('dvt');
+    }
+function handleSubmit(event) {
+         setIsLoading(true);
          event.preventDefault()
          const url = 'http://localhost:8090/dvt/recommendation/upload';
          const formData = new FormData();
@@ -264,10 +217,44 @@ function Nestedselect() {
          };
          axios.post(url, formData, config).then((response) => {
            console.log(response.data);
+             setIsLoading(false);
+           alert("uploaded successfully")
+           window.location.reload();
            navigate("/dvt/selection");
          });
 
        }
+
+ const downloadReport =  (event) => {
+  setIsLoading(true);
+ let requestParams = { method: "GET", headers: "", body: "" };
+         requestParams.headers = { "Content-Type": "application/json" };
+       //  requestParams.body =   JSON.stringify({
+                                              // schemaName:event.target.
+                                              // targetSchemaName:
+                                              // tableName:
+                                              // runId : event.target.
+                                  //  });
+         console.log("Data To Submit == ", JSON.stringify(requestParams));
+         fetch('http://localhost:8090/dvt/validation/exportData?runId='+event.target.value)
+      .then((response) => {
+      setIsLoading(false);
+
+              if (response.ok) {
+                return response.text();
+              }
+            })
+            .then((resultData) => {
+              let msg = resultData !== null ? resultData : "Saved Sucessfully";
+              alert("Excel report downloaded Sucessfully")
+            })
+            .catch((error) => {
+             setIsLoading(false);
+              console.log("Error ::", error);
+            });
+        }
+   //
+
   const fetchPost = () => {
     fetch(API)
       .then((res) => res.json())
@@ -313,7 +300,6 @@ function Nestedselect() {
             }
           }
         }
-
         console.log("post", { post });
         console.log("data1", data1.hostDetailsList);
       })
@@ -325,7 +311,6 @@ function Nestedselect() {
   useEffect(() => {
     fetchPost();
   }, []);
-
   const handleOnHostNameClick = (event) => {
     hostNameSelected = event.value;
     dispatch({ type: POPULATE_DATABASE, hostName: event.value });
@@ -349,7 +334,6 @@ function Nestedselect() {
     console.log("showtable", state.showTable);
     state.showTable = true;
     //console.log()
-
     let tempArr = [];
     let slnumber = 1;
     for (
@@ -399,9 +383,7 @@ function Nestedselect() {
         tempArr.push(obj);
       }
     }
-    console.log("temparr", tempArr);
     setTableData(tempArr);
-    console.log("data", data);
   };
 
   const handleOnTableClick = (event) => {
@@ -413,45 +395,48 @@ function Nestedselect() {
     tableRunSelected = event.value;
     let tempArr = [];
     let slnumber = 1;
-
     for (
       let i = 0,
         len = data1.hostDetailsList
           .find(() => hostNameSelected)
           .databaseList.find(() => dbNameSelected)
           .schemaList.find(() => schemaNameSelected)
-          .tableList.find(() => tableNameSelected).tableRun.length;
+          .tableList.find(obj => { return obj.tableName === tableNameSelected;
+                                                              }) .tableRun.length;
       i < len;
       i++
     ) {
       let obj = {};
       obj.slNo = slnumber;
+        setTableData(tempArr);
+      slnumber++;
       obj.tableName = data1.hostDetailsList
         .find(() => hostNameSelected)
         .databaseList.find(() => dbNameSelected)
         .schemaList.find(() => schemaNameSelected)
-        .tableList.find(() => tableNameSelected).tableName;
+        .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableName;
       obj.tableRun = data1.hostDetailsList
         .find(() => hostNameSelected)
         .databaseList.find(() => dbNameSelected)
         .schemaList.find(() => schemaNameSelected)
-        .tableList.find(() => tableNameSelected).tableRun[i].run;
+        .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].run;
       obj.runDate = data1.hostDetailsList
         .find(() => hostNameSelected)
         .databaseList.find(() => dbNameSelected)
         .schemaList.find(() => schemaNameSelected)
-        .tableList.find(() => tableNameSelected).tableRun[i].executionDate;
+        .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].executionDate;
       obj.runId = data1.hostDetailsList
              .find(() => hostNameSelected)
              .databaseList.find(() => dbNameSelected)
              .schemaList.find(() => schemaNameSelected)
-             .tableList.find(() => tableNameSelected).tableRun[i].runId;
+             .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].runId;
       obj.schemaName = data1.hostDetailsList
              .find(() => hostNameSelected)
              .databaseList.find(() => dbNameSelected)
              .schemaList.find(() => schemaNameSelected)
-             .tableList.find(() => tableNameSelected).tableRun[i].schemaName;
+             .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].schemaName;
               console.log("random", obj);
+
       tempArr.push(obj);
     }
     setTableData(tempArr);
@@ -618,8 +603,7 @@ function Nestedselect() {
                         </Button>
                         {" "} &nbsp;&nbsp;{" "}
                          <Button variant="outlined" color="success" value={row.runId+'&schemaName='+row.schemaName+'&tableName='+row.tableName}
-                         onClick={downloadReport}
-                          >
+                         onClick={downloadReport} disabled={isLoading} >
                           Download
                           </Button>
                       </Box>
@@ -642,10 +626,12 @@ function Nestedselect() {
                        <Box sx={{ border: 1, borderColor: "primary.main", borderRadius: 1 }}>
                        <input type="file" name="file" variant="outlined" color="success"  onChange={handleChange} />
                                                      &nbsp;&nbsp;{" "}
-                        <Button vcolor="primary" variant="contained" onClick={handleSubmit}>Upload</Button>
+                        <Button vcolor="primary" variant="contained" onClick={handleSubmit} disabled={isLoading}>Upload</Button>
                         </Box>
                       </Stack>
            </Grid>
+               <Grid item xs={3} align="center" valign="top">    {isLoading ? <LoadingSpinner /> : ""}</Grid>
+
     </Box>
       </div>
   );
