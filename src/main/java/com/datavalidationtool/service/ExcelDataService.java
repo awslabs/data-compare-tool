@@ -1,6 +1,6 @@
 package com.datavalidationtool.service;
 
-import com.datavalidationtool.ds.DataSource;
+import com.datavalidationtool.dao.DataSource;
 import com.datavalidationtool.model.ExcelDataRequest;
 import com.datavalidationtool.model.SchemaData;
 import com.datavalidationtool.model.request.ExportDataRequest;
@@ -26,6 +26,8 @@ import org.postgresql.core.ResultCursor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
@@ -39,12 +41,13 @@ public class ExcelDataService {
     private static final long MAX_ROWS_IN_SHEET = 100000;
     @Autowired
     private FetchValidationDetailsService service;
+    @Autowired
+    public DataSource dataSource;
+
     public String processDBUpdates(String filePath) throws Exception {
         SchemaData dbUpdateData = readExcel(filePath);
-        if (!DataSource.getInstance().isPoolInitialized()){
-            JdbcUtil.setConnections(ValidationRequest.builder().targetHost("ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com").targetPort(5432).targetDBName("ttp").targetUserName("postgres").targetUserPassword("postgres").connectionPoolMaxSize(3).connectionPoolMinSize(1).build());
-        }
-        if (DataSource.getInstance().isPoolInitialized()) {
+
+        if (dataSource.isPoolInitialized()) {
             if(dbUpdateData.isMismatchPresent()) {
                 executeDBCall(dbUpdateData);
             }
@@ -54,16 +57,14 @@ public class ExcelDataService {
         }
         return "Success";    }
 
-    public int executeDBCall(SchemaData dbUpdateData) {
+    public int executeDBCall(SchemaData dbUpdateData) throws SQLException {
         ResultSet rs = null;
         Connection con=null;
             int rowsUpdates = 0;
             try {
-                if (!DataSource.getInstance().isPoolInitialized()){
-                    JdbcUtil.setConnections(ValidationRequest.builder().targetHost("ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com").targetPort(5432).targetDBName("ttp").targetUserName("postgres").targetUserPassword("postgres").connectionPoolMaxSize(3).connectionPoolMinSize(1).build());
-                }
-                if (DataSource.getInstance().isPoolInitialized()) {
-                    con = DataSource.getInstance().getTargetDBConnection();
+
+                if (dataSource.isPoolInitialized()) {
+                    con = dataSource.getDBConnection();
                     String dbFunction = "{ call fn_remediate_mismatch_exceptions_dvt2(?,?,?,?,?,?) }";
                     CallableStatement cst = null;
                     try {
@@ -89,23 +90,20 @@ public class ExcelDataService {
             } finally {
                 JdbcUtil jdbcUtil = new JdbcUtil();
                 JdbcUtil.closeResultSet(rs);
-                ;
+                con.close();
             }
 
         return rowsUpdates;
 
     }
-    public int executeDBInsertCall(SchemaData dbUpdateData) {
+    public int executeDBInsertCall(SchemaData dbUpdateData) throws SQLException {
 
         ResultSet rs = null;
         Connection con=null;
         int rowsUpdates=0;
         try {
-            if (!DataSource.getInstance().isPoolInitialized()){
-                JdbcUtil.setConnections(ValidationRequest.builder().targetHost("ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com").targetPort(5432).targetDBName("ttp").targetUserName("postgres").targetUserPassword("postgres").connectionPoolMaxSize(3).connectionPoolMinSize(1).build());
-            }
-            if (DataSource.getInstance().isPoolInitialized()) {
-                con = DataSource.getInstance().getTargetDBConnection();
+            if (dataSource.isPoolInitialized()) {
+                con = dataSource.getDBConnection();
                 String dbFunction = "{ call fn_remediate_missing_exceptions(?,?,?,?,?) }";
                 CallableStatement cst = null;
                 try {
@@ -131,6 +129,7 @@ public class ExcelDataService {
         } finally {
             JdbcUtil jdbcUtil = new JdbcUtil();
             JdbcUtil.closeResultSet(rs);;
+            con.close();
         }
         return rowsUpdates;
     }
@@ -218,82 +217,90 @@ public class ExcelDataService {
         return details;
     }
 
-    public void createExcel(ExportDataRequest exportDataRequest) throws Exception {
-
-        if (!DataSource.getInstance().isPoolInitialized()){
-            JdbcUtil.setConnections(ValidationRequest.builder().targetHost("ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com").targetPort(5432).targetDBName("ttp").targetUserName("postgres").targetUserPassword("postgres").connectionPoolMaxSize(3).connectionPoolMinSize(1).build());
-        }
-        if (DataSource.getInstance().isPoolInitialized()) {
+    public boolean createExcel(ExportDataRequest exportDataRequest, HttpServletResponse response) throws Exception {
+        boolean excelCreated=false;
+        if (dataSource.isPoolInitialized()) {
+            Connection con=dataSource.getDBConnection();
             ExcelDataRequest excelDataRequest =ExcelDataRequest.builder().runId(exportDataRequest.getRunId()).schemaName(exportDataRequest.getSchemaName()).tableName(exportDataRequest.getTableName()).build();
-            ResultSet resultSet = getResultSet(excelDataRequest);
-            ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
-            String tableName = resultSetMetaData.getTableName(1);
-            String schemaName = excelDataRequest.getSchemaName();
-            int noOfColumns = resultSetMetaData.getColumnCount();
-            int rowCount = 0;
-            XSSFWorkbook workbook = new XSSFWorkbook();
-            XSSFSheet sheet0 = workbook.createSheet("Info");
-            workbook.setSheetVisibility(0, SheetVisibility.HIDDEN);
-            Row firstRow = sheet0.createRow(0);
-            Row secoundRow = sheet0.createRow(1);
-            Row thirdRow = sheet0.createRow(2);
-            Row fourtRow = sheet0.createRow(3);
-            Row fifthRow = sheet0.createRow(4);
-            Cell fRCell0 = firstRow.createCell(0);
-            fRCell0.setCellValue("Schema_Name");
-            Cell fRCell1 = firstRow.createCell(1);
-            fRCell1.setCellValue(schemaName);
+            ResultSet resultSet = getResultSet(con,excelDataRequest);
+            if(resultSet!=null) {
+                ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
+                String tableName = resultSetMetaData.getTableName(1);
+                String schemaName = excelDataRequest.getSchemaName();
+                int noOfColumns = resultSetMetaData.getColumnCount();
+                int rowCount = 0;
+                XSSFWorkbook workbook = new XSSFWorkbook();
+                XSSFSheet sheet0 = workbook.createSheet("Info");
+                workbook.setSheetVisibility(0, SheetVisibility.HIDDEN);
+                Row firstRow = sheet0.createRow(0);
+                Row secoundRow = sheet0.createRow(1);
+                Row thirdRow = sheet0.createRow(2);
+                Row fourtRow = sheet0.createRow(3);
+                Row fifthRow = sheet0.createRow(4);
+                Cell fRCell0 = firstRow.createCell(0);
+                fRCell0.setCellValue("Schema_Name");
+                Cell fRCell1 = firstRow.createCell(1);
+                fRCell1.setCellValue(schemaName);
 
-            Cell sRCell0 = secoundRow.createCell(0);
-            sRCell0.setCellValue("Target_Schema_Name");
-            Cell sRCell1 = secoundRow.createCell(1);
-            sRCell1.setCellValue(exportDataRequest.getTargetSchemaName());
+                Cell sRCell0 = secoundRow.createCell(0);
+                sRCell0.setCellValue("Target_Schema_Name");
+                Cell sRCell1 = secoundRow.createCell(1);
+                sRCell1.setCellValue(exportDataRequest.getTargetSchemaName());
 
-            Cell tRCell0 = thirdRow.createCell(0);
-            tRCell0.setCellValue("Table_Name");
-            Cell tRCell1 = thirdRow.createCell(1);
-            tRCell1.setCellValue(tableName);
+                Cell tRCell0 = thirdRow.createCell(0);
+                tRCell0.setCellValue("Table_Name");
+                Cell tRCell1 = thirdRow.createCell(1);
+                tRCell1.setCellValue(tableName);
 
-            Cell fRtCell0 = fourtRow.createCell(0);
-            fRtCell0.setCellValue("Run_Id");
-            Cell fRtCell1 = fourtRow.createCell(1);
-            fRtCell1.setCellValue(exportDataRequest.getRunId());
+                Cell fRtCell0 = fourtRow.createCell(0);
+                fRtCell0.setCellValue("Run_Id");
+                Cell fRtCell1 = fourtRow.createCell(1);
+                fRtCell1.setCellValue(exportDataRequest.getRunId());
 
-            Cell ffCell0 = fifthRow.createCell(0);
-            ffCell0.setCellValue("Columns");
-            Cell ffCell1 = fifthRow.createCell(1);
-            ffCell1.setCellValue(getColumnNames(resultSetMetaData,noOfColumns));
-            createExcelSheet(workbook,rowCount,noOfColumns,excelDataRequest,resultSetMetaData,"Mismatch Data",1);
-            excelDataRequest.getResultSet().beforeFirst();
-            createExcelSheet(workbook,rowCount,noOfColumns,excelDataRequest,resultSetMetaData,"Recommendation Data",2);
-            //Current record details.
-            try (POIFSFileSystem fs = new POIFSFileSystem()) {
-                EncryptionInfo info = new EncryptionInfo(EncryptionMode.agile);
-                Encryptor encryptor = info.getEncryptor();
-                encryptor.confirmPassword("Password1@");
-                // Write out the encrypted version
-                Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-                String timeStampStr=timestamp.toString().replace(" ","");
-                try (FileOutputStream outputStream = new FileOutputStream("reports/"+tableName +"_"+timeStampStr.substring(0,18)+ ".xlsx")) {
-                //try (FileOutputStream outputStream = new FileOutputStream("/Users/amsudan/Desktop/Projects/DataValidation/awslab/"+tableName + ".xlsx")) {
-                    workbook.write(outputStream);
-                    outputStream.flush();
-                    outputStream.close();
-                    try (OPCPackage opc = OPCPackage.open("reports/"+tableName +"_"+timeStampStr.substring(0,18)+ ".xlsx", PackageAccess.READ_WRITE);
-                  //  try (OPCPackage opc = OPCPackage.open("/Users/amsudan/Desktop/Projects/DataValidation/awslab/"+tableName + ".xlsx", PackageAccess.READ_WRITE);
-                         OutputStream os = encryptor.getDataStream(fs)) {
-                        opc.save(os);
-                    } catch (IOException | InvalidFormatException e) {
+                Cell ffCell0 = fifthRow.createCell(0);
+                ffCell0.setCellValue("Columns");
+                Cell ffCell1 = fifthRow.createCell(1);
+                ffCell1.setCellValue(getColumnNames(resultSetMetaData, noOfColumns));
+                createExcelSheet(workbook, rowCount, noOfColumns, excelDataRequest, resultSetMetaData, "Mismatch Data", 1);
+                excelDataRequest.getResultSet().beforeFirst();
+                createExcelSheet(workbook, rowCount, noOfColumns, excelDataRequest, resultSetMetaData, "Recommendation Data", 2);
+                //Current record details.
+                try (POIFSFileSystem fs = new POIFSFileSystem()) {
+                    EncryptionInfo info = new EncryptionInfo(EncryptionMode.agile);
+                    Encryptor encryptor = info.getEncryptor();
+                    encryptor.confirmPassword("Password1@");
+                    // Write out the encrypted version
+                    Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+                    String timeStampStr = timestamp.toString().replace(" ", "");
+                    try (FileOutputStream outputStream = new FileOutputStream("reports/" + tableName + "_" + timeStampStr.substring(0, 18) + ".xlsx")) {
+                        //try (FileOutputStream outputStream = new FileOutputStream("/Users/amsudan/Desktop/Projects/DataValidation/awslab/"+tableName + ".xlsx")) {
+                        workbook.write(outputStream);
+                        outputStream.flush();
+                        outputStream.close();
+                        try (OPCPackage opc = OPCPackage.open("reports/" + tableName + "_" + timeStampStr.substring(0, 18) + ".xlsx", PackageAccess.READ_WRITE);
+                             //  try (OPCPackage opc = OPCPackage.open("/Users/amsudan/Desktop/Projects/DataValidation/awslab/"+tableName + ".xlsx", PackageAccess.READ_WRITE);
+                             OutputStream os = encryptor.getDataStream(fs)) {
+                            opc.save(os);
+                            ServletOutputStream outStream = response.getOutputStream();
+                            workbook.write(outStream);
+                            workbook.close();
+                            outputStream.close();
+                            excelCreated=true;
+                        } catch (IOException | InvalidFormatException e) {
+                            e.printStackTrace();
+                        } catch (GeneralSecurityException e) {
+                            e.printStackTrace();
+                        }
+                    } catch (IOException e) {
                         e.printStackTrace();
-                    } catch (GeneralSecurityException e) {
-                        e.printStackTrace();
+                    }finally{
+                        con.close();
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
                 }
             }
 
         }
+        return excelCreated;
     }
 
     private String getColumnNames(ResultSetMetaData resultSetMetaData,int noOfColumns) throws SQLException {
@@ -306,10 +313,9 @@ public class ExcelDataService {
         return colNames.toString();
     }
 
-    private ResultSet getResultSet(ExcelDataRequest excelDataRequest) {
+    private ResultSet getResultSet(Connection con, ExcelDataRequest excelDataRequest) {
         ResultSet rs=null;
         try {
-            Connection con= DataSource.getInstance().getTargetDBConnection();
             String pk =null;
             StringBuilder stb=new StringBuilder();
             boolean firstCol=true;
@@ -336,7 +342,6 @@ public class ExcelDataService {
                 "WHERE RUN_ID = ? \n" +
                 "AND UPPER(VAL_TYPE) IN ('MISMATCH_SRC','MISMATCH_TRG','MISSING','EXTRA_RECORD') \n" +
                 ") SRC ORDER BY EXCEPTION_RANK ASC,VAL_ID ASC;\n";
-            System.out.println("preparedQuery=" + preparedQuery);
             PreparedStatement pst = null ;
             try {
                 pst = con.prepareStatement(preparedQuery,ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
@@ -349,8 +354,8 @@ public class ExcelDataService {
             rs= pst.executeQuery();
             excelDataRequest.setResultSet(rs);
             } catch (SQLException e) {
-                e.printStackTrace();
-            }
+            e.printStackTrace();
+        }
         return rs;
     }
     public void createExcelSheet(XSSFWorkbook workbook,int rowCount,int noOfColumns,ExcelDataRequest excelDataRequest,ResultSetMetaData resultSetMetaData,String sheetName,int sheetNum) throws SQLException {
@@ -432,6 +437,9 @@ public class ExcelDataService {
             //Target data
             if (valType != null && valType.startsWith("MISMATCH_")) {
 
+                if (sheetNum == 2 ) {
+                    excelDataRequest.getResultSet().next();
+                }
                 for (int i = 4; i < noOfColumns; i++) {
                     Object field = excelDataRequest.getResultSet().getString(i);
                     Cell cell = row.createCell(noOfColumns - 6 + i);
@@ -452,7 +460,7 @@ public class ExcelDataService {
                         cell.setCellValue((String) field);
                 }
                 //This is to avoid the two SRC and TRG mismatch records
-                if (sheetNum == 2 || sheetNum==1) {
+                if (sheetNum==1) {
                     excelDataRequest.getResultSet().next();
                 }
 

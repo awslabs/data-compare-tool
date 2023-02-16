@@ -1,6 +1,6 @@
 package com.datavalidationtool.util;
 
-import com.datavalidationtool.ds.DataSource;
+import com.datavalidationtool.dao.DataSource;
 import com.datavalidationtool.model.DatabaseInfo;
 import com.datavalidationtool.model.request.ValidationRequest;
 import org.slf4j.Logger;
@@ -84,34 +84,7 @@ public class JdbcUtil {
 			}
 		}
 	}
-	/**
-	 *
-	 * @param appProperties
-	 * @throws Exception
-	 */
-	public static void setConnections(ValidationRequest appProperties) throws Exception {
-		Connection sourceConn = null;
-		Connection targetConn = null;
-		DatabaseInfo targetDb = new DatabaseInfo(appProperties.getTargetHost(), appProperties.getTargetPort(),
-				appProperties.getTargetDBName(), null, appProperties.getTargetUserName(),
-				appProperties.getTargetUserPassword(), false, DatabaseInfo.dbType.POSTGRESQL,
-				true, null,  null);
-		targetDb.setConnectionPoolMinSize(appProperties.getConnectionPoolMinSize());
-		targetDb.setConnectionPoolMaxSize(appProperties.getConnectionPoolMaxSize());
-		//POOL INITIALIEZED
-		DataSource.getInstance().initializePool(null, targetDb);
-		logger.info("Successfully initialized the pool");
-	}
-	/**
-	 *
-	 * @param db
-	 * @return
-	 * @throws Exception
-	 */
-	public Connection getConnection(DatabaseInfo db) throws Exception {
 
-		return getConnection(db.getURL(), db.getDriverClass(), db.getUserName(), db.getPassword(), db.getType().name(), db.isSslRequire(), db.getTrustStorePath(), db.getTrsutStorePassword());
-	}
 
 	/**
 	 *

@@ -11,7 +11,7 @@
 package com.datavalidationtool.service;
 
 
-import com.datavalidationtool.ds.DataSource;
+import com.datavalidationtool.dao.DataSource;
 import com.datavalidationtool.model.DatabaseInfo;
 import com.datavalidationtool.model.RunDetails;
 import com.datavalidationtool.model.request.ValidationRequest;
@@ -19,6 +19,7 @@ import com.datavalidationtool.util.JdbcUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.datavalidationtool.model.DatabaseInfo.dbType;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.sql.*;
@@ -27,6 +28,8 @@ import java.util.*;
 @Service
 public class ValidationService {
 	public Logger logger = LoggerFactory.getLogger("CompareService");
+	@Autowired
+	public DataSource dataSource;
 	/**
 	 * 
 	 * @param validationRequest
@@ -44,9 +47,7 @@ public class ValidationService {
 					validationRequest.setTargetSchemaName(schemas[1].toLowerCase());
 			}
 
-			if(!DataSource.getInstance().isPoolInitialized())
-	  		  setConnections(validationRequest);
-  			if(DataSource.getInstance().isPoolInitialized()) { 
+  		//	if(dataSource.isPoolInitialized()) {
 	  			long rowNo = 1;
   				Date date = new Date();
   				//DateUtil dateUtil = new DateUtil();
@@ -62,9 +63,9 @@ public class ValidationService {
 						 runId= compareSchema(validationRequest, /*getSourceConn(), getTargetConn(),*/  null);
 					}
   				}
-			} else {
-  				logger.info("Either Source or Target DB connection is not established."); 
-  			}
+		//	} else {
+  				//logger.info("Either Source or Target DB connection is not established.");
+  			//}
 	  	} catch (Exception ex) {
 	  		logger.error(ex.getMessage(), ex);
 	  	} finally {
@@ -75,9 +76,9 @@ public class ValidationService {
 	public RunDetails getCurrentRunInfo(ValidationRequest appProperties) throws Exception {
 		RunDetails runDetails = new RunDetails();
 		String query = "SELECT max(schema_run), max(table_run) FROM public.run_details where target_host_name=? and database_name=? and schema_name=? and table_name=?";
-
+		Connection dbConn=null;
 		try {
-			Connection dbConn= DataSource.getInstance().getTargetDBConnection();
+			dbConn= dataSource.getDBConnection();
 			PreparedStatement pst = dbConn.prepareStatement(query);
 			pst.setString(1,appProperties.getTargetHost());
 			pst.setString(2,appProperties.getTargetDBName());
@@ -99,14 +100,17 @@ public class ValidationService {
 			logger.error("Exception while fetching table details");
 			logger.error(ex.getMessage());
 		}
+		finally {
+			dbConn.close();
+		}
 		return runDetails;
 	}
 	public List<RunDetails> addRunDetailsForSelection(RunDetails runDetails) throws Exception {
-
+		Connection dbConn=null;
 		List<RunDetails> outputRunDetailsList = new ArrayList<>();
 		String query = "insert into public.run_details(source_host_name,target_host_name,database_name,schema_name,table_name,schema_run,table_run,run_id,execution_date) values(?,?,?,?,?,?,?,?,?)";
 		try {
-			Connection dbConn= DataSource.getInstance().getTargetDBConnection();
+			dbConn= dataSource.getDBConnection();
 			PreparedStatement pst = dbConn.prepareStatement(query);
 			pst.setString(1,runDetails.getSourceHostName());
 			pst.setString(2,runDetails.getTargetHostName());
@@ -122,6 +126,8 @@ public class ValidationService {
 		} catch (SQLException ex) {
 			logger.error("Exception while adding table details");
 			logger.error(ex.getMessage());
+		}finally {
+			dbConn.close();
 		}
 		return outputRunDetailsList;
 	}
@@ -131,20 +137,7 @@ public class ValidationService {
 	 * @param appProperties
 	 * @throws Exception
 	 */
-	private void setConnections(ValidationRequest appProperties) throws Exception {
-		
-	  	Connection sourceConn = null;
-	  	Connection targetConn = null;
-		DatabaseInfo targetDb = new DatabaseInfo(appProperties.getTargetHost(), appProperties.getTargetPort(),
-					appProperties.getTargetDBName(), null, appProperties.getTargetUserName(),
-					appProperties.getTargetUserPassword(), false, dbType.POSTGRESQL,
-					true, null,  null);
-			targetDb.setConnectionPoolMinSize(appProperties.getConnectionPoolMinSize());
-			targetDb.setConnectionPoolMaxSize(appProperties.getConnectionPoolMaxSize());
-            //POOL INITIALIEZED
-            DataSource.getInstance().initializePool(null, targetDb);
-	  		logger.info("Successfully initialized the pool");
-	}
+
 
 	/**
 	 *
@@ -243,7 +236,7 @@ public class ValidationService {
 		String runId="";
         long usedMemory = 0;
 		try {
-			checkIfTableExistsInPg(appProperties.getTargetSchemaName().toLowerCase(), tableName.toLowerCase(), "POSTGRESQL"/*, targetConn*/);
+			//checkIfTableExistsInPg(appProperties.getTargetSchemaName().toLowerCase(), tableName.toLowerCase(), "POSTGRESQL"/*, targetConn*/);
             long rowCount=0;
 			info.append("Schema: ");
 			info.append(appProperties.getTargetSchemaName());
@@ -258,7 +251,7 @@ public class ValidationService {
 			Connection con=null;
 
 			try {
-				con =  DataSource.getInstance().getTargetDBConnection() ;
+				con =  dataSource.getDBConnection() ;
 				//stmt = getConnection().createStatement();
 				stmt = con.createStatement();
 				 start = System.currentTimeMillis();
@@ -274,8 +267,8 @@ public class ValidationService {
 				{
 					cst.setString(1, appProperties.getSourceSchemaName());
 					cst.setString(2, appProperties.getTargetSchemaName());
-					cst.setString(3, appProperties.getTableName());
-					cst.setString(4, appProperties.getTableName());
+					cst.setString(3, appProperties.getTableName().equals("")?tableName:appProperties.getTableName());
+					cst.setString(4, appProperties.getTableName().equals("")?tableName:appProperties.getTableName());
 					//cst.setString(5, appProperties.getColumns());
 					//cst.setString(6, appProperties.getFilter());
 					//cst.setString(7, appProperties.getFilter());
@@ -300,7 +293,7 @@ public class ValidationService {
 					runDetails.setTargetHostName(appProperties.getTargetHost());
 					runDetails.setDatabaseName(appProperties.getTargetDBName());
 					runDetails.setSchemaName(appProperties.getSourceSchemaName());
-					runDetails.setTableName(appProperties.getTableName());
+					runDetails.setTableName(appProperties.getTableName().equals("")?tableName:appProperties.getTableName());
 					Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 					runDetails.setExecutionTime(timestamp);
 					addRunDetailsForSelection(runDetails);
@@ -311,10 +304,8 @@ public class ValidationService {
 				logger.error("DB", ex);
 
 			} finally {
-				JdbcUtil jdbcUtil = new JdbcUtil();
-				JdbcUtil.closeResultSet(rs);
-				JdbcUtil.closeStatement(stmt);
-				//JdbcUtil.closeConnection(con);
+				rs.close();
+				con.close();
 			}
 		} catch (SQLException ex) {
 
@@ -370,7 +361,7 @@ public class ValidationService {
 		ResultSet rs = null;
 		Connection conn=null;
 		try {
-			conn=DataSource.getInstance().getTargetDBConnection();
+			conn=dataSource.getDBConnection();
 			rs = conn.getMetaData().getTables(null, schemaName, tableName , null);
 			if (!rs.next()) {
 				throw new Exception("Table " + schemaName + "." + tableName + " not found for "+ dbType + " DATABASE");
@@ -378,8 +369,8 @@ public class ValidationService {
 		} catch(SQLException ex) {
 			logger.error(ex.getMessage(), ex);
 		} finally {
-			new JdbcUtil().closeResultSet(rs);
-			JdbcUtil.closeConnection(conn);
+		rs.close();
+		conn.close();
 		} 
 	}
 	/**
@@ -395,7 +386,7 @@ public class ValidationService {
 		Connection sourceConn=null;
 		String runId="";
 		try {
-			sourceConn =DataSource.getInstance().getTargetDBConnection();
+			sourceConn =dataSource.getDBConnection();
 			List<String> ignoreTables = (appProperties.getTableName() != null && !appProperties.getTableName().isEmpty()
 					&& appProperties.isIgnoreTables()) ? Arrays.asList(appProperties.getTableName().split(","))
 					: new ArrayList<String>();
@@ -409,8 +400,8 @@ public class ValidationService {
 		} catch (SQLException ex) {
 			logger.error(ex.getMessage(), ex);
 		} finally {
-			new JdbcUtil().closeResultSet(rs);
-			JdbcUtil.closeConnection(sourceConn);
+			rs.close();
+			sourceConn.close();
 		}
 		if (!tableNames.isEmpty()) {
 			for (String tableName : tableNames) {

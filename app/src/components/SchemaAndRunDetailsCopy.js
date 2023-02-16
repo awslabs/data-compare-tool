@@ -18,6 +18,7 @@ import Stack from "@mui/material/Stack";
 import { Link } from "react-router-dom";
 import LoadingSpinner from "./LoadingSpinner";
 import "./styles.css";
+import fs from 'fs';
 const CLEAR = "clear";
 
 const POPULATE_DATABASE = "populateDatabase";
@@ -245,8 +246,8 @@ function handleSubmit(event) {
               }
             })
             .then((resultData) => {
-              let msg = resultData !== null ? resultData : "Saved Sucessfully";
-              alert("Excel report downloaded Sucessfully")
+              let msg = resultData == "Success" ? " Excel report downloaded Successfully " : "Excel report downloaded Successfully";
+              alert(msg)
             })
             .catch((error) => {
              setIsLoading(false);
@@ -254,7 +255,6 @@ function handleSubmit(event) {
             });
         }
    //
-
   const fetchPost = () => {
     fetch(API)
       .then((res) => res.json())
@@ -606,6 +606,7 @@ function handleSubmit(event) {
                          onClick={downloadReport} disabled={isLoading} >
                           Download
                           </Button>
+                           <a href={'http://localhost:8090/dvt/validation/exportData?runId='+row.runId+'&schemaName='+row.schemaName+'&tableName='+row.tableName} class="btn btn-primary">link</a>
                       </Box>
                     </TableCell>
                   </TableRow>

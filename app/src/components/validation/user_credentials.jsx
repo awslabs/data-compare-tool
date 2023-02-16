@@ -27,6 +27,8 @@ const initialValue = {
   schemaNames: "ops$ora:crtdms",
   tableNames: "ppt_100",
   columnNames: "id",
+  exTables:false,
+  exColumns:false,
 };
 
 const reducer = (userCred, action) => {
@@ -71,7 +73,18 @@ export default function Validation() {
       payload: { key: event.target.name, value: event.target.name === "usessl" ? !userCred.usessl : event.target.value },
     });
   };
-
+  const handleTabExcludeInput = (event) => {
+    dispatch({
+      type: "update",
+      payload: { key: event.target.name, value: userCred.exTables  },
+    });
+  };
+    const handleColExcludeInput = (event) => {
+      dispatch({
+        type: "update",
+        payload: { key: event.target.name, value: userCred.exColumns  },
+      });
+    };
   const handleSubmit1 = () => {
      fetch('http://localhost:8090/validation/compareData', {
           method: 'POST', credentials: 'include',
@@ -99,7 +112,11 @@ export default function Validation() {
                                                targetUserName :userCred.username,
                                                targetUserPassword :userCred.password,
                                                tableName : userCred.tableNames,
-                                               columns: userCred.columnNames
+                                               columns: userCred.columnNames,
+                                               ignoreColumns:userCred.exColumns,
+                                               ignoreTables:userCred.exTables,
+                                               dataFilters:userCred.dataFilters,
+                                               filterType:userCred.filterType
                                    });
         console.log("Data To Submit == ", JSON.stringify(requestParams));
          fetch('http://localhost:8090/dvt/validation/compareData', requestParams)
@@ -171,6 +188,8 @@ export default function Validation() {
         targetUserName: userCred.username,
         targetUserPassword: userCred.password,
         tableName: userCred.tableNames,
+        dataFilters: userCred.dataFilters,
+        filterType: userCred.filterType,
       };
 
       var fetchContent = {
@@ -219,7 +238,8 @@ export default function Validation() {
       userCred.password === "" ||
       userCred.schemaNames.length === 0 ||
       userCred.tableNames.length === 0 ||
-      userCred.columnNames.length === 0
+      userCred.columnNames.length === 0 ||
+      userCred.dataFilters.length=== 0
     ) {
       setIsEntireFormValid(false);
     } else {
@@ -345,7 +365,7 @@ export default function Validation() {
               onChange={handleInput}
             />
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} md={3}>
             <TextField
               fullWidth
               multiline
@@ -358,7 +378,12 @@ export default function Validation() {
               onChange={handleInput}
             />
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} md={1}>
+                      <FormGroup>
+                        <FormControlLabel control={<Checkbox name="exTables" value={userCred.exTables} onChange={handleTabExcludeInput} />} label="Exclude" />
+                      </FormGroup>
+                    </Grid>
+          <Grid item xs={12} md={3}>
             <TextField
               fullWidth
               multiline
@@ -371,6 +396,40 @@ export default function Validation() {
               onChange={handleInput}
             />
           </Grid>
+
+          <Grid item xs={12} md={1}>
+                      <FormGroup>
+                        <FormControlLabel control={<Checkbox name="exColumns" value={userCred.exColumns} onChange={handleColExcludeInput} />} label="Exclude" />
+                      </FormGroup>
+                    </Grid>
+    <Grid item xs={4} md={4}>
+                    <TextField
+                    fullWidth
+                    multiline
+                    maxRows={4}
+                    name="filterType"
+                    label="Filter Type"
+                    variant="outlined"
+                    value={userCred.filterType}
+                    error={userCred.filterType === '' && ifFormTouched === FormStatus.MODIFIED}
+                    onChange={handleInput}
+                    />
+                     </Grid>
+                        <Grid item xs={12} md={8}>
+                                          <TextField
+                                            fullWidth
+                                            multiline
+                                            maxRows={4}
+                                            name="dataFilters"
+                                            label="Data Filters"
+                                            variant="outlined"
+                                            value={userCred.dataFilters}
+                                            error={userCred.dataFilters === '' && ifFormTouched === FormStatus.MODIFIED}
+                                            onChange={handleInput}
+                                          />
+                                        </Grid>
+
+
           <Grid item md={3}></Grid>
           <Grid item md={6}>
             <Stack direction="row" spacing={2} style={{ justifyContent: "space-evenly" }}>

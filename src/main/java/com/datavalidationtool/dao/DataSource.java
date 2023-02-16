@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.sql.Connection;
@@ -21,43 +22,33 @@ public class DataSource {
 
     @Autowired
     private AWSUtil awsUtil;
-
     public Logger logger = LoggerFactory.getLogger("DataSource");
-
-    private HikariDataSource dataSource;
-
+    private HikariDataSource hkDataSource;
     private boolean isPoolInitialized = false;
-
     public boolean isPoolInitialized() {
-        return isPoolInitialized;
+        return this.isPoolInitialized;
     }
-
     public DataSource() {
     }
-
-
-
     public Connection getDBConnection() throws SQLException {
-        logger.info("Source DB Pool Size===" + dataSource.getMaximumPoolSize());
-        return dataSource.getConnection();
+        logger.info("Source DB Pool Size===" + hkDataSource.getMaximumPoolSize());
+        return hkDataSource.getConnection();
     }
-
     @PostConstruct
     public synchronized void initializePool() throws JsonProcessingException {
         if (!isPoolInitialized) {
             String secret = awsUtil.fetchValidationDetailsFromSSM();
             ObjectMapper mapper = new ObjectMapper();
             AwsSecret awsSecret = mapper.readValue(secret, AwsSecret.class);
-
-            dataSource = new HikariDataSource();
-            dataSource.setJdbcUrl("jdbc:postgresql://"+awsSecret.getHost()+":"+awsSecret.getPort()+"/"+awsSecret.getDbname()+"?tcpKeepAlive=true");
-            dataSource.setDriverClassName("org.postgresql.Driver");
-            dataSource.setUsername(awsSecret.getUsername());
-            dataSource.setPassword(awsSecret.getPassword());
-            dataSource.setConnectionTestQuery("select 1");
-            dataSource.setMinimumIdle(30);
-            dataSource.setMaximumPoolSize(30);
-
+            hkDataSource = new HikariDataSource();
+            hkDataSource.setJdbcUrl("jdbc:postgresql://"+awsSecret.getHost()+":"+awsSecret.getPort()+"/"+awsSecret.getDbname()+"?tcpKeepAlive=true");
+            hkDataSource.setDriverClassName("org.postgresql.Driver");
+            hkDataSource.setUsername(awsSecret.getUsername());
+            hkDataSource.setPassword(awsSecret.getPassword());
+            hkDataSource.setConnectionTestQuery("select 1");
+            hkDataSource.setMinimumIdle(30);
+            hkDataSource.setMaximumPoolSize(30);
+            logger.info("Pool initialized in DS===" + hkDataSource.getMaximumPoolSize());
             this.isPoolInitialized=true;
         }
         else{

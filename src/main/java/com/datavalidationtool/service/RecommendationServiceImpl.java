@@ -7,13 +7,14 @@
 
 package com.datavalidationtool.service;
 
-import com.datavalidationtool.ds.DataSource;
+import com.datavalidationtool.dao.DataSource;
 import com.datavalidationtool.model.DatabaseInfo;
 import com.datavalidationtool.model.ExcelDataRequest;
 import com.datavalidationtool.model.RunDetails;
 import com.datavalidationtool.model.response.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.sql.*;
@@ -26,23 +27,24 @@ import java.util.stream.Collectors;
 @Service
 public class RecommendationServiceImpl implements RecommendationService {
 
+    @Autowired
+    public DataSource dataSource;
     public Logger logger = LoggerFactory.getLogger("RecommendationServiceImpl");
-
     public String recommendationApiTest() {
         logger.info("Recommendation Api Test Successful");
         return "Recommendation Api Test Successful";
     }
 
 
-    public List<String> getDbSchemaDetails(DatabaseInfo databaseInfo) {
+    public List<String> getDbSchemaDetails(DatabaseInfo databaseInfo)  {
         List<String> schemaList = new ArrayList<>();
         String query = "SELECT schema_name FROM information_schema.schemata where schema_owner ='postgres'";
         //String query = "SELECT schema_name FROM information_schema.schemata";
-
-        try (Connection dbConn = getConnection(databaseInfo);
+        Connection dbConn =null;
+        try { dbConn = dataSource.getDBConnection();
              PreparedStatement pst = dbConn.prepareStatement(query);
-             ResultSet rs = pst.executeQuery()) {
-            while (rs.next()) {
+             ResultSet rs = pst.executeQuery();
+            while (rs.next()){
                 schemaList.add(rs.getString(1));
             }
         } catch (SQLException ex) {
@@ -53,6 +55,13 @@ public class RecommendationServiceImpl implements RecommendationService {
             logger.error(e.getMessage());
             throw new RuntimeException(e);
         }
+        finally {
+            try {
+                dbConn.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
         return schemaList;
 
     }
@@ -62,7 +71,7 @@ public class RecommendationServiceImpl implements RecommendationService {
         List<String> tableList = new ArrayList<>();
         String preparedQuery = "SELECT table_name FROM information_schema.tables WHERE table_schema=?";
 
-        try (Connection con = getConnection(databaseInfo);
+        try (Connection con = dataSource.getDBConnection();
              PreparedStatement pst = con.prepareStatement(preparedQuery)) {
             pst.setString(1, schemaName);
 
@@ -121,10 +130,10 @@ public class RecommendationServiceImpl implements RecommendationService {
         }
 
         query = queryWithOptionalParam + whereQueryCondition;
-
-        try (Connection dbConn = getConnection(databaseInfo);
+        Connection dbConn =null;
+        try { dbConn =dataSource.getDBConnection();
              PreparedStatement pst = dbConn.prepareStatement(query);
-             ResultSet rs = pst.executeQuery()) {
+             ResultSet rs = pst.executeQuery();
 
             while (rs.next()) {
 
@@ -154,10 +163,10 @@ public class RecommendationServiceImpl implements RecommendationService {
         List<RunDetails> outputRunDetailsList = new ArrayList<>();
         String query = "SELECT * FROM public.run_details WHERE "
                 + "source_host_name='" + hostName + "' ";
-
-        try (Connection dbConn = getConnection(databaseInfo);
+        Connection dbConn =null;
+        try { dbConn = dataSource.getDBConnection();
              PreparedStatement pst = dbConn.prepareStatement(query);
-             ResultSet rs = pst.executeQuery()) {
+             ResultSet rs = pst.executeQuery();
 
             while (rs.next()) {
 
@@ -178,7 +187,9 @@ public class RecommendationServiceImpl implements RecommendationService {
         } catch (SQLException ex) {
             logger.error("Exception while fetching table details");
             logger.error(ex.getMessage());
-        }
+        }finally {
+        dbConn.close();
+    }
         return outputRunDetailsList;
     }
 
@@ -187,10 +198,10 @@ public class RecommendationServiceImpl implements RecommendationService {
 
         List<RunDetails> outputRunDetailsList = new ArrayList<>();
         String query = "SELECT * FROM public.run_details";
-
-        try (Connection dbConn = getConnection(databaseInfo);
+        Connection dbConn =null;
+        try { dbConn =dataSource.getDBConnection();
              PreparedStatement pst = dbConn.prepareStatement(query);
-             ResultSet rs = pst.executeQuery()) {
+             ResultSet rs = pst.executeQuery();
 
             while (rs.next()) {
 
@@ -210,7 +221,9 @@ public class RecommendationServiceImpl implements RecommendationService {
         } catch (SQLException ex) {
             logger.error("Exception while fetching table details");
             logger.error(ex.getMessage());
-        }
+        }finally {
+        dbConn.close();
+    }
         return outputRunDetailsList;
     }
 
@@ -218,8 +231,8 @@ public class RecommendationServiceImpl implements RecommendationService {
         RunDetails runDetails = new RunDetails();
         String query = "SELECT max(schema_run), max(table_run) FROM public.run_details";
 
-        try {
-            Connection dbConn= DataSource.getInstance().getTargetDBConnection();
+        Connection dbConn =null;
+        try { dbConn = dataSource.getDBConnection();
              PreparedStatement pst = dbConn.prepareStatement(query);
              ResultSet rs = pst.executeQuery();
             while (rs.next()) {
@@ -230,7 +243,9 @@ public class RecommendationServiceImpl implements RecommendationService {
         } catch (SQLException ex) {
             logger.error("Exception while fetching table details");
             logger.error(ex.getMessage());
-        }
+        }finally {
+        dbConn.close();
+    }
         return runDetails;
     }
 
@@ -330,10 +345,10 @@ public class RecommendationServiceImpl implements RecommendationService {
                 + "ORDER BY val_id ASC ";
 
         //+"ORDER BY val_id ASC LIMIT 100";
-
-        try (Connection dbConn = getConnection(databaseInfo);
+        Connection dbConn =null;
+        try { dbConn = dataSource.getDBConnection();
              PreparedStatement pst = dbConn.prepareStatement(selectQuery);
-             ResultSet rs = pst.executeQuery()) {
+             ResultSet rs = pst.executeQuery();
 
             while (rs.next()) {
                 valIdList.add(rs.getInt("val_id"));
@@ -341,6 +356,8 @@ public class RecommendationServiceImpl implements RecommendationService {
         } catch (SQLException ex) {
             logger.error("Exception while fetching table details");
             logger.error(ex.getMessage());
+        }finally {
+            dbConn.close();
         }
         return valIdList;
     }
@@ -359,12 +376,12 @@ public class RecommendationServiceImpl implements RecommendationService {
         System.out.println(" tableJoinQuery ->"+tableJoinQuery );
 
         List<Map<String,Object>> rsKeyValMapList = new ArrayList<>();
-
-        try (Connection dbConn = getConnection(databaseInfo);
+        Connection dbConn =null;
+        try { dbConn = dataSource.getDBConnection();
              //PreparedStatement pst = dbConn.prepareStatement(selectQuery);){
 
             //use below table join query to get source and target records.
-             PreparedStatement pst = dbConn.prepareStatement(tableJoinQuery);){
+             PreparedStatement pst = dbConn.prepareStatement(tableJoinQuery);
 
              ResultSet rs = pst.executeQuery();
 
@@ -407,6 +424,8 @@ public class RecommendationServiceImpl implements RecommendationService {
         } catch (SQLException ex) {
             logger.error("Exception while fetching table details");
             logger.error(ex.getMessage());
+        }finally {
+            dbConn.close();
         }
         return rsKeyValMapList;
     }
@@ -445,12 +464,12 @@ public class RecommendationServiceImpl implements RecommendationService {
         }
         List<RecommendationRow> recommendationRowList = new ArrayList<>();
 
-
-        try (Connection dbConn = getConnection(databaseInfo);
+        Connection dbConn =null;
+        try { dbConn =dataSource.getDBConnection();
              //PreparedStatement pst = dbConn.prepareStatement(selectQuery);){
 
              //use below table join query to get source and target records.
-             PreparedStatement pst = dbConn.prepareStatement(tableJoinQuery);){
+             PreparedStatement pst = dbConn.prepareStatement(tableJoinQuery);
 
             ResultSet rs = pst.executeQuery();
 
@@ -506,8 +525,9 @@ public class RecommendationServiceImpl implements RecommendationService {
         } catch (SQLException ex) {
             logger.error("Exception while fetching table details");
             logger.error(ex.getMessage());
-        }
-
+        }finally {
+        dbConn.close();
+    }
         recommendationResponse.setRows(recommendationRowList);
 
         return recommendationResponse;
@@ -556,7 +576,8 @@ public class RecommendationServiceImpl implements RecommendationService {
 
         System.out.println("selectColumnsQuery -> " + selectColumnsQuery);
         String logColsList="";
-        try (Connection dbConn = getConnection(databaseInfo); PreparedStatement pst = dbConn.prepareStatement(selectColumnsQuery); ResultSet rs = pst.executeQuery()) {
+        Connection dbConn =null;
+        try { dbConn = dataSource.getDBConnection(); PreparedStatement pst = dbConn.prepareStatement(selectColumnsQuery); ResultSet rs = pst.executeQuery();
 
             while (rs.next()) {
                 logColsList = rs.getString("val_log");
@@ -564,8 +585,11 @@ public class RecommendationServiceImpl implements RecommendationService {
         } catch (SQLException ex) {
             logger.error("Exception while fetching table details");
             logger.error(ex.getMessage());
+        }finally {
+            dbConn.close();
         }
         return logColsList;
+
     }
 
     public List<RunDetails> getRunDetails(RunDetails inputRunDetails_1, DatabaseInfo databaseInfo) throws Exception {
@@ -593,10 +617,10 @@ public class RecommendationServiceImpl implements RecommendationService {
 
 
         query = queryWithOptionalParam;
-
-        try (Connection dbConn = getConnection(databaseInfo);
+        Connection dbConn =null;
+        try { dbConn = dataSource.getDBConnection();
              PreparedStatement pst = dbConn.prepareStatement(query);
-             ResultSet rs = pst.executeQuery()) {
+             ResultSet rs = pst.executeQuery();
 
             while (rs.next()) {
 
@@ -617,6 +641,8 @@ public class RecommendationServiceImpl implements RecommendationService {
         } catch (SQLException ex) {
             logger.error("Exception while fetching table details");
             logger.error(ex.getMessage());
+        }finally {
+            dbConn.close();
         }
         return outputRunDetailsList;
     }
@@ -624,9 +650,9 @@ public class RecommendationServiceImpl implements RecommendationService {
     public boolean executeDbProcedure(RunDetails inputRunDetails_1, DatabaseInfo databaseInfo) throws Exception {
 
         boolean executeDbProcedureResult = false;
-
-        try (Connection dbConn = getConnection(databaseInfo);
-             PreparedStatement pst = dbConn.prepareStatement("call helloworld()");) {
+        Connection dbConn =null;
+        try { dbConn = dataSource.getDBConnection();
+             PreparedStatement pst = dbConn.prepareStatement("call helloworld()");
             pst.execute();
             executeDbProcedureResult = true;
 
@@ -634,13 +660,16 @@ public class RecommendationServiceImpl implements RecommendationService {
             logger.error("Exception in execute Db Procedure");
             logger.error(ex.getMessage());
         }
+        finally {
+            dbConn.close();
+        }
         return executeDbProcedureResult;
     }
 
     public int insertRunDetailsRecord(RunDetails inputRunDetails_1, DatabaseInfo databaseInfo) throws Exception {
         int updateResult = 0;
         String insertQuery = "Insert into public.run_details ( source_host_name,target_host_name,database_name,schema_name, table_name,schema_run, execution_date)";
-
+        Connection dbConn =null;
         insertQuery = insertQuery + " values (" +
                 "'" + inputRunDetails_1.getSourceHostName() + "'," +
                 "'" + inputRunDetails_1.getTargetHostName() + "'," +
@@ -651,7 +680,7 @@ public class RecommendationServiceImpl implements RecommendationService {
                 "current_timestamp)";
 
         try {
-            Connection dbConn = getConnection(databaseInfo);
+            dbConn = dataSource.getDBConnection();
             PreparedStatement pst = dbConn.prepareStatement(insertQuery);
             updateResult = pst.executeUpdate();
 
@@ -660,69 +689,13 @@ public class RecommendationServiceImpl implements RecommendationService {
             logger.error("Exception while fetching table details");
             logger.error(ex.getMessage());
         }
+        finally {
+            dbConn.close();
+        }
 
 
         return updateResult;
     }
-
-    /**
-     *
-     * @param db
-     * @return
-     * @throws Exception
-     */
-    public Connection getConnection(DatabaseInfo db) throws Exception {
-
-        return getConnection(db.getURL(), db.getDriverClass(), db.getUserName(), db.getPassword(), db.getType().name(), db.isSslRequire(), db.getTrustStorePath(), db.getTrsutStorePassword());
-    }
-
-    /**
-     *
-     * @param url
-     * @param driverClass
-     * @param user
-     * @param password
-     * @return
-     * @throws Exception
-     */
-    public Connection getConnection(String url, String driverClass, String user, String password, String dbType, boolean isSslRequire, String trustStorePath, String trsutStorePassword) throws Exception {
-
-        try {
-
-            Class.forName(driverClass);
-
-        } catch (ClassNotFoundException ex) {
-
-            ex.printStackTrace();
-            throw new Exception(ex.getMessage());
-        }
-
-        Properties props = new Properties();
-        props.setProperty("user", user);
-        props.setProperty("password", password);
-        if (isSslRequire) {
-            //props.setProperty("oracle.net.ssl_cipher_suites", "(TLS_ SA_WITH_AES_128_CBC_SHA, TLS_ SA_WITH_AES_256_CBC_SHA, SSL_ SA_WITH_3DES_EDE_CBC_SHA ,SSL_ SA_WITH_ C4_128_SHA,SSL_ SA_WITH_ C4_128_MD5 ,SSL_ SA_WITH_DES_CBC_SHA ,SSL_DH_anon_WITH_3DES_EDE_CBC_SHA,SSL_DH_anon_WITH_ C4_128_MD5,SSL_DH_anon_WITH_DES_CBC_SHA,SSL_ SA_EXPO T_WITH_ C4_40_MD5 ,SSL_ SA_EXPO T_WITH_DES40_CBC_SHA ,TLS_ SA_WITH_AES_128_CBC_SHA,TLS_ SA_WITH_AES_256_CBC_SHA)");
-            setSslProperties(props, trustStorePath, trsutStorePassword);
-        }
-        logger.info("\n" + url);
-        Connection conn = DriverManager.getConnection(url, props);
-
-        return conn;
-    }
-
-
-    /**
-     * Method for configuring SSL connection properties.
-     */
-    public void setSslProperties(Properties props, String trustStorePath, String trsutStorePassword) {
-
-        props.setProperty("javax.net.ssl.trustStore",
-                trustStorePath);
-        props.setProperty("javax.net.ssl.trustStoreType", "JKS");
-        props.setProperty("javax.net.ssl.trustStorePassword", trsutStorePassword);
-
-    }
-
 
     public RecommendationResponse getRecommendationResponseV2(RunDetails runDetails) throws Exception {
         RecommendationResponse recommendationResponse = new RecommendationResponse();
@@ -799,15 +772,9 @@ public class RecommendationServiceImpl implements RecommendationService {
 
     private ResultSet getResultSet(ExcelDataRequest excelDataRequest, RecommendationResponse recommendationResponse) throws Exception {
         ResultSet rs=null;
+        Connection con=null;
         try {
-            //Connection con= DataSource.getInstance().getTargetDBConnection();
-
-            DatabaseInfo valTableDbInfo = new DatabaseInfo("ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com", 5432,
-                    "ttp", null, "postgres", "postgres", false, DatabaseInfo.dbType.POSTGRESQL,
-                    true, "/certs/", "changeit");
-
-            Connection con=getConnection(valTableDbInfo);
-
+            con=dataSource.getDBConnection();
             String pk =null;
             StringBuilder stb=new StringBuilder();
             boolean firstCol=true;
@@ -855,6 +822,9 @@ public class RecommendationServiceImpl implements RecommendationService {
             excelDataRequest.setResultSet(rs);
         } catch (SQLException e) {
             e.printStackTrace();
+        }
+        finally {
+          //  con.close();
         }
         return rs;
     }

@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 
 @Service
@@ -26,7 +27,7 @@ public class RemediateService {
     private ExcelDataService excelDataService;
 
 
-    public int remediateData(RemediateRequest remediateRequest) {
+    public int remediateData(RemediateRequest remediateRequest) throws SQLException {
         String strUpdateValue = "";
         String strInsertValue = "";
         int rowsUpdated = 0;

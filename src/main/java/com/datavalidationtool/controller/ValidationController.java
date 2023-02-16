@@ -11,6 +11,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletResponse;
+
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @RestController
 @RequestMapping("/dvt")
@@ -35,19 +38,23 @@ public class ValidationController {
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping("validation/compareData")
     public String compareData(@RequestBody ValidationRequest inputRunDetails) throws Exception {
-        ValidationService validationService = new ValidationService();
         String runId=validationService.validateData(inputRunDetails);
         toolRunning = Boolean.FALSE;
         return runId;
     }
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @GetMapping("validation/exportData")
-    public String exportData(@RequestParam String runId,@RequestParam String tableName,@RequestParam String schemaName) throws Exception {
+    public void exportData(@RequestParam String runId, @RequestParam String tableName, @RequestParam String schemaName, HttpServletResponse response) throws Exception {
        // ExcelDataService excelDataService = new ExcelDataService();
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         ExportDataRequest exportDataRequest=ExportDataRequest.builder().runId(runId).schemaName(schemaName).tableName(tableName).build();
-        excelDataService.createExcel(exportDataRequest);
+       // boolean fileCreated=
+          excelDataService.createExcel(exportDataRequest,response);
         toolRunning = Boolean.FALSE;
-        return "redirect:/result";
+        //if(fileCreated){
+          //  return "Success";
+     //   }
+       // return  "failure";
     }
     @GetMapping("/")
     public String index(Model model) {
