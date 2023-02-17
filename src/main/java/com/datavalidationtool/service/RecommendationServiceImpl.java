@@ -194,7 +194,7 @@ public class RecommendationServiceImpl implements RecommendationService {
     }
 
     @Override
-    public List<RunDetails> getHostRunDetailsForSelection(DatabaseInfo databaseInfo) throws Exception {
+    public List<RunDetails> getHostRunDetailsForSelection() throws Exception {
 
         List<RunDetails> outputRunDetailsList = new ArrayList<>();
         String query = "SELECT * FROM public.run_details";

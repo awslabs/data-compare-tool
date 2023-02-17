@@ -26,12 +26,10 @@ public class RemediateService {
     @Autowired
     private ExcelDataService excelDataService;
 
-
     public int remediateData(RemediateRequest remediateRequest) throws SQLException {
         String strUpdateValue = "";
         String strInsertValue = "";
         int rowsUpdated = 0;
-        RunDetails inputRunDetails_1 = new RunDetails("ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com", "ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com", "ttp", "ops$ora", "company", 5);
         SchemaData details = buildUpdatRequest(remediateRequest);
         details.setSourceSchemaName("ops$ora");
         details.setTargetSchemaName("crtdms");

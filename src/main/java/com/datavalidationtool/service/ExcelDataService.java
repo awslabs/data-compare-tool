@@ -96,6 +96,40 @@ public class ExcelDataService {
         return rowsUpdates;
 
     }
+    public int executeDBCallV2(SchemaData dbUpdateData) throws SQLException {
+        ResultSet rs = null;
+        Connection con=null;
+        int rowsUpdates = 0;
+        try {
+
+            if (dataSource.isPoolInitialized()) {
+                con = dataSource.getDBConnection();
+                String sql = "{ call fn_remediate_mismatch_exceptions_dvt2(?,?,?,?,?,?) }";
+                PreparedStatement pst = null;
+
+                pst.setString(1, dbUpdateData.getRunId());
+                pst.setString(2, dbUpdateData.getDataUpdateStr());
+                pst.setString(3, dbUpdateData.getSourceSchemaName());
+                pst.setString(4, dbUpdateData.getTargetSchemaName());
+                pst.setString(5, dbUpdateData.getTableName().replace("_val","").substring(dbUpdateData.getTableName().indexOf(".")+1));
+                pst.setString(6, dbUpdateData.getTableName().replace("_val","").substring(dbUpdateData.getTableName().indexOf(".")+1));
+                pst.addBatch();
+                pst.executeBatch();
+
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            JdbcUtil jdbcUtil = new JdbcUtil();
+            JdbcUtil.closeResultSet(rs);
+            con.close();
+        }
+
+        return rowsUpdates;
+
+    }
     public int executeDBInsertCall(SchemaData dbUpdateData) throws SQLException {
 
         ResultSet rs = null;

@@ -7,12 +7,14 @@ import "./App.css";
 import Validation from "./components/validation/user_credentials";
 import SchemaAndTableSelectCopy from "./components/SchemaAndRunDetailsCopy";
 import Recommendation from "./components/recommendation/Recommendation";
+import Menu from "./components/hmenu";
 
 function App() {
   return (
     <div className="App">
       <Routes>
         <Route path="/dvt/selection" element={<SchemaAndTableSelectCopy />}></Route>
+         <Route path="/dvt/menu" element={<Menu />}></Route>
         <Route path="/dvt/recommend" element={<Recommendation />}></Route>
         <Route path="http://localhost:8090/compareData" element={<Validation />}></Route>
         <Route path="/dvt/selection" element={<SchemaAndTableSelectCopy />}></Route>

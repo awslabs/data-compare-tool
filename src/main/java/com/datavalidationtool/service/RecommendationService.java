@@ -40,7 +40,7 @@ public interface RecommendationService {
 
     List<RunDetails> getHostRunDetails(String hostName, DatabaseInfo databaseInfo) throws Exception;
 
-    List<RunDetails> getHostRunDetailsForSelection(DatabaseInfo databaseInfo) throws Exception;
+    List<RunDetails> getHostRunDetailsForSelection() throws Exception;
 
     RunDetailsSelectionResponse getRunDetailsSelectionResponse(List<RunDetails> runDetails) ;
 
