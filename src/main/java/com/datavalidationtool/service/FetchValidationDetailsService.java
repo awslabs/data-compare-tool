@@ -59,6 +59,9 @@ public class FetchValidationDetailsService {
 
         HostDetails hostDetails = new HostDetails();
         hostDetails.setHostName(awsSecret.getHost());
+        hostDetails.setPort(awsSecret.getPort());
+        hostDetails.setUsername(awsSecret.getUsername());
+        hostDetails.setPassword(awsSecret.getPassword());
         DatabaseDetails databaseDetails = new DatabaseDetails();
         databaseDetails.setDatabaseName(awsSecret.getDbname());
         List<SchemaDetails> schemaList = new ArrayList<>();

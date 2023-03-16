@@ -31,6 +31,7 @@ public class ValidationController {
     private ValidationService validationService;
 
     @GetMapping(value = "validation/dbDetails")
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
     public ResponseEntity getValidationScreenDetails() throws Exception {
         var s = service.getValidationDetails();
         return new ResponseEntity(s, HttpStatus.ACCEPTED);
