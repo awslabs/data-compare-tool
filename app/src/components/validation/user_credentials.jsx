@@ -24,6 +24,7 @@ import { FormStatus } from "./static_data";
 import { Link } from "react-router-dom";
 import LoadingSpinner from "../LoadingSpinner";
 import "../styles.css";
+import Select from "react-select";
 
 const initialValue = {
   hostname: "ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com",
@@ -32,7 +33,7 @@ const initialValue = {
   usessl: false,
   username: "postgres",
   password: "postgres",
-  schemaNames: "ops$ora:crtdms",
+  schemaNames: ["ops$ora:crtdms"],
   tableNames: "ppt_100",
   columnNames: "id",
   exTables:false,
@@ -60,7 +61,12 @@ const reducer = (userCred, action) => {
         };
       }
     case "set_default":
-      return action.payload;
+
+      return {
+          ...userCred,
+
+          userCred : action.payload
+      };
     case "reset":
       return initialValue;
     default:
@@ -141,6 +147,110 @@ userCred.tableNames=event.target.value;
                                   console.log("Error ::", error);
                                 });
                             }
+      dispatch({
+        type: "update",
+        payload: { key: event.target.name, value: userCred.exColumns  },
+      });
+    };
+  const handleSubmit1 = () => {
+     fetch('http://localhost:8090/validation/compareData', {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        })
+          .then(res => res.json())
+          .then(response => {
+            window.location.href = `${response.logoutUrl}?id_token_hint=${response.idToken}`
+              + `&post_logout_redirect_uri=${window.location.origin}`;
+          });
+      }
+    let databaseList=[];
+    let clearable = true;
+    const handleSchemaChange = (event) =>{
+        let list= [];
+        if(event!=null){
+            console.log('selectedschema '+event.value)
+            //console.log('pageDetails  '+pageDetails[0][0].schemaList)
+            initialValue.tableNames=[]
+            list=pageDetails[0][0].schemaList.find((schema) =>schema.schemaName==event.value).tableList;
+            //console.log(list);
+            //   console.log('databaseList '+databaseList)
+            //   let list=databaseList[0].schemaList.find((schema) =>schema.schemaName==event.value).tableList;
+            for(let j=0;j<list.length;j++){
+                list[j].label=list[j].tableName;
+                list[j].value=list[j].tableName;
+            }
+            console.log('tableList '+JSON.stringify(list[0]))
+        }
+
+
+      initialValue.tableNames=list;
+      setDummy([]);
+      console.log('initialValue.tableNames  =>   '+JSON.stringify(initialValue.tableNames))
+        dispatch({
+            type: "reset",
+            payload: initialValue,
+        });
+    }
+
+    const [pageDetails,setPageDetails] = useState([]);
+    const [dummy,setDummy] = useState([]);
+
+    const fetchPageDetails = () =>{
+        fetch('http://localhost:8090/dvt/validation/dbDetails').then((res =>res.json()))//.then((res => JSON.stringify(res)))
+            .then((res) =>{
+
+                //setPageDetails(res.databaseList);
+                pageDetails.push(res.databaseList);
+                console.log('dbdetails '+JSON.stringify(pageDetails));
+                //console.log('dbdetails123 '+JSON.stringify(pageDetails[0][0]));
+                console.log('dbdetails123 '+pageDetails[0][0].databaseName);
+                //initialValue.hostname = res.hostname;
+                let details = initialValue;
+                console.log('details    '+details.hostname);
+                console.log('dbdetails1 '+res.hostName);
+                let d= res
+                console.log('d '+d.hostName)
+                details.hostName=d;
+                initialValue.hostname=res.hostName;
+                initialValue.port = res.port;
+                initialValue.username = res.username;
+                initialValue.password = res.password;
+                databaseList = res.databaseList;
+                console.log('databaseList '+databaseList)
+                console.log(res.databaseList[0].databaseName);
+                initialValue.dbname=res.databaseList[0].databaseName;
+
+                let schemaNamesArray = new Array();
+                for(let i=0;i<res.databaseList[0].schemaList.length;i++){
+                    let jsondata={};
+                    jsondata.label=res.databaseList[0].schemaList[i].schemaName;
+                    jsondata.value=res.databaseList[0].schemaList[i].schemaName;
+                    schemaNamesArray.push(jsondata);
+                }
+
+                console.log('array '+schemaNamesArray)
+                initialValue.schemaNames = schemaNamesArray;
+                console.log('schemaNames'+initialValue.schemaNames)
+                let tableList='';
+                for(let i=0;i<res.databaseList[0].schemaList[0].tableList.length;i++){
+                    tableList = tableList.concat(res.databaseList[0].schemaList[0].tableList[i].tableName+', ');
+                }
+                tableList.slice(0,-3);
+                console.log(tableList);
+                initialValue.tableNames=tableList;
+                //initialva
+                //initialValue.dbname = res.databaseList.
+                console.log('details '+details.hostName)
+                dispatch({
+                    type: "set_default",
+                    payload: details,
+                });
+            })
+            .catch(err => {throw new Error(err)})
+    }
+    useEffect(() => {
+        fetchPageDetails();
+    }, []);
 
 
  function handleSubmit () {
@@ -241,7 +351,8 @@ console.log(Array.isArray(runTableData))
 /*async handleTableInput(event) {
     event.preventDefault();
     const {item} = this.state;
-     fetch('http://localhost:8090/validation/getRunInfo'), {
+
+    await fetch('http://localhost:8090/validation/compareData' + (item.id ? '/' + item.id : ''), {
         method: 'POST',
         headers: {
             'Accept': 'application/json',
@@ -261,23 +372,16 @@ console.log(Array.isArray(runTableData))
       defaultData.usessl = dummyInputData.ssl_mode;
       defaultData.username = dummyInputData.username;
       defaultData.password = dummyInputData.password;
-
       dispatch({
         type: "set_default",
         payload: defaultData,
       });
     };
-
-
     if (!loadDefaultData) {
       setLoadDefaultData(true);
-     // getLastRunDetails(); ///////////////////////////////////////// --->> Use this to load any default data
-
+      //makeApiCall(); ///////////////////////////////////////// --->> Use this to load any default data
     }
   }, [loadDefaultData]);
-
-
-
 
   useEffect(() => {
     if (isEntireFormValid) {
@@ -461,30 +565,53 @@ console.log(Array.isArray(runTableData))
             <Typography> Table Details </Typography>
           </Grid>
           <Grid item xs={12} md={4}>
-            <TextField
-              fullWidth
-              multiline
-              maxRows={4}
-              name="schemaNames"
-              label="Schema Names"
-              variant="outlined"
-              value={userCred.schemaNames}
-              error={userCred.schemaNames === '' && ifFormTouched === FormStatus.MODIFIED}
-              onChange={handleInput}
-            />
+            {/*<TextField*/}
+            {/*  fullWidth*/}
+            {/*  multiline*/}
+            {/*  maxRows={4}*/}
+            {/*  name="schemaNames"*/}
+            {/*  label="Schema Names"*/}
+            {/*  variant="outlined"*/}
+            {/*  value={userCred.schemaNames}*/}
+            {/*  error={userCred.schemaNames === '' && ifFormTouched === FormStatus.MODIFIED}*/}
+            {/*  onChange={handleInput}*/}
+            {/*/>*/}
+              <Select
+                  isDisabled= {false}
+                  isLoading= {false}
+                  isClearable
+                  isSearchable={false}
+                  placeholder="Schema Names.."
+                  defaultValue={userCred.schemaNames[0]}
+                  name="schemas"
+                  options={userCred.schemaNames}
+                  onChange={handleSchemaChange}
+              />
           </Grid>
           <Grid item xs={12} md={3}>
-            <TextField
-              fullWidth
-              multiline
-              maxRows={4}
-              name="tableNames"
-              label="Table Names"
-              variant="outlined"
-              value={userCred.tableNames}
-              error={userCred.tableNames === '' && ifFormTouched === FormStatus.MODIFIED}
-              onChange={handleTableInput}
-            />
+            {/*<TextField*/}
+            {/*  fullWidth*/}
+            {/*  multiline*/}
+            {/*  maxRows={4}*/}
+            {/*  name="tableNames"*/}
+            {/*  label="Table Names"*/}
+            {/*  variant="outlined"*/}
+            {/*  value={userCred.tableNames}*/}
+            {/*  error={userCred.tableNames === '' && ifFormTouched === FormStatus.MODIFIED}*/}
+            {/*  onChange={handleInput}*/}
+            {/*/>*/}
+              <Select
+                  isDisabled= {false}
+                  isLoading= {false}
+                  isClearable = {clearable}
+                  isSearchable={false}
+                  placeholder="Table Names.."
+                  defaultValue={userCred.schemaNames[0]}
+                  //value={''}
+                  name="tables"
+                  options={userCred.tableNames}
+                  //onChange={handleSchemaChange}
+              />
           </Grid>
           <Grid item xs={12} md={1}>
                       <FormGroup>
@@ -504,7 +631,6 @@ console.log(Array.isArray(runTableData))
               onChange={handleInput}
             />
           </Grid>
-
 
           <Grid item xs={12} md={1}>
                       <FormGroup>
