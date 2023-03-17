@@ -156,9 +156,9 @@ function DVTTableModal(props) {
       >
         <Box sx={style}>
           <span>
-            {modalDetailsData.recommendationCode === 1 ? (
+            {
               <Button onClick={copyAllFrmSrcToTarget}>SrcToTarget</Button>
-            ) : null}
+            }
           </span>
 
           <div>

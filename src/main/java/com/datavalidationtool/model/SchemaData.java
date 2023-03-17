@@ -2,6 +2,8 @@ package com.datavalidationtool.model;
 
 import lombok.*;
 
+import java.util.HashMap;
+
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,4 +19,5 @@ public class SchemaData {
     private String columnNames;
     private boolean missingPresent;
     private boolean mismatchPresent;
+    private HashMap<String, HashMap<String,String>> tableValues;
 }

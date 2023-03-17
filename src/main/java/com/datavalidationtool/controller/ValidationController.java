@@ -1,7 +1,10 @@
 package com.datavalidationtool.controller;
 
+import com.datavalidationtool.model.RunDetails;
 import com.datavalidationtool.model.request.ExportDataRequest;
 import com.datavalidationtool.model.request.ValidationRequest;
+import com.datavalidationtool.model.response.LastRunDetails;
+import com.datavalidationtool.model.response.RunInfo;
 import com.datavalidationtool.service.ExcelDataService;
 import com.datavalidationtool.service.FetchValidationDetailsService;
 import com.datavalidationtool.service.ValidationService;
@@ -13,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @RestController
@@ -35,6 +39,18 @@ public class ValidationController {
         var s = service.getValidationDetails();
         return new ResponseEntity(s, HttpStatus.ACCEPTED);
     }
+    @PostMapping(value = "validation/getRunInfo")
+    public Object getRunInfoDetails(@RequestBody ValidationRequest validationRequest) throws Exception {
+        RunInfo runDetailBeans = validationService.getRunInfo(validationRequest);
+        return runDetailBeans;
+    }
+
+    @PostMapping(value = "validation/getLastRunDetails")
+    public LastRunDetails getLastRunDetails(@RequestBody ValidationRequest validationRequest) throws Exception {
+        LastRunDetails runDetailBeans = validationService.getLastRunDetails(validationRequest);
+        return runDetailBeans;
+    }
+
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping("validation/compareData")
     public String compareData(@RequestBody ValidationRequest inputRunDetails) throws Exception {

@@ -28,4 +28,5 @@ public class ValidationRequest {
     private String connectionType;
     private boolean ignoreTables;
     private boolean checkAdditionalRows;
+    private int schemaRunNumber;
 }

@@ -57,6 +57,7 @@ public class RecommendationServiceImpl implements RecommendationService {
         }
         finally {
             try {
+                if(dbConn!=null)
                 dbConn.close();
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -97,18 +98,14 @@ public class RecommendationServiceImpl implements RecommendationService {
         List<RunDetails> outputRunDetailsList = new ArrayList<>();
         String query = null;
         String whereQueryCondition = "";
-
         String queryWithOptionalParam = "SELECT * FROM public.run_details";
-
         if (inputRunDetails_1.getSourceHostName() != null) {
             whereQueryCondition = whereQueryCondition + " WHERE ";
             whereQueryCondition = whereQueryCondition + "source_host_name='" + inputRunDetails_1.getSourceHostName() + "' ";
         }
-
         if (inputRunDetails_1.getTargetHostName() != null) {
             whereQueryCondition = whereQueryCondition + " and " + "target_host_name='" + inputRunDetails_1.getTargetHostName() + "' ";
         }
-
         if (inputRunDetails_1.getDatabaseName() != null) {
             whereQueryCondition = whereQueryCondition + " and " + "database_name='" + inputRunDetails_1.getDatabaseName() + "' ";
         }
@@ -188,7 +185,8 @@ public class RecommendationServiceImpl implements RecommendationService {
             logger.error("Exception while fetching table details");
             logger.error(ex.getMessage());
         }finally {
-        dbConn.close();
+            if(dbConn!=null)
+            dbConn.close();
     }
         return outputRunDetailsList;
     }
@@ -222,7 +220,8 @@ public class RecommendationServiceImpl implements RecommendationService {
             logger.error("Exception while fetching table details");
             logger.error(ex.getMessage());
         }finally {
-        dbConn.close();
+            if(dbConn!=null)
+                dbConn.close();
     }
         return outputRunDetailsList;
     }
@@ -230,7 +229,6 @@ public class RecommendationServiceImpl implements RecommendationService {
     public RunDetails getCurrentRunInfo() throws Exception {
         RunDetails runDetails = new RunDetails();
         String query = "SELECT max(schema_run), max(table_run) FROM public.run_details";
-
         Connection dbConn =null;
         try { dbConn = dataSource.getDBConnection();
              PreparedStatement pst = dbConn.prepareStatement(query);
@@ -244,7 +242,8 @@ public class RecommendationServiceImpl implements RecommendationService {
             logger.error("Exception while fetching table details");
             logger.error(ex.getMessage());
         }finally {
-        dbConn.close();
+            if(dbConn!=null)
+                dbConn.close();
     }
         return runDetails;
     }
@@ -357,6 +356,7 @@ public class RecommendationServiceImpl implements RecommendationService {
             logger.error("Exception while fetching table details");
             logger.error(ex.getMessage());
         }finally {
+            if(dbConn!=null)
             dbConn.close();
         }
         return valIdList;
@@ -425,6 +425,7 @@ public class RecommendationServiceImpl implements RecommendationService {
             logger.error("Exception while fetching table details");
             logger.error(ex.getMessage());
         }finally {
+            if(dbConn!=null)
             dbConn.close();
         }
         return rsKeyValMapList;
@@ -516,7 +517,7 @@ public class RecommendationServiceImpl implements RecommendationService {
                         recommendationCode=3;
                     }
 
-                    recommendationRowList.add(new RecommendationRow(recommendationCode,recommendationColumns,rs.getInt(2)));
+                    recommendationRowList.add(new RecommendationRow(recommendationCode,recommendationColumns,rs.getInt(2),null));
                     rsKeyValMapList.add(rsKeyValMap);
                 }
 
@@ -526,7 +527,8 @@ public class RecommendationServiceImpl implements RecommendationService {
             logger.error("Exception while fetching table details");
             logger.error(ex.getMessage());
         }finally {
-        dbConn.close();
+            if(dbConn!=null)
+            dbConn.close();
     }
         recommendationResponse.setRows(recommendationRowList);
 
@@ -586,6 +588,7 @@ public class RecommendationServiceImpl implements RecommendationService {
             logger.error("Exception while fetching table details");
             logger.error(ex.getMessage());
         }finally {
+            if(dbConn!=null)
             dbConn.close();
         }
         return logColsList;
@@ -642,6 +645,7 @@ public class RecommendationServiceImpl implements RecommendationService {
             logger.error("Exception while fetching table details");
             logger.error(ex.getMessage());
         }finally {
+            if(dbConn!=null)
             dbConn.close();
         }
         return outputRunDetailsList;
@@ -661,6 +665,7 @@ public class RecommendationServiceImpl implements RecommendationService {
             logger.error(ex.getMessage());
         }
         finally {
+            if(dbConn!=null)
             dbConn.close();
         }
         return executeDbProcedureResult;
@@ -690,6 +695,7 @@ public class RecommendationServiceImpl implements RecommendationService {
             logger.error(ex.getMessage());
         }
         finally {
+            if(dbConn!=null)
             dbConn.close();
         }
 
@@ -699,8 +705,10 @@ public class RecommendationServiceImpl implements RecommendationService {
 
     public RecommendationResponse getRecommendationResponseV2(RunDetails runDetails) throws Exception {
         RecommendationResponse recommendationResponse = new RecommendationResponse();
-        ExcelDataRequest excelDataRequest = ExcelDataRequest.builder().runId(runDetails.getRunId()).schemaName(runDetails.getSchemaName()).tableName(runDetails.getTableName()).build();
-        ResultSet resultSet = getResultSet(excelDataRequest, recommendationResponse);
+        ExcelDataRequest excelDataRequest = ExcelDataRequest.builder().runId(runDetails.getRunId()).schemaName(runDetails.getSchemaName()).tableName(runDetails.getTableName()).validationRequest(runDetails.isValidationrequest()).build();
+        Connection con=null;
+       try{  con=dataSource.getDBConnection();
+        ResultSet resultSet = getResultSet(excelDataRequest, recommendationResponse,con);
         ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
         String tableName = resultSetMetaData.getTableName(1);
         String schemaName = excelDataRequest.getSchemaName();
@@ -715,6 +723,7 @@ public class RecommendationServiceImpl implements RecommendationService {
             Map<Object, Map<String, Object>> tgtValueMap = new HashMap<>();
             Map<Object, Integer> valIdMap = new HashMap<>();
             int valId=0;
+            String durationText="";
             while (resultSet.next()) {
                 Map<String, Object> rsKeyValMap = new HashMap<>();
                 for (int index = 0; index < rsmd.getColumnCount(); index++) {
@@ -759,22 +768,33 @@ public class RecommendationServiceImpl implements RecommendationService {
                             recommendationCode = 1;
                         } else if ("Mismatch_trg".equalsIgnoreCase(srcValue.get(srcColumns).toString())) {
                             recommendationCode = 3;
+                        }else{
+                            recommendationCode = 4;
+                            durationText=resultSet.getString(4);
                         }
                     }
                 }
-                recommendationRowList.add(new RecommendationRow(recommendationCode, recommendationColumns,valIdMap.get(srcKey)));
+                recommendationRowList.add(new RecommendationRow(recommendationCode, recommendationColumns,valIdMap.get(srcKey),durationText));
             }
         }
+
         recommendationResponse.setTotalRecords(rowCount);
         recommendationResponse.setRows(recommendationRowList);
+       } catch (SQLException e) {
+           e.printStackTrace();
+       }
+       finally {
+            if(con!=null)
+            con.close();
+       }
         return recommendationResponse;
     }
 
-    private ResultSet getResultSet(ExcelDataRequest excelDataRequest, RecommendationResponse recommendationResponse) throws Exception {
+    private ResultSet getResultSet(ExcelDataRequest excelDataRequest, RecommendationResponse recommendationResponse,Connection con) throws Exception {
         ResultSet rs=null;
-        Connection con=null;
+
         try {
-            con=dataSource.getDBConnection();
+
             String pk =null;
             StringBuilder stb=new StringBuilder();
             boolean firstCol=true;
@@ -783,10 +803,8 @@ public class RecommendationServiceImpl implements RecommendationService {
             ResultSet rs1=meta.getColumns(null,excelDataRequest.getSchemaName(),excelDataRequest.getTableName(),null);
             ArrayList list = new ArrayList<String>();
             while (rs.next()) {
-                //pk = rs.getString("COLUMN_NAME");
                 pk = rs.getString(4);
                 System.out.println("getPrimaryKeys(): columnName=" + pk);
-
                 if(!pk.isEmpty()){
                     recommendationResponse.setUniqueColumns(Arrays.asList(pk.split(",")));
                 }
@@ -803,19 +821,28 @@ public class RecommendationServiceImpl implements RecommendationService {
                 list.add(col);
             }
             excelDataRequest.setColList(list);
-            String preparedQuery="SELECT SRC.*, DENSE_RANK () OVER ( ORDER BY SRC.id  ASC) EXCEPTION_RANK FROM \n" +
+            String preparedQuery="";
+            if(!excelDataRequest.isValidationRequest())
+                preparedQuery=  "SELECT SRC.*, DENSE_RANK () OVER ( ORDER BY SRC.id  ASC) EXCEPTION_RANK FROM \n" +
                     "(SELECT RUN_ID, VAL_ID, UPPER(VAL_TYPE) AS EXCEPTION_STATUS,"+stb.toString()+" FROM "+excelDataRequest.getSchemaName()+"."+excelDataRequest.getTableName()+"_val \n" +
                     "WHERE RUN_ID = ? \n" +
                     "AND UPPER(VAL_TYPE) IN ('MISMATCH_SRC','MISMATCH_TRG','MISSING','EXTRA_RECORD') \n" +
                     ") SRC ORDER BY EXCEPTION_RANK ASC,VAL_ID ASC;\n";
-            System.out.println("preparedQuery=" + preparedQuery);
+            else {
+                preparedQuery = "SELECT SRC.*, DENSE_RANK () OVER ( ORDER BY SRC.id  ASC) EXCEPTION_RANK FROM \n" +
+                        "(SELECT RUN_ID, VAL_ID, UPPER(VAL_TYPE) AS EXCEPTION_STATUS,"+stb.toString()+" FROM "+excelDataRequest.getSchemaName()+"."+excelDataRequest.getTableName()+"_val \n" +
+                        "WHERE RUN_ID IN ( SELECT RUN_ID FROM "+excelDataRequest.getSchemaName()+"."+excelDataRequest.getTableName()+"_val ORDER BY VAL_ID DESC LIMIT 1 ) \n" +
+                        "AND UPPER(VAL_TYPE) IN ('MISMATCH_SRC','MISMATCH_TRG','MISSING','LOG-END','EXTRA_RECORD')  \n" +
+                        ") SRC ORDER BY EXCEPTION_RANK ASC,VAL_ID ASC";
+            }
+
             PreparedStatement pst = null ;
             try {
                 pst = con.prepareStatement(preparedQuery,ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
             } catch (SQLException e) {
                 e.printStackTrace();
             }
-            {
+            {   if(!excelDataRequest.isValidationRequest())
                 pst.setString(1, excelDataRequest.getRunId());
             }
             rs= pst.executeQuery();
@@ -824,7 +851,7 @@ public class RecommendationServiceImpl implements RecommendationService {
             e.printStackTrace();
         }
         finally {
-          //  con.close();
+
         }
         return rs;
     }

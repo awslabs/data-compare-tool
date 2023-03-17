@@ -66,11 +66,8 @@ public class RemediateService {
             //{\"column\":\"id\",\"value\":\"\",\"valId\":377},{\"column\":\"transaction\",\"value\":\"\",\"valId\":377}],[{\"column\":\"country\",\"value\":\"\",\"valId\":377},{\"column\":\"exception_status\",\"value\":\"\",\"valId\":377},{\"column\":\"id\",\"value\":\"\",\"valId\":377},{\"column\":\"transaction\",\"value\":\"\",\"valId\":377}]]"}
             if (remediateReq.getExceptionType().toUpperCase().startsWith("MISSING")) {
                 if (rowChangeValid != valId) {
-                    if (index != 0) {
-                        strInsertValue = ";" + strInsertValue;
-                    }
-                    if (index == (remediateRequest.getColumnDetails().size() - 1)) {
-                        strInsertValue = strInsertValue + remediateReq.getValId();
+                    if (!strInsertValue.equals("")) {
+                        strInsertValue = strInsertValue +","+ remediateReq.getValId();
                     } else {
                         strInsertValue = strInsertValue + remediateReq.getValId() ;
                     }
@@ -82,11 +79,15 @@ public class RemediateService {
           else if (remediateReq.getExceptionType().toUpperCase().startsWith("MISMATCH")) {
                 if (rowChangeValid != valId) {
                     // add semicolon
-                    if (index != 0) {
-                        strUpdateValue = ";" + strUpdateValue;
+                    if (index != 0 && index < (remediateRequest.getColumnDetails().size()-1)) {
+                        strUpdateValue =  strUpdateValue+";";
+                        strUpdateValue =  strUpdateValue.replace(",;", ";");
                     }
+                    strUpdateValue = strUpdateValue + remediateReq.getValId() + "," + remediateReq.getColumn();
                     // add val id and column name
-                    strUpdateValue = strUpdateValue + remediateReq.getValId() + "," + remediateReq.getColumn() + ",";
+                    if (index < (remediateRequest.getColumnDetails().size()-1)) {
+                        strUpdateValue = strUpdateValue + ",";
+                    }
                 } else {
                     if (index == (remediateRequest.getColumnDetails().size()-1)) {
                         strUpdateValue = strUpdateValue + remediateReq.getColumn();
@@ -99,6 +100,9 @@ public class RemediateService {
 
             index++;
         }
+        //to avoid any , or ; at the end
+        if(strUpdateValue.lastIndexOf(',')==(strUpdateValue.length()-1) || strUpdateValue.lastIndexOf(';')==(strUpdateValue.length()-1))
+            strUpdateValue= strUpdateValue.substring(0,strUpdateValue.length()-1);
         details.setDataUpdateStr(strUpdateValue);
         details.setDataInsertStr(strInsertValue);
     return details;

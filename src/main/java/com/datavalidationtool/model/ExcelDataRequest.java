@@ -19,4 +19,5 @@ public class ExcelDataRequest {
     String schemaName;
     String runId;
     ArrayList colList;
+    boolean validationRequest;
 }

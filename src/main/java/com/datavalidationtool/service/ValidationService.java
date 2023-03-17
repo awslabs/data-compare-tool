@@ -15,6 +15,10 @@ import com.datavalidationtool.dao.DataSource;
 import com.datavalidationtool.model.DatabaseInfo;
 import com.datavalidationtool.model.RunDetails;
 import com.datavalidationtool.model.request.ValidationRequest;
+import com.datavalidationtool.model.response.LastRunDetails;
+import com.datavalidationtool.model.response.RecommendationResponse;
+import com.datavalidationtool.model.response.RecommendationRow;
+import com.datavalidationtool.model.response.RunInfo;
 import com.datavalidationtool.util.JdbcUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +34,8 @@ public class ValidationService {
 	public Logger logger = LoggerFactory.getLogger("CompareService");
 	@Autowired
 	public DataSource dataSource;
+	@Autowired
+	public RecommendationService recommendationService;
 	/**
 	 * 
 	 * @param validationRequest
@@ -53,12 +59,15 @@ public class ValidationService {
   				//DateUtil dateUtil = new DateUtil();
 				if (validationRequest.getTableName() != null && !validationRequest.getTableName().isEmpty()
 						&& !validationRequest.isIgnoreTables()) {
+					getCurrentSchemaRunInfo(validationRequest);
   					String[] tableNameParts = validationRequest.getTableName().split(",");
   					for (String tableName : tableNameParts) {
+						validationRequest.setTableName(tableName);
 						runId=validate(validationRequest,tableName, null);
   					}
 		  			
   				} else {
+					getCurrentSchemaRunInfo(validationRequest);
   					for (String schemaName : schemaParts) {
 						 runId= compareSchema(validationRequest, /*getSourceConn(), getTargetConn(),*/  null);
 					}
@@ -73,9 +82,40 @@ public class ValidationService {
 		}
     return runId;
 	}
-	public RunDetails getCurrentRunInfo(ValidationRequest appProperties) throws Exception {
+	public RunDetails getCurrentSchemaRunInfo(ValidationRequest appProperties) throws Exception {
 		RunDetails runDetails = new RunDetails();
-		String query = "SELECT max(schema_run), max(table_run) FROM public.run_details where target_host_name=? and database_name=? and schema_name=? and table_name=?";
+		String query = "SELECT max(schema_run) FROM public.run_details where target_host_name=? and database_name=? and schema_name=?";
+		Connection dbConn=null;
+		try {
+			dbConn= dataSource.getDBConnection();
+			PreparedStatement pst = dbConn.prepareStatement(query);
+			pst.setString(1,appProperties.getTargetHost());
+			pst.setString(2,appProperties.getTargetDBName());
+			pst.setString(3,appProperties.getSourceSchemaName());
+			ResultSet rs = pst.executeQuery();
+			while (rs.next()) {
+				// If it is a schema run
+				if(appProperties.getTableName()==null || appProperties.getTableName().isBlank()) {
+					appProperties.setSchemaRunNumber(rs.getInt(1)+1);
+				}else{
+					appProperties.setSchemaRunNumber(0);
+				}
+			}
+
+		} catch (SQLException ex) {
+			logger.error("Exception while fetching table details");
+			logger.error(ex.getMessage());
+		}
+		finally {
+			if(dbConn!=null)
+			dbConn.close();
+		}
+		return runDetails;
+	}
+
+	public RunDetails getCurrentTableRunInfo(ValidationRequest appProperties) throws Exception {
+		RunDetails runDetails = new RunDetails();
+		String query = "SELECT max(table_run) FROM public.run_details where target_host_name=? and database_name=? and schema_name=? and table_name=?";
 		Connection dbConn=null;
 		try {
 			dbConn= dataSource.getDBConnection();
@@ -88,11 +128,9 @@ public class ValidationService {
 			while (rs.next()) {
 				// If it is a schema run
 				if(appProperties.getTableName()==null || appProperties.getTableName().isBlank()) {
-					runDetails.setTableRun(rs.getInt(2) + 1);
-					runDetails.setSchemaRun(0);
+					runDetails.setTableRun(rs.getInt(1) + 1);
 				}else{
-					runDetails.setSchemaRun(rs.getInt(1)+1);
-					runDetails.setTableRun(rs.getInt(2) + 1);
+					runDetails.setTableRun(rs.getInt(1) + 1);
 				}
 			}
 
@@ -101,10 +139,12 @@ public class ValidationService {
 			logger.error(ex.getMessage());
 		}
 		finally {
-			dbConn.close();
+			if(dbConn!=null)
+				dbConn.close();
 		}
 		return runDetails;
 	}
+
 	public List<RunDetails> addRunDetailsForSelection(RunDetails runDetails) throws Exception {
 		Connection dbConn=null;
 		List<RunDetails> outputRunDetailsList = new ArrayList<>();
@@ -127,6 +167,7 @@ public class ValidationService {
 			logger.error("Exception while adding table details");
 			logger.error(ex.getMessage());
 		}finally {
+			if(dbConn!=null)
 			dbConn.close();
 		}
 		return outputRunDetailsList;
@@ -245,7 +286,7 @@ public class ValidationService {
 			int i;
 			info = new StringBuilder();
 		   info.append("\n###############################################################\n");
-			logger.info(info.toString());
+			//logger.info(info.toString());
 			Statement stmt = null;
 			ResultSet rs = null;
 			Connection con=null;
@@ -281,13 +322,16 @@ public class ValidationService {
 				rs= cst.executeQuery();
 				while(rs.next()) {
 					String result = rs.getString(1);
-					logger.info("DB", result);
+					logger.info("Table "+tableName+" Validation Status", result);
 					if(result.contains("Validation complete for Run Id")) {
 						runId = result.substring(31, 63);
 					}
 				}
 				if(!runId.isBlank()) {
-					RunDetails runDetails = getCurrentRunInfo(appProperties);
+					if(appProperties.getTableName().equals(""))
+					appProperties.setTableName(tableName);
+					RunDetails runDetails = getCurrentTableRunInfo(appProperties);
+					runDetails.setSchemaRun(appProperties.getSchemaRunNumber());
 					runDetails.setRunId(runId);
 					runDetails.setSourceHostName(appProperties.getTargetHost());
 					runDetails.setTargetHostName(appProperties.getTargetHost());
@@ -319,7 +363,7 @@ public class ValidationService {
 		long timeTaken = end - start;
 		info = new StringBuilder();
 		info.append("\n----------------------------------------------------\n");
-		info.append("Finished writing comparison results for ");
+		info.append("Finished writing comparison results for "+timeTaken);
 		info.append(appProperties.getSourceSchemaName());
 		info.append(".");
 		info.append(tableName);
@@ -390,11 +434,10 @@ public class ValidationService {
 			List<String> ignoreTables = (appProperties.getTableName() != null && !appProperties.getTableName().isEmpty()
 					&& appProperties.isIgnoreTables()) ? Arrays.asList(appProperties.getTableName().split(","))
 					: new ArrayList<String>();
-			String[] types = {"FOREIGN"};
 			rs = sourceConn.getMetaData().getTables(appProperties.getTargetDBName().toLowerCase(), appProperties.getSourceSchemaName().toLowerCase(), null, null);
 			while (rs.next()) {
 				String tableName = rs.getString("TABLE_NAME");
-				if (ignoreTable(ignoreTables, tableName) || tableName.toLowerCase().contains("awsdms") || tableName.trim().equals("") || !tableName.trim().startsWith("ppt")) continue;
+				if (ignoreTable(ignoreTables, tableName) || tableName.toLowerCase().contains("awsdms") || tableName.trim().equals("") ) continue;
 				tableNames.add(tableName);
 			}
 		} catch (SQLException ex) {
@@ -406,8 +449,9 @@ public class ValidationService {
 		if (!tableNames.isEmpty()) {
 			for (String tableName : tableNames) {
 				StringBuilder info = new StringBuilder();
+				appProperties.setTableName(tableName);
 				runId= validate(appProperties,  tableName, columnList);
-				logger.info(info.toString());
+				//logger.info(info.toString());
 			}
 		}
 		return runId;
@@ -428,4 +472,116 @@ public class ValidationService {
 	    return false;		
 	}
 
+	public RunInfo getRunInfo(ValidationRequest inputRunDetails) throws Exception {
+		long rowCount= getTableCount(inputRunDetails);
+		RunDetails runDetails= RunDetails.builder().schemaName(inputRunDetails.getSourceSchemaName()).tableName(inputRunDetails.getTableName()).validationrequest(true).build();
+		RecommendationResponse recommendationResponse = recommendationService.getRecommendationResponseV2(runDetails);
+		RunInfo runInfo=buildRunInfo(recommendationResponse,rowCount);
+		return runInfo;
+	}
+
+	public LastRunDetails getLastRunDetails(ValidationRequest inputRunDetails) throws Exception {
+		ArrayList<RunInfo> list= new ArrayList<RunInfo>();
+		LastRunDetails lastRunDetails=new LastRunDetails();
+		RunDetails runDetail= RunDetails.builder().schemaName(inputRunDetails.getSourceSchemaName()).tableName(inputRunDetails.getTableName()).validationrequest(true).build();
+		List<RunDetails> rundetails=getLastRunResults(runDetail);
+		HashMap<String,Long> tableList=new HashMap<String,Long>();
+		for(RunDetails runId:rundetails ) {
+			Long rowCount= 0L;
+			runId.setValidationrequest(true);
+			RecommendationResponse recommendationResponse = recommendationService.getRecommendationResponseV2(runId);
+			inputRunDetails.setTableName(runId.getTableName());
+			if(tableList.get(runId.getTableName())!=null){
+				rowCount=tableList.get(runId.getTableName());
+			}else
+			 rowCount= getTableCount(inputRunDetails);
+			RunInfo runInfo = buildRunInfo(recommendationResponse, rowCount);
+			runInfo.setTable(runId.getTableName());
+			runInfo.setLastRunDate(runId.getExecutionDate());
+			tableList.put(runId.getTableName(),rowCount);
+			list.add(runInfo);
+		}
+		lastRunDetails.setRuns(list);
+		lastRunDetails.setSchemaName(runDetail.getSchemaName());
+		return lastRunDetails;
+
+	}
+
+	private List<RunDetails> getLastRunResults(RunDetails runDetail) throws SQLException {
+		List<RunDetails> outputRunDetailsList = new ArrayList<>();
+		String query = "select * FROM public.run_details order by execution_date desc limit 10";
+		Connection dbConn =null;
+		try { dbConn =dataSource.getDBConnection();
+			PreparedStatement pst = dbConn.prepareStatement(query);
+			ResultSet rs = pst.executeQuery();
+
+			while (rs.next()) {
+
+				RunDetails runDetails = new RunDetails();
+				runDetails.setSourceHostName(rs.getString("source_host_name"));
+				runDetails.setTargetHostName(rs.getString("target_host_name"));
+				runDetails.setDatabaseName(rs.getString("database_name"));
+				runDetails.setSchemaName(rs.getString("schema_name"));
+				runDetails.setTableName(rs.getString("table_name"));
+				runDetails.setSchemaRun(rs.getInt("schema_run"));
+				runDetails.setTableRun(rs.getInt("table_run"));
+				runDetails.setRunId(rs.getString("run_id"));
+				runDetails.setExecutionDate(rs.getString("execution_date"));
+				outputRunDetailsList.add(runDetails);
+			}
+
+		} catch (SQLException ex) {
+			logger.error("Exception while fetching table details");
+			logger.error(ex.getMessage());
+		}finally {
+			if(dbConn!=null)
+				dbConn.close();
+		}
+		return outputRunDetailsList;
+	}
+
+
+
+	private RunInfo buildRunInfo(RecommendationResponse recommendationResponse, long rowCount) {
+		RunInfo runInfo=RunInfo.builder().totalRecords(rowCount).build();
+		long missing=0;
+		long mismatch=0;
+		for(RecommendationRow row : recommendationResponse.getRows())
+		{
+          if((Integer) row.getRecommendationCode()==1)
+			  missing++;
+		  else if((Integer) row.getRecommendationCode()==2)
+			  mismatch++;
+		  else if((Integer) row.getRecommendationCode()==4)
+			runInfo.setDuration(row.getDurationText());
+		}
+		runInfo.setMismatchRows(mismatch);
+		runInfo.setMissingRows(missing);
+		return runInfo;
+	}
+
+	private long getTableCount(ValidationRequest inputRunDetails) throws SQLException {
+		String query = "SELECT count(*) from "+ inputRunDetails.getSourceSchemaName()+"."+inputRunDetails.getTableName();
+		long count=0;
+		Connection dbConn=null;
+		try {
+			dbConn= dataSource.getDBConnection();
+			Statement pst = dbConn.createStatement();
+			ResultSet rs = pst.executeQuery(query);
+			while (rs.next()) {
+				// If it is a schema run
+				count=rs.getLong(1);
+			}
+
+		} catch (SQLException ex) {
+			logger.error("Exception while fetching table details");
+			logger.error(ex.getMessage());
+		}
+		finally {
+			if(dbConn!=null)
+			dbConn.close();
+		}
+		return count;
+
+	}
 }

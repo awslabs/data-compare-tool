@@ -14,4 +14,5 @@ public class RecommendationRow {
     Object recommendationCode;
     List<RecommendationColumn> columns;
     int valId;
+    String durationText;
 }

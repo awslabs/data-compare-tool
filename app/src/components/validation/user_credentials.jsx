@@ -10,7 +10,15 @@ import TextField from "@mui/material/TextField";
 import Checkbox from "@mui/material/Checkbox";
 import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
-
+import Select from "react-select";
+import TableContainer from "@mui/material/TableContainer";
+import Paper from "@mui/material/Paper";
+import Table from "@mui/material/Table";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import TableCell from "@mui/material/TableCell";
+import TableBody from "@mui/material/TableBody";
+import { containerClasses } from "@mui/material";
 import dummyInputData from "./dummy_data.json";
 import { FormStatus } from "./static_data";
 import { Link } from "react-router-dom";
@@ -29,6 +37,8 @@ const initialValue = {
   columnNames: "id",
   exTables:false,
   exColumns:false,
+  showTable:false,
+  showRunTable:false,
 };
 
 const reducer = (userCred, action) => {
@@ -66,7 +76,13 @@ export default function Validation() {
   const [ifFormTouched, setIfFormTouched] = useState(FormStatus.UNTOUCHED);
   const [isEntireFormValid, setIsEntireFormValid] = useState(false);
   const navigate = useNavigate();
-
+  const [tableData, setTableData] = useState([{}]);
+  const [showTable, setShowTable]= useState(false);
+  const [showRunTable, setShowRunTable]= useState(false);
+  const [runTableData, setRunTableData] = useState([{}]);
+  const [exTables, setExTables]= useState(false);
+   const [exColumns, setExColumns]= useState(false);
+  const [data, setData] = useState([{}]);
   const handleInput = (event) => {
     dispatch({
       type: "update",
@@ -74,28 +90,57 @@ export default function Validation() {
     });
   };
   const handleTabExcludeInput = (event) => {
-    dispatch({
-      type: "update",
-      payload: { key: event.target.name, value: userCred.exTables  },
-    });
+   setExTables(event.target.checked);
   };
     const handleColExcludeInput = (event) => {
-      dispatch({
-        type: "update",
-        payload: { key: event.target.name, value: userCred.exColumns  },
-      });
-    };
-  const handleSubmit1 = () => {
-     fetch('http://localhost:8090/validation/compareData', {
-          method: 'POST', credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-        })
-          .then(res => res.json())
-          .then(response => {
-            window.location.href = `${response.logoutUrl}?id_token_hint=${response.idToken}`
-              + `&post_logout_redirect_uri=${window.location.origin}`;
-          });
-      }
+       setExColumns(event.target.checked);
+       }
+
+
+function handleTableInput (event){
+ setIsLoading(true);
+  setShowRunTable(false);
+  setShowTable(false);
+userCred.tableNames=event.target.value;
+     let requestParams = { method: "POST", headers: "", body: "" };
+             requestParams.headers = { "Content-Type": "application/json" };
+             requestParams.body =   JSON.stringify({
+                                                    sourceSchemaName : userCred.schemaNames.split(":")[0],
+                                                    tableName : event.target.value,
+                                        });
+
+             console.log("Data To Submit == ", JSON.stringify(requestParams));
+
+              fetch('http://localhost:8090/dvt/validation/getRunInfo', requestParams)
+          .then((response) => {
+                       if (response.ok) {
+                         return response.json();
+                       }
+                     })
+                      .then((resultData) => {
+                                setIsLoading(false);
+                                    let slnumber = 1;
+                                  let msg = (resultData !== null || resultData!=='')? resultData : "Something went wrong, please try again";
+                                          let obj = {};
+                                          obj.slNo = slnumber;
+                                          slnumber++;
+                                          console.log("slno", slnumber);
+                                          obj.tableName = userCred.tableNames;
+                                          obj.mismatchRows = resultData.mismatchRows;
+                                          obj.missingRows = resultData.missingRows;
+                                          obj.totalRows = resultData.totalRecords;
+                                          setTableData(obj);
+                                          setShowTable(true);
+                                           setShowRunTable(false);
+                                            setIsLoading(false);
+                                })
+                                .catch((error) => {
+                                setErrorMessage("Unable to validate the data");
+                                setIsLoading(false);
+                                alert(error);
+                                  console.log("Error ::", error);
+                                });
+                            }
 
 
  function handleSubmit () {
@@ -113,10 +158,11 @@ export default function Validation() {
                                                targetUserPassword :userCred.password,
                                                tableName : userCred.tableNames,
                                                columns: userCred.columnNames,
-                                               ignoreColumns:userCred.exColumns,
-                                               ignoreTables:userCred.exTables,
+                                               ignoreColumns:exColumns,
                                                dataFilters:userCred.dataFilters,
-                                               filterType:userCred.filterType
+                                               filterType:userCred.filterType,
+                                               ignoreTables:exTables,
+
                                    });
         console.log("Data To Submit == ", JSON.stringify(requestParams));
          fetch('http://localhost:8090/dvt/validation/compareData', requestParams)
@@ -139,12 +185,63 @@ export default function Validation() {
              console.log("Error ::", error);
            });
        }
+function getLastRunDetails () {
+    //event.preventDefault();
+    setIsLoading(true);
+     let requestParams = { method: "POST", headers: "", body: "" };
+        requestParams.headers = { "Content-Type": "application/json" };
+        requestParams.body =   JSON.stringify({
+                                               targetSchemaName : userCred.schemaNames,
+                                               sourceSchemaName : userCred.schemaNames.split(":")[0],
+                                               targetDBName : userCred.dbname,
+                                               targetHost : userCred.hostname,
+                                               targetPort : userCred.port,
+                                               targetUserName :userCred.username,
+                                               targetUserPassword :userCred.password,
+                                               tableName : userCred.tableNames,
+                                               columns: userCred.columnNames,
+                                               ignoreColumns:userCred.exColumns,
+                                               ignoreTables:exTables,
+                                               dataFilters:userCred.dataFilters,
+                                               filterType:userCred.filterType
+                                   });
+        console.log("Data To Submit == ", JSON.stringify(requestParams));
+         fetch('http://localhost:8090/dvt/validation/getLastRunDetails', requestParams)
+     .then((response) => {
+             if (response.ok) {
+               return response.json();
+             }
+           })
+           .then((response) => {
+             let obj = {};
+             obj.schemaName=response.schemaName;
+obj.runs=response.runs;
+           setRunTableData(response.runs)
+           setShowRunTable(true);
+           setIsLoading(false);
 
-/*async handleInput(event) {
+           })
+           .catch((error) => {
+           setErrorMessage("Unable to validate the data");
+           setIsLoading(false);
+            alert("Something went wrong, please try again");
+             console.log("Error ::", error);
+           });
+       }
+
+const object = {"runInfo":[{"totalRecords":0,"table":"ppt_100","missingRows":2,"mismatchRows":3,"lastRunDate":"2023-03-01 12:41:30.163"},{"totalRecords":0,"table":"ppt_100","missingRows":2,"mismatchRows":3,"lastRunDate":"2023-02-28 15:19:50.387"},{"totalRecords":0,"table":"ppt_20","missingRows":0,"mismatchRows":0,"lastRunDate":"2023-02-24 13:23:07.334"},{"totalRecords":0,"table":"ppt_2","missingRows":0,"mismatchRows":0,"lastRunDate":"2023-02-24 13:22:40.587"},{"totalRecords":0,"table":"ppt_19","missingRows":0,"mismatchRows":0,"lastRunDate":"2023-02-24 13:22:13.871"},{"totalRecords":0,"table":"ppt_18","missingRows":0,"mismatchRows":0,"lastRunDate":"2023-02-24 13:21:47.144"},{"totalRecords":0,"table":"ppt_17","missingRows":0,"mismatchRows":0,"lastRunDate":"2023-02-24 13:21:20.391"},{"totalRecords":0,"table":"ppt_16","missingRows":0,"mismatchRows":0,"lastRunDate":"2023-02-24 13:20:53.7"},{"totalRecords":0,"table":"ppt_15","missingRows":0,"mismatchRows":0,"lastRunDate":"2023-02-24 13:20:26.97"},{"totalRecords":0,"table":"ppt_14","missingRows":0,"mismatchRows":0,"lastRunDate":"2023-02-24 13:20:00.299"}]}
+console.log("runTableData",runTableData)
+//console.log("runTableData 1 ",runTableData.runs.map((item) => item.table))
+console.log(Array.isArray(runTableData))
+//
+// Instead, map over the items property rather than the parent object
+//const result =runTableData.runInfo.map((item) => item.table);
+
+//console.log(result); // ["item 1 data", "item 2 data"]
+/*async handleTableInput(event) {
     event.preventDefault();
     const {item} = this.state;
-
-    await fetch('http://localhost:8090/validation/compareData' + (item.id ? '/' + item.id : ''), {
+     fetch('http://localhost:8090/validation/getRunInfo'), {
         method: 'POST',
         headers: {
             'Accept': 'application/json',
@@ -164,16 +261,23 @@ export default function Validation() {
       defaultData.usessl = dummyInputData.ssl_mode;
       defaultData.username = dummyInputData.username;
       defaultData.password = dummyInputData.password;
+
       dispatch({
         type: "set_default",
         payload: defaultData,
       });
     };
+
+
     if (!loadDefaultData) {
       setLoadDefaultData(true);
-      //makeApiCall(); ///////////////////////////////////////// --->> Use this to load any default data
+     // getLastRunDetails(); ///////////////////////////////////////// --->> Use this to load any default data
+
     }
   }, [loadDefaultData]);
+
+
+
 
   useEffect(() => {
     if (isEntireFormValid) {
@@ -190,6 +294,8 @@ export default function Validation() {
         tableName: userCred.tableNames,
         dataFilters: userCred.dataFilters,
         filterType: userCred.filterType,
+        ignoreTables:exTables,
+        ignoreColumns:userCred.exColumns,
       };
 
       var fetchContent = {
@@ -256,10 +362,12 @@ export default function Validation() {
  const handleRecomm = () => {
         navigate("/dvt/selection");
     }
+      const [state] = useReducer(reducer);
+
   return (
     <div>
       <Grid item xs={12}>
-        <Typography variant="h5">Data Comparision Tool Connection Details</Typography>
+        <Typography variant="h5">Data Validation And Remediation Tool (DVART)- Validation</Typography>
       </Grid>
       <Box mx={{ xs: 1, md: 10 }} px={{ xs: 2 }} sx={{ border: 1, borderColor: "primary.main", borderRadius: 2 }}>
         <Grid container mb={2} spacing={2} columnSpacing={{ xs: 2 }} justifyContent="center" alignItems="center">
@@ -375,12 +483,12 @@ export default function Validation() {
               variant="outlined"
               value={userCred.tableNames}
               error={userCred.tableNames === '' && ifFormTouched === FormStatus.MODIFIED}
-              onChange={handleInput}
+              onChange={handleTableInput}
             />
           </Grid>
           <Grid item xs={12} md={1}>
                       <FormGroup>
-                        <FormControlLabel control={<Checkbox name="exTables" value={userCred.exTables} onChange={handleTabExcludeInput} />} label="Exclude" />
+                        <FormControlLabel control={<Checkbox name="exTables" value={exTables} onChange={handleTabExcludeInput} />} label="Exclude" />
                       </FormGroup>
                     </Grid>
           <Grid item xs={12} md={3}>
@@ -397,9 +505,10 @@ export default function Validation() {
             />
           </Grid>
 
+
           <Grid item xs={12} md={1}>
                       <FormGroup>
-                        <FormControlLabel control={<Checkbox name="exColumns" value={userCred.exColumns} onChange={handleColExcludeInput} />} label="Exclude" />
+                        <FormControlLabel control={<Checkbox name="exColumns" value={exColumns} onChange={handleColExcludeInput} />} label="Exclude" />
                       </FormGroup>
                     </Grid>
     <Grid item xs={4} md={4}>
@@ -436,8 +545,8 @@ export default function Validation() {
               <Button color="secondary" variant="contained" onClick={handleSubmit} disabled={isLoading}>
                 Compare
               </Button>
-              <Button color="success" variant="contained" onClick={handleReset}>
-                Reset
+              <Button color="success" variant="contained" onClick={getLastRunDetails}>
+                Last Run Info
               </Button>
               <Button color="primary" variant="contained" onClick={handleRecomm}>
                 Recommendation
@@ -451,7 +560,85 @@ export default function Validation() {
         <Grid item md={2}>{isLoading ? <LoadingSpinner /> : ""}</Grid>
         <Grid item md={4}></Grid>
         </Grid>
+          { showTable && (
+        <Grid item xs={12}>
+                <Typography variant="h5">Last run details</Typography>
+              </Grid> )}
+<Grid item xs={12} md={6}>
+ { showTable && (
+        <div>
+          <TableContainer component={Paper} align="center" className="dvttbl">
+            <Table sx={{ minWidth: 900, border: 1, borderColor: "primary.main", borderRadius: 2, width: 200 }} aria-label="simple table">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Sl No.</TableCell>
+                  <TableCell align="center">Table Name</TableCell>
+                   <TableCell align="center">Table Total Rows</TableCell>
+                  <TableCell align="center">Missing Rows</TableCell>
+                  <TableCell align="center">Mismatch Rows</TableCell>
 
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                  <TableRow key={tableData.slNo} sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
+                    <TableCell scope="row">{tableData.slNo}</TableCell>
+                    <TableCell className="tablename" align="center">{tableData.tableName}</TableCell>
+                    <TableCell align="center">{tableData.totalRows}</TableCell>
+                    <TableCell align="center">{tableData.missingRows}</TableCell>
+                    <TableCell align="center">{tableData.mismatchRows}</TableCell>
+
+                  </TableRow>
+
+              </TableBody>
+            </Table>
+            {" "} &nbsp;&nbsp;{" "}
+            {" "} &nbsp;&nbsp;{" "}
+          </TableContainer>
+        </div>
+  )}
+      </Grid>
+  { showRunTable && (
+        <Grid item xs={12}>
+                <Typography variant="h5">Last run details</Typography>
+              </Grid> )}
+<Grid item xs={12} md={6}>
+ { showRunTable && (
+ <div style={{ marginTop: 10, marginBottom: 10 }}>
+   <TableContainer component={Paper} align="center" className="dvttbl">
+              <Table sx={{ minWidth: 900, border: 1, borderColor: "primary.main", borderRadius: 2, width: 200 }} aria-label="simple table">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Sl No.</TableCell>
+                    <TableCell align="center">Table Name</TableCell>
+                     <TableCell align="center">Table Total Rows</TableCell>
+                    <TableCell align="center">Missing Rows</TableCell>
+                    <TableCell align="center">Mismatch Rows</TableCell>
+                     <TableCell align="center">Run Date</TableCell>
+
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                 {runTableData.map((element,index) => {
+                   return (
+                 <TableRow key={index+1} sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
+                                    <TableCell scope="row">{index+1}</TableCell>
+                                    <TableCell scope="row">{element.table}</TableCell>
+                                    <TableCell align="center">{element.totalRecords}</TableCell>
+                                    <TableCell align="center">{element.missingRows}</TableCell>
+                                     <TableCell align="center">{element.mismatchRows}</TableCell>
+                                    <TableCell align="center">{element.lastRunDate}</TableCell>
+                                  </TableRow>
+
+   );
+ })}
+          </TableBody>
+           </Table>
+           {" "} &nbsp;&nbsp;{" "}{" "} &nbsp;&nbsp;{" "}
+           </TableContainer>
+      </div>
+       )}
+      </Grid>
+ {" "} &nbsp;&nbsp;{" "}
       </Box>
     </div>
   );

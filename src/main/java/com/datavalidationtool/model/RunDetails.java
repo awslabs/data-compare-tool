@@ -24,6 +24,7 @@ public class RunDetails {
     private String executionDate;
     private String colNames;
     private Timestamp executionTime;
+    private boolean validationrequest;
 
     public RunDetails() {
     }
