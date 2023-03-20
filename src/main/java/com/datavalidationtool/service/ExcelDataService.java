@@ -217,11 +217,11 @@ public class ExcelDataService {
                             if (cellIndex == 0) {
                                 cellValue0 = cell.getStringCellValue();
                             }
-                            if (cellIndex == 1) {
+                           else if (cellIndex == 1) {
                                 //_remediate_missing_exceptions(‘ops$ora’,‘crtdms’,‘ppt_100’,‘ppt_100’,‘433;434;435’)
                                 if (cellValue.startsWith("MISSING")) {
                                     strInsertValue = strInsertValue + cellValue0;
-                                    if (index < lastRow) {
+                                    if (index < lastRow && (index>(firstRow + 2))) {
                                         strInsertValue = strInsertValue + ";";
                                     }
 
@@ -249,10 +249,10 @@ public class ExcelDataService {
                 }
                 i++;
             }
-            boolean latest = isTargetDataLatest(recDataExcel, details);
+           // boolean latest = isTargetDataLatest(recDataExcel, details);
             inputStream.close();
             recDataExcel.close();
-        } catch (IOException | SQLException e) {
+        } catch (IOException e) {
             throw e;
         }
 
@@ -523,7 +523,7 @@ public class ExcelDataService {
             //Target data
             if (valType != null && valType.startsWith("MISMATCH_")) {
 
-                if (sheetNum == 2) {
+                if (sheetNum == 1) {
                     excelDataRequest.getResultSet().next();
                 }
                 for (int i = 4; i < noOfColumns; i++) {
@@ -546,7 +546,7 @@ public class ExcelDataService {
                         cell.setCellValue((String) field);
                 }
                 //This is to avoid the two SRC and TRG mismatch records
-                if (sheetNum == 1) {
+                if (sheetNum == 2) {
                     excelDataRequest.getResultSet().next();
                 }
 

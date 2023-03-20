@@ -24,7 +24,6 @@ import { FormStatus } from "./static_data";
 import { Link } from "react-router-dom";
 import LoadingSpinner from "../LoadingSpinner";
 import "../styles.css";
-import Select from "react-select";
 
 const initialValue = {
   hostname: "ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com",
@@ -88,7 +87,12 @@ export default function Validation() {
   const [runTableData, setRunTableData] = useState([{}]);
   const [exTables, setExTables]= useState(false);
    const [exColumns, setExColumns]= useState(false);
+   const [tableName, setTableName]= useState("");
+   const [schemaName, setSchemaName]= useState("");
+    const [srcSchemaName, setSrcSchemaName]= useState("");
   const [data, setData] = useState([{}]);
+
+
   const handleInput = (event) => {
     dispatch({
       type: "update",
@@ -101,7 +105,12 @@ export default function Validation() {
     const handleColExcludeInput = (event) => {
        setExColumns(event.target.checked);
        }
-
+ const handleTableSelection = (event) => {
+   setTableName(event.value);
+  };
+ const handleSrcSchemaChange = (event) => {
+       setSrcSchemaName(event.value);
+       }
 
 function handleTableInput (event){
  setIsLoading(true);
@@ -114,9 +123,7 @@ userCred.tableNames=event.target.value;
                                                     sourceSchemaName : userCred.schemaNames.split(":")[0],
                                                     tableName : event.target.value,
                                         });
-
              console.log("Data To Submit == ", JSON.stringify(requestParams));
-
               fetch('http://localhost:8090/dvt/validation/getRunInfo', requestParams)
           .then((response) => {
                        if (response.ok) {
@@ -147,22 +154,8 @@ userCred.tableNames=event.target.value;
                                   console.log("Error ::", error);
                                 });
                             }
-      dispatch({
-        type: "update",
-        payload: { key: event.target.name, value: userCred.exColumns  },
-      });
-    };
-  const handleSubmit1 = () => {
-     fetch('http://localhost:8090/validation/compareData', {
-          method: 'POST', credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-        })
-          .then(res => res.json())
-          .then(response => {
-            window.location.href = `${response.logoutUrl}?id_token_hint=${response.idToken}`
-              + `&post_logout_redirect_uri=${window.location.origin}`;
-          });
-      }
+
+
     let databaseList=[];
     let clearable = true;
     const handleSchemaChange = (event) =>{
@@ -179,7 +172,7 @@ userCred.tableNames=event.target.value;
                 list[j].label=list[j].tableName;
                 list[j].value=list[j].tableName;
             }
-            console.log('tableList '+JSON.stringify(list[0]))
+            setSchemaName( event.value);
         }
 
 
@@ -194,11 +187,9 @@ userCred.tableNames=event.target.value;
 
     const [pageDetails,setPageDetails] = useState([]);
     const [dummy,setDummy] = useState([]);
-
     const fetchPageDetails = () =>{
         fetch('http://localhost:8090/dvt/validation/dbDetails').then((res =>res.json()))//.then((res => JSON.stringify(res)))
             .then((res) =>{
-
                 //setPageDetails(res.databaseList);
                 pageDetails.push(res.databaseList);
                 console.log('dbdetails '+JSON.stringify(pageDetails));
@@ -259,14 +250,14 @@ userCred.tableNames=event.target.value;
      let requestParams = { method: "POST", headers: "", body: "" };
         requestParams.headers = { "Content-Type": "application/json" };
         requestParams.body =   JSON.stringify({
-                                               targetSchemaName : userCred.schemaNames,
-                                               sourceSchemaName : userCred.schemaNames,
+                                               targetSchemaName : schemaName,
+                                               sourceSchemaName : srcSchemaName,
                                                targetDBName : userCred.dbname,
                                                targetHost : userCred.hostname,
                                                targetPort : userCred.port,
                                                targetUserName :userCred.username,
                                                targetUserPassword :userCred.password,
-                                               tableName : userCred.tableNames,
+                                               tableName : tableName,
                                                columns: userCred.columnNames,
                                                ignoreColumns:exColumns,
                                                dataFilters:userCred.dataFilters,
@@ -301,14 +292,14 @@ function getLastRunDetails () {
      let requestParams = { method: "POST", headers: "", body: "" };
         requestParams.headers = { "Content-Type": "application/json" };
         requestParams.body =   JSON.stringify({
-                                               targetSchemaName : userCred.schemaNames,
-                                               sourceSchemaName : userCred.schemaNames.split(":")[0],
+                                               targetSchemaName : schemaName,
+                                               sourceSchemaName : srcSchemaName,
                                                targetDBName : userCred.dbname,
                                                targetHost : userCred.hostname,
                                                targetPort : userCred.port,
                                                targetUserName :userCred.username,
                                                targetUserPassword :userCred.password,
-                                               tableName : userCred.tableNames,
+                                               tableName : tableName,
                                                columns: userCred.columnNames,
                                                ignoreColumns:userCred.exColumns,
                                                ignoreTables:exTables,
@@ -363,25 +354,7 @@ console.log(Array.isArray(runTableData))
     this.props.history.push('/dvt/selection');
 }*/
 
-  useEffect(() => {
-    const makeApiCall = async () => {
-      const defaultData = initialValue;
-      defaultData.hostname = dummyInputData.host_name;
-      defaultData.port = dummyInputData.port;
-      defaultData.dbname = dummyInputData.database_name;
-      defaultData.usessl = dummyInputData.ssl_mode;
-      defaultData.username = dummyInputData.username;
-      defaultData.password = dummyInputData.password;
-      dispatch({
-        type: "set_default",
-        payload: defaultData,
-      });
-    };
-    if (!loadDefaultData) {
-      setLoadDefaultData(true);
-      //makeApiCall(); ///////////////////////////////////////// --->> Use this to load any default data
-    }
-  }, [loadDefaultData]);
+
 
   useEffect(() => {
     if (isEntireFormValid) {
@@ -564,7 +537,7 @@ console.log(Array.isArray(runTableData))
           <Grid item xs={12}>
             <Typography> Table Details </Typography>
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} md={2}>
             {/*<TextField*/}
             {/*  fullWidth*/}
             {/*  multiline*/}
@@ -584,10 +557,39 @@ console.log(Array.isArray(runTableData))
                   placeholder="Schema Names.."
                   defaultValue={userCred.schemaNames[0]}
                   name="schemas"
+                  label="Target Schema"
+                  variant="outlined"
                   options={userCred.schemaNames}
                   onChange={handleSchemaChange}
               />
           </Grid>
+
+                    <Grid item xs={12} md={2}>
+                                       {/*<TextField*/}
+                                       {/*  fullWidth*/}
+                                       {/*  multiline*/}
+                                       {/*  maxRows={4}*/}
+                                       {/*  name="schemaNames"*/}
+                                       {/*  label="Schema Names"*/}
+                                       {/*  variant="outlined"*/}
+                                       {/*  value={userCred.schemaNames}*/}
+                                       {/*  error={userCred.schemaNames === '' && ifFormTouched === FormStatus.MODIFIED}*/}
+                                       {/*  onChange={handleInput}*/}
+                                       {/*/>*/}
+                                         <Select
+                                             isDisabled= {false}
+                                             isLoading= {false}
+                                             isClearable
+                                             isSearchable={false}
+                                             placeholder="Schema Names.."
+                                             defaultValue={userCred.schemaNames[0]}
+                                             name="srcSchemas"
+                                             label="Source Schema"
+                                             variant="outlined"
+                                             options={userCred.schemaNames}
+                                             onChange={handleSrcSchemaChange}
+                                         />
+                                     </Grid>
           <Grid item xs={12} md={3}>
             {/*<TextField*/}
             {/*  fullWidth*/}
@@ -606,11 +608,13 @@ console.log(Array.isArray(runTableData))
                   isClearable = {clearable}
                   isSearchable={false}
                   placeholder="Table Names.."
-                  defaultValue={userCred.schemaNames[0]}
+                  defaultValue={userCred.tableNames[0]}
                   //value={''}
                   name="tables"
+                  label="Table Name"
+                   variant="outlined"
                   options={userCred.tableNames}
-                  //onChange={handleSchemaChange}
+                  onChange={handleTableSelection}
               />
           </Grid>
           <Grid item xs={12} md={1}>
