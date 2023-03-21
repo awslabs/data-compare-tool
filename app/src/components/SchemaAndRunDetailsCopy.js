@@ -201,7 +201,7 @@ function handleChange(event) {
     setFile(event.target.files[0])
     }
 function redirectToValidation(event) {
-   navigate('dvt');
+   navigate('/dvt/compare');
     }
 function handleSubmit(event) {
          setIsLoading(true);
@@ -304,7 +304,7 @@ function handleSubmit(event) {
       })
       .catch((error) => {
                    console.log("Error ::", error);
-                   alert(error);
+
                  });
   };
   useEffect(() => {

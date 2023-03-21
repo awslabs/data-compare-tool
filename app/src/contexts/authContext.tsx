@@ -1,4 +1,4 @@
-import React, { useState, createContext,useEffect, useContext } from 'react'
+import React, { useState, useEffect, useContext } from 'react'
 
 import * as cognito from '../libs/cognito'
 
@@ -22,6 +22,10 @@ export interface IAuth {
   changePassword?: any
   getAttributes?: any
   setAttribute?: any
+  selection?:any
+  compare?:any
+  recommend?:any
+
 }
 
 const defaultState: IAuth = {
@@ -32,26 +36,23 @@ const defaultState: IAuth = {
 type Props = {
   children?: React.ReactNode
 }
-console.log("in authContext 35")
-export const AuthContext = createContext(defaultState)
-console.log("in authContext 35",AuthContext)
+
+export const AuthContext = React.createContext(defaultState)
 
 export const AuthIsSignedIn = ({ children }: Props) => {
-  console.log( "AuthIsSignedIn ",children )
+console.log("in 43",useContext(AuthContext))
   const { authStatus }: IAuth = useContext(AuthContext)
-
   return <>{authStatus === AuthStatus.SignedIn ? children : null}</>
 }
 
 export const AuthIsNotSignedIn = ({ children }: Props) => {
-  console.log( "AuthIsNotSignedIn",children )
+console.log("in 50",useContext(AuthContext))
   const { authStatus }: IAuth = useContext(AuthContext)
   return <>{authStatus === AuthStatus.SignedOut ? children : null}</>
 }
 
 const AuthProvider = ({ children }: Props) => {
-  console.log( "AuthProvider",children )
-
+  console.log( "children",children )
   const [authStatus, setAuthStatus] = useState(AuthStatus.Loading)
   const [sessionInfo, setSessionInfo] = useState({})
   const [attrInfo, setAttrInfo] = useState([])
@@ -66,7 +67,6 @@ const AuthProvider = ({ children }: Props) => {
         })
         window.localStorage.setItem('accessToken', `${session.accessToken.jwtToken}`)
         window.localStorage.setItem('refreshToken', `${session.refreshToken.token}`)
-        await setAttribute({ Name: 'website', Value: 'https:localhost:3000' })
         const attr: any = await getAttributes()
         setAttrInfo(attr)
         setAuthStatus(AuthStatus.SignedIn)
@@ -178,11 +178,8 @@ const AuthProvider = ({ children }: Props) => {
     getAttributes,
     setAttribute,
   }
-console.log("chld",{children})
-console.log("state",{state})
-
-
-return (<AuthContext.Provider value={state}>{children}</AuthContext.Provider>)
+console.log({state})
+  return <AuthContext.Provider value={state}>{children}</AuthContext.Provider>
 }
 
 export default AuthProvider
