@@ -261,7 +261,7 @@ userCred.tableNames=event.target.value;
                                                columns: userCred.columnNames,
                                                ignoreColumns:exColumns,
                                                dataFilters:userCred.dataFilters,
-                                               filterType:userCred.filterType,
+                                               uniqueCols:userCred.uniqueCols,
                                                ignoreTables:exTables,
 
                                    });
@@ -304,7 +304,7 @@ function getLastRunDetails () {
                                                ignoreColumns:userCred.exColumns,
                                                ignoreTables:exTables,
                                                dataFilters:userCred.dataFilters,
-                                               filterType:userCred.filterType
+                                               uniqueCols:userCred.uniqueCols
                                    });
         console.log("Data To Submit == ", JSON.stringify(requestParams));
          fetch('http://localhost:8090/dvt/validation/getLastRunDetails', requestParams)
@@ -370,7 +370,7 @@ console.log(Array.isArray(runTableData))
         targetUserPassword: userCred.password,
         tableName: userCred.tableNames,
         dataFilters: userCred.dataFilters,
-        filterType: userCred.filterType,
+        uniqueCols: userCred.uniqueCols,
         ignoreTables:exTables,
         ignoreColumns:userCred.exColumns,
       };
@@ -647,11 +647,11 @@ console.log(Array.isArray(runTableData))
                     fullWidth
                     multiline
                     maxRows={4}
-                    name="filterType"
-                    label="Filter Type"
+                    name="uniqueCols"
+                    label="Unique Columns"
                     variant="outlined"
-                    value={userCred.filterType}
-                    error={userCred.filterType === '' && ifFormTouched === FormStatus.MODIFIED}
+                    value={userCred.uniqueCols}
+                    error={userCred.uniqueCols === '' && ifFormTouched === FormStatus.MODIFIED}
                     onChange={handleInput}
                     />
                      </Grid>

@@ -311,12 +311,9 @@ public class ValidationService {
 					cst.setString(2, appProperties.getTargetSchemaName());
 					cst.setString(3, appProperties.getTableName().equals("")?tableName:appProperties.getTableName());
 					cst.setString(4, appProperties.getTableName().equals("")?tableName:appProperties.getTableName());
-					//cst.setString(5, appProperties.getColumns());
-					//cst.setString(6, appProperties.getFilter());
-					//cst.setString(7, appProperties.getFilter());
-					cst.setString(5, appProperties.getColumns()!=null?appProperties.getColumns():"");
+					cst.setString(5, appProperties.getUniqueCols()!=null?appProperties.getUniqueCols():"");
 					cst.setString(6, appProperties.getDataFilters()!=null?appProperties.getDataFilters():"");
-					cst.setString(7, appProperties.getFilterType()!=null?appProperties.getFilterType():"");
+					cst.setString(7, appProperties.getColumns()!=null?appProperties.getColumns():"");
 					cst.setBoolean(8, appProperties.isIgnoreColumns());
 					cst.setBoolean(9, appProperties.isCheckAdditionalRows());
 					//cst.registerOutParameter(1, Types.VARCHAR);
