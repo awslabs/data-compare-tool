@@ -37,7 +37,7 @@ function DVTTable(props) {
 
   //alert("DVTTable");
   function redirectToValidation(event) {
-    navigate('dvt');
+    navigate('/dvt/compare');
               }
     function redirectToRecommendation(event) {
    navigate('/dvt/selection');
