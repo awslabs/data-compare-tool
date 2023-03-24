@@ -298,7 +298,8 @@ public class ValidationService {
 				 start = System.currentTimeMillis();
 				long keySize = 0;
 				long valSize = 0;
-				String dbFunction = "{ call fn_post_mig_data_validation_dvt2(?,?,?,?,?,?,?,?) }";
+				//fn_post_mig_data_validation_dvt2_include_exclude('ops$ora','crtdms','grade','grade','id','','comments',true,false)
+				String dbFunction = "{ call fn_post_mig_data_validation_dvt2_include_exclude(?,?,?,?,?,?,?,?,?) }";
 				CallableStatement cst = null ;
 				try {
 					cst = con.prepareCall(dbFunction);
@@ -316,7 +317,8 @@ public class ValidationService {
 					cst.setString(5, appProperties.getColumns()!=null?appProperties.getColumns():"");
 					cst.setString(6, appProperties.getFilter()!=null?appProperties.getFilter():"");
 					cst.setString(7, appProperties.getFilterType()!=null?appProperties.getFilterType():"");
-					cst.setBoolean(8, appProperties.isCheckAdditionalRows());
+					cst.setBoolean(8, appProperties.getColumns()!=null?true:false);
+					cst.setBoolean(9, appProperties.isCheckAdditionalRows());
 					//cst.registerOutParameter(1, Types.VARCHAR);
 				}
 				rs= cst.executeQuery();
