@@ -46,10 +46,10 @@ const SignIn: React.FunctionComponent<{}> = () => {
 
   console.log("authContext 2",authContext)
       await signInWithEmail(username, password)
-      history('compare')
+      history('/dvt/compare')
     } catch (err: any) {
       if (err.code === 'UserNotConfirmedException') {
-        history('verify')
+        history('/dvt/verify')
       } else {
         setError(err.message)
       }

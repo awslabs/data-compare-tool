@@ -3,7 +3,7 @@ import { useState } from "react";
 import Button from "@mui/material/Button";
 import { Checkbox } from "@mui/material";
 import "./css/Recommendation.css";
-
+import Typography from "@mui/material/Typography";
 function RecommendationSummary(props) {
   console.log("Entered RecommendationSummary.jsx..");
 
@@ -29,10 +29,9 @@ function RecommendationSummary(props) {
   }
 
   return (
-    <div>
+    <div align="center" valign="center">
       <br />
-      <span>Summary of Changes For Table {props.tableName}</span>
-
+<Typography variant="h5" align="center" valign="center">Summary of Changes For Table {props.tableName}</Typography>
       <div style={{ marginTop: 10, marginBottom: 10 }}>
         <table border="1" align="center" id="customers" className="dvttbl">
           <thead>
@@ -63,7 +62,7 @@ function RecommendationSummary(props) {
         <Checkbox onClick={acknowledgeHandler}></Checkbox>
         <span>I acknowledge that these values will be saved in DataBase</span>
       </div>
-      <div>
+      <div align="center" valign="center">
         <Button variant="outlined" onClick={continueHandler}>
           Continue
         </Button>{" "}

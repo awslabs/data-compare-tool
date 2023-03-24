@@ -443,8 +443,9 @@ console.log(Array.isArray(runTableData))
 
   return (
     <div>
+
       <Grid item xs={12}>
-        <Typography variant="h5">Data Validation And Remediation Tool (DVART)- Validation</Typography>
+        <Typography variant="h5" align="center" valign="center" >Data Validation And Remediation Tool (DVART) </Typography>
       </Grid>
       <Box mx={{ xs: 1, md: 10 }} px={{ xs: 2 }} sx={{ border: 1, borderColor: "primary.main", borderRadius: 2 }}>
         <Grid container mb={2} spacing={2} columnSpacing={{ xs: 2 }} justifyContent="center" alignItems="center">

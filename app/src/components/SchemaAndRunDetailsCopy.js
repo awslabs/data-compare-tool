@@ -480,7 +480,7 @@ function handleSubmit(event) {
   return (
      <div>
        <Grid item xs={12}>
-         <Typography variant="h5">Recommendation Details</Typography>
+         <Typography variant="h5" align="center" valign="center">Recommendation Details</Typography>
        </Grid>
     <Box mt={2} mx={10}>
       <Grid container spacing={2} columnSpacing={{ xs: 2 }}>

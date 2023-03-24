@@ -4,7 +4,7 @@ import DVTTable from "./table/DVTTable";
 import { useSearchParams } from "react-router-dom";
 import RecommendationSummary from "./RecommendationSummary";
 import loadingimage from "./images/loadingimage.gif";
-
+import Typography from "@mui/material/Typography";
 import "./css/Recommendation.css";
 
 function Recommendation() {
@@ -200,7 +200,8 @@ function fetchRecData(tableName,schemaName, runId, pageNumber)
 
       {data !== null && summaryData.length === 0 ? (
         <div>
-          <header>Table : {searchParams.get("table")}</header>
+          <header> <Typography variant="h5" align="center" valign="center">Summary of changes for Table {data.table}</Typography>
+</header>
           <DVTTable
             data={data}
             setDataHandler={setDataHandler}

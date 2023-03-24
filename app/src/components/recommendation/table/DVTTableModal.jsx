@@ -157,7 +157,7 @@ function DVTTableModal(props) {
         <Box sx={style}>
           <span>
             {
-              <Button onClick={copyAllFrmSrcToTarget}>SrcToTarget</Button>
+              <Button onClick={copyAllFrmSrcToTarget}>Src To Target</Button>
             }
           </span>
 
@@ -198,7 +198,7 @@ function DVTTableModal(props) {
               </TableContainer>
             )}
           </div>
-          <div style={{ "padding-top": 8 }}>
+          <div style={{ "padding-top": 8 }} align="center" valign="center">
             <Button variant="outlined" onClick={handleClose}>
               close
             </Button>{" "}
