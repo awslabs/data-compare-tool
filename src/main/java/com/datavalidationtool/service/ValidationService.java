@@ -43,24 +43,27 @@ public class ValidationService {
 	public String validateData(ValidationRequest validationRequest) {
 		String runId="";
 		try {
+			String[] schemaParts=null;
             boolean isSchemaLevel=false;
-			String[] schemaParts = validationRequest.getSourceSchemaName().split(",");
-			for (String schemaName : schemaParts) {
-				String[] schemas = schemaName.split(":");
-				if (schemas.length > 0)
-					validationRequest.setSourceSchemaName(schemas[0]);
-				if (schemas.length > 1)
-					validationRequest.setTargetSchemaName(schemas[1].toLowerCase());
+			if(validationRequest.getSourceSchemaName()!=null) {
+				schemaParts = validationRequest.getSourceSchemaName().split(",");
+				for (String schemaName : schemaParts) {
+					String[] schemas = schemaName.split(":");
+					if (schemas.length > 0)
+						validationRequest.setSourceSchemaName(schemas[0]);
+					if (schemas.length > 1)
+						validationRequest.setTargetSchemaName(schemas[1].toLowerCase());
+				}
 			}
-
   		//	if(dataSource.isPoolInitialized()) {
 	  			long rowNo = 1;
   				Date date = new Date();
   				//DateUtil dateUtil = new DateUtil();
 				if (validationRequest.getTableName() != null && !validationRequest.getTableName().isEmpty()
 						&& !validationRequest.isIgnoreTables()) {
-					getCurrentSchemaRunInfo(validationRequest);
-  					String[] tableNameParts = validationRequest.getTableName().split(",");
+					//getCurrentSchemaRunInfo(validationRequest);
+					validationRequest.setSchemaRunNumber(0);
+					String[] tableNameParts = validationRequest.getTableName().split(",");
   					for (String tableName : tableNameParts) {
 						validationRequest.setTableName(tableName);
 						runId=validate(validationRequest,tableName, null);

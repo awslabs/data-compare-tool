@@ -4,6 +4,8 @@ import Button from "@mui/material/Button";
 import { Checkbox } from "@mui/material";
 import "./css/Recommendation.css";
 import Typography from "@mui/material/Typography";
+import logo from '../dart-logo.jpg'
+import Grid from "@mui/material/Grid";
 function RecommendationSummary(props) {
   console.log("Entered RecommendationSummary.jsx..");
 
@@ -31,7 +33,11 @@ function RecommendationSummary(props) {
   return (
     <div align="center" valign="center">
       <br />
-<Typography variant="h5" align="center" valign="center">Summary of Changes For Table {props.tableName}</Typography>
+    <Grid container mb={2} spacing={1} columnSpacing={{ xs: 2 }} justifyContent="center" alignItems="center">
+            <Grid item xs={12} sm={6} md={2}><img src={logo}  alt="Logo"  align="right" valign="bottom"/></Grid><Grid item xs={12} sm={6} md={10}>
+              <Typography variant="h4" align="left" valign="bottom" >Summary of Table Changes  </Typography>
+            </Grid></Grid>
+
       <div style={{ marginTop: 10, marginBottom: 10 }}>
         <table border="1" align="center" id="customers" className="dvttbl">
           <thead>

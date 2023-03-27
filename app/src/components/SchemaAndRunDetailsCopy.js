@@ -18,6 +18,7 @@ import Stack from "@mui/material/Stack";
 import { Link } from "react-router-dom";
 import LoadingSpinner from "./LoadingSpinner";
 import "./styles.css";
+import logo from './dart-logo.jpg'
 const CLEAR = "clear";
 
 const POPULATE_DATABASE = "populateDatabase";
@@ -142,7 +143,7 @@ function reducer(state, action) {
     case POPULATE_SCHEMA_RUN:
       return {
         ...state,
-        disableSchemaRun: false,
+        disableSchemaRun: true,
         loadingSchemaRun: false,
 
         schemaRunsToBeLoaded: data1.hostDetailsList
@@ -203,6 +204,36 @@ function handleChange(event) {
 function redirectToValidation(event) {
    navigate('/dvt/compare');
     }
+    function handleDataSync (event) {
+        //event.preventDefault();
+        setIsLoading(true);
+         let requestParams = { method: "POST", headers: "", body: "" };
+            requestParams.headers = { "Content-Type": "application/json" };
+            requestParams.body =   JSON.stringify({
+                                                   tableName : event.target.value,
+
+                                       });
+            console.log("Data To Submit == ", JSON.stringify(requestParams));
+             fetch('http://localhost:8090/dvt/validation/compareData', requestParams)
+
+         .then((response) => {
+                 if (response.ok) {
+                   return response.text();
+                 }
+               })
+               .then((resultData) => {
+               setIsLoading(false);
+                 let msg = (resultData !== null || resultData!=='')? resultData : "Something went wrong, please try again";
+                 alert(msg);
+                // navigate("/dvt/selection");
+               })
+               .catch((error) => {
+               //setErrorMessage("Unable to validate the data");
+               setIsLoading(false);
+                alert("Something went wrong, please try again");
+                 console.log("Error ::", error);
+               });
+           }
 function handleSubmit(event) {
          setIsLoading(true);
          event.preventDefault()
@@ -385,10 +416,11 @@ function handleSubmit(event) {
     setTableData(tempArr);
   };
 
-  const handleOnTableClick = (event) => {
+  const handleOnTableClickOld = (event) => {
     tableNameSelected = event.value;
     dispatch({ type: POPULATE_TABLE_RUN, tableName: event.value });
   };
+
 
   const handleOnTableRunClick = (event) => {
     tableRunSelected = event.value;
@@ -402,6 +434,59 @@ function handleSubmit(event) {
           .schemaList.find(() => schemaNameSelected)
           .tableList.find(obj => { return obj.tableName === tableNameSelected;
                                                               }) .tableRun.length;
+      i < len;
+      i++
+    ) {
+      let obj = {};
+      obj.slNo = slnumber;
+        setTableData(tempArr);
+
+      obj.tableName = data1.hostDetailsList
+        .find(() => hostNameSelected)
+        .databaseList.find(() => dbNameSelected)
+        .schemaList.find(() => schemaNameSelected)
+        .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableName;
+      obj.tableRun = data1.hostDetailsList
+        .find(() => hostNameSelected)
+        .databaseList.find(() => dbNameSelected)
+        .schemaList.find(() => schemaNameSelected)
+        .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].run;
+      obj.runDate = data1.hostDetailsList
+        .find(() => hostNameSelected)
+        .databaseList.find(() => dbNameSelected)
+        .schemaList.find(() => schemaNameSelected)
+        .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].executionDate;
+      obj.runId = data1.hostDetailsList
+             .find(() => hostNameSelected)
+             .databaseList.find(() => dbNameSelected)
+             .schemaList.find(() => schemaNameSelected)
+             .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].runId;
+      obj.schemaName = data1.hostDetailsList
+             .find(() => hostNameSelected)
+             .databaseList.find(() => dbNameSelected)
+             .schemaList.find(() => schemaNameSelected)
+             .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].schemaName;
+              console.log("random", obj.tableRun);
+
+      if(obj.tableRun==tableRunSelected){
+       tempArr.push(obj);
+        slnumber++;
+       }
+    }
+    setTableData(tempArr);
+  };
+ const handleOnTableClick = (event) => {
+    tableNameSelected = event.value;
+    dispatch({ type: POPULATE_TABLE_RUN, tableName: event.value });
+    let tempArr = [];
+    let slnumber = 1;
+    for (
+      let i = 0,
+        len = data1.hostDetailsList
+          .find(() => hostNameSelected)
+          .databaseList.find(() => dbNameSelected)
+          .schemaList.find(() => schemaNameSelected)
+          .tableList.find((table) => table.value === tableNameSelected).tableRun.length;
       i < len;
       i++
     ) {
@@ -436,11 +521,10 @@ function handleSubmit(event) {
              .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].schemaName;
               console.log("random", obj);
 
-      tempArr.push(obj);
+       tempArr.push(obj);
     }
     setTableData(tempArr);
   };
-
   // @ts-ignore
   let navigate = useNavigate();
   const redirectToRecommendation =  (event) => {
@@ -479,10 +563,18 @@ function handleSubmit(event) {
 
   return (
      <div>
-       <Grid item xs={12}>
-         <Typography variant="h5" align="center" valign="center">Recommendation Details</Typography>
-       </Grid>
-    <Box mt={2} mx={10}>
+
+
+         <Grid container mb={2} spacing={1} columnSpacing={{ xs: 2 }} justifyContent="center" alignItems="center">
+              <Grid item xs={12} sm={6} md={2}><img src={logo}  alt="Logo"  align="right" valign="bottom"/></Grid><Grid item xs={12} sm={6} md={10}>
+                <Typography variant="h4" align="left" valign="bottom" >Recommendation Details </Typography>
+              </Grid></Grid>
+
+
+    <Box mx={{ xs: 1, md: 10 }} px={{ xs: 2 }} sx={{ border: 1, borderColor: "primary.main", borderRadius: 2 }}>
+       <Grid container mb={2} spacing={2} columnSpacing={{ xs: 2 }} justifyContent="center" alignItems="center"></Grid>
+               {" "} &nbsp;&nbsp;{" "}{" "} &nbsp;&nbsp;{" "}
+
       <Grid container spacing={2} columnSpacing={{ xs: 2 }}>
         <Grid item xs={6}>
           <Select
@@ -511,7 +603,7 @@ function handleSubmit(event) {
           </Grid>
         )}
         {!state.disableSchemaName && (
-          <Grid item xs={3}>
+          <Grid item xs={5}>
             <Select
               isDisabled={state.disableSchemaName}
               isLoading={state.loadingSchemaRun}
@@ -539,7 +631,7 @@ function handleSubmit(event) {
           </Grid>
         )}
         {!state.disableTableName && (
-          <Grid item xs={3}>
+          <Grid item xs={5}>
             <Select
               isDisabled={state.disableTableName}
               isLoading={state.loadingTableRun}
@@ -553,7 +645,7 @@ function handleSubmit(event) {
           </Grid>
         )}
         {!state.disableTableRun && (
-          <Grid item xs={3}>
+          <Grid item xs={2}>
             <Select
               isDisabled={state.disableTableRun}
               isLoading={false}
@@ -568,10 +660,10 @@ function handleSubmit(event) {
         )}
       </Grid>
       <br />
-      <br />
       {state.showTable && (
         <div>
           <TableContainer component={Paper} align="center" className="dvttbl">
+                   {" "} &nbsp;&nbsp;{" "}{" "} &nbsp;&nbsp;{" "}
             <Table sx={{ minWidth: 900, border: 1, borderColor: "primary.main", borderRadius: 2, width: 100 }} aria-label="simple table">
               <TableHead>
                 <TableRow>
@@ -591,7 +683,7 @@ function handleSubmit(event) {
                     <TableCell align="left">{row.runDate}</TableCell>
                     <TableCell align="center">
                       <Box>
-                        <Button variant="outlined" color="secondary"  onClick={redirectToValidation}>
+                        <Button variant="outlined" color="secondary"  value={row.tableName} onClick={redirectToValidation}>
                           Sync
                         </Button>{" "}
                         &nbsp;&nbsp;{" "}
@@ -612,7 +704,11 @@ function handleSubmit(event) {
                 ))}
               </TableBody>
             </Table>
+                     {" "} &nbsp;&nbsp;{" "}{" "} &nbsp;&nbsp;{" "}
+
           </TableContainer>
+                   {" "} &nbsp;&nbsp;{" "}{" "} &nbsp;&nbsp;{" "}
+
         </div>
       )}
  <Grid item xs={3}>
@@ -629,10 +725,13 @@ function handleSubmit(event) {
                         <Button vcolor="primary" variant="contained" onClick={handleSubmit} disabled={isLoading}>Upload</Button>
                         </Box>
                       </Stack>
+                       {" "} &nbsp;&nbsp;{" "}{" "} &nbsp;&nbsp;{" "}
            </Grid>
+            {" "} &nbsp;&nbsp;{" "}{" "} &nbsp;&nbsp;{" "}
                <Grid item xs={3} align="center" valign="top">    {isLoading ? <LoadingSpinner /> : ""}</Grid>
-
+  <Grid container mb={2} spacing={2} columnSpacing={{ xs: 2 }} justifyContent="center" alignItems="center"></Grid>
     </Box>
+    {" "} &nbsp;&nbsp;{" "}
       </div>
   );
 }

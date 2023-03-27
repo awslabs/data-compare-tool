@@ -5,8 +5,9 @@ import { useSearchParams } from "react-router-dom";
 import RecommendationSummary from "./RecommendationSummary";
 import loadingimage from "./images/loadingimage.gif";
 import Typography from "@mui/material/Typography";
+import logo from '../dart-logo.jpg'
 import "./css/Recommendation.css";
-
+import Grid from "@mui/material/Grid";
 function Recommendation() {
   console.log("Entered Recommendation.jsx..");
   const [searchParams, setSearchParams] = useSearchParams();
@@ -182,7 +183,7 @@ function fetchRecData(tableName,schemaName, runId, pageNumber)
   return (
     <div>
       <div>
-        {successMessage !== null ? <div className="success-msg">{successMessage}</div> : null}
+
         {errorMessage !== null ? <div className="error-msg">{errorMessage}</div> : null}
 
         {data === null ? <img style={{ height: 40, width: 40 }} src={loadingimage}></img> : null}
@@ -200,8 +201,10 @@ function fetchRecData(tableName,schemaName, runId, pageNumber)
 
       {data !== null && summaryData.length === 0 ? (
         <div>
-          <header> <Typography variant="h5" align="center" valign="center">Summary of changes for Table {data.table}</Typography>
-</header>
+          <header>  <Grid container mb={2} spacing={1} columnSpacing={{ xs: 2 }} justifyContent="center" alignItems="center">
+                         <Grid item xs={12} sm={6} md={2}><img src={logo}  alt="Logo"  align="right" valign="bottom"/></Grid><Grid item xs={12} sm={6} md={10}>
+                           <Typography variant="h4" align="left" valign="bottom" >Summary of table changes </Typography>
+                         </Grid></Grid></header>
           <DVTTable
             data={data}
             setDataHandler={setDataHandler}
