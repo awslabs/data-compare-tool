@@ -34,19 +34,18 @@ const SignIn: React.FunctionComponent<{}> = () => {
   const [error, setError] = useState('')
 
   const isValid = !usernameIsValid || username.length === 0 || !passwordIsValid || password.length === 0
-
   const history = useNavigate()
- console.log("authContext 0",AuthContext)
   const authContext1 = React.useContext(AuthContext)
- console.log("authContext 1",authContext1)
  let authContext = React.useContext(AuthContext)
- console.log("authContext 2",authContext1)
+
+
   const signInClicked = async () => {
     try {
 
   console.log("authContext 2",authContext)
-      await signInWithEmail(username, password)
-      history('/dvt/compare')
+
+  await signInWithEmail(username, password)
+
     } catch (err: any) {
       if (err.code === 'UserNotConfirmedException') {
         history('/dvt/verify')
@@ -57,8 +56,12 @@ const SignIn: React.FunctionComponent<{}> = () => {
   }
  async function signInWithEmail(username: string, password: string) {
     try {
-      await cognito.signInWithEmail(username, password)
+    const response =  await cognito.signInWithEmail(username, password)
+    console.log("response",response)
+    if (response!=null) {
       setAuthStatus(AuthStatus.SignedIn)
+       history('/dvt/compare')
+      }
     } catch (err) {
       setAuthStatus(AuthStatus.SignedOut)
       throw err
