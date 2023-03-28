@@ -25,6 +25,9 @@ export default props => {
               <a className="menu-item" href="/dvt/signup">
                           Register User
                         </a>
+         <a className="menu-item" href="/dvt/changepassword">
+                    Change Password
+                  </a>
       <a className="menu-item" href="/dvt/compare">
         Validation
       </a>
