@@ -54,7 +54,7 @@ export default function RequestCode() {
         <Typography className={classes.text} variant="h5">{`Reset Code Sent to ${username}`}</Typography>
       </Box>
       <Box mt={4}>
-        <Button onClick={() => history('forgotpassword')} color="primary" variant="contained">
+        <Button onClick={() => history('/dvt/forgotpassword')} color="primary" variant="contained">
           Reset Password
         </Button>
       </Box>

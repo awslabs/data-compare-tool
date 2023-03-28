@@ -112,6 +112,9 @@ export default function Validation() {
        setSrcSchemaName(event.value);
        }
 
+function redirectToHome (event){
+navigate("/dvt/menu")
+}
 function handleTableInput (event){
 setTableName(event.value);
  setIsLoading(true);
@@ -685,6 +688,9 @@ console.log(Array.isArray(runTableData))
               <Button color="primary" variant="contained" onClick={handleRecomm}>
                 Recommendation
               </Button>
+              <Button color="success" variant="contained" onClick={redirectToHome}>
+                              Home
+                            </Button>
             </Stack>
 
           </Grid>

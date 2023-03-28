@@ -39,14 +39,14 @@ const VerifyCode: React.FunctionComponent<{}> = () => {
   const sendClicked = async () => {
     try {
       await authContext.verifyCode(username, code)
-      history('signin')
+      history('/dvt/signin')
     } catch (err) {
       setError('Invalid Code')
     }
   }
 
   const passwordResetClicked = async () => {
-    history('resetpassword')
+    history('/dvt/resetpassword')
   }
 
   return (
@@ -56,7 +56,7 @@ const VerifyCode: React.FunctionComponent<{}> = () => {
           <Grid container direction="column" justify="center" alignItems="center">
             {/* Title */}
             <Box m={2}>
-              <Typography variant="h3">Send Code</Typography>
+              <Typography variant="h4">Send Code</Typography>
             </Box>
 
             {/* Sign In Form */}

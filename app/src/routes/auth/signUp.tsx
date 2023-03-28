@@ -13,7 +13,8 @@ import { useValidEmail, useValidPassword, useValidUsername } from '../../hooks/u
 import { Email, Password, Username } from '../../components/authComponents'
 
 import { AuthContext } from '../../contexts/authContext'
-
+import logo from '../../components/dart-logo.jpg'
+import "../../components/styles.css";
 const useStyles = makeStyles({
   root: {
     height: '100vh',
@@ -110,7 +111,7 @@ const SignUp: React.FunctionComponent<{}> = () => {
       <Typography variant="h6">{`Verfiy Code sent to ${email}`}</Typography>
 
       <Box m={4}>
-        <Button onClick={() => history('/verify')} color="primary" variant="contained">
+        <Button onClick={() => history('/dvt/verify')} color="primary" variant="contained">
           Send Code
         </Button>
       </Box>
@@ -124,11 +125,11 @@ const SignUp: React.FunctionComponent<{}> = () => {
           <Grid container direction="column" justify="center" alignItems="center">
             {/* Title */}
             <Box m={3}>
-              <Grid container direction="row" justify="center" alignItems="center">
-                <Typography variant="h3">Sign Up</Typography>
+              <Grid container direction="row" justify="flex-end" alignItems="flex-end">
+                  <Grid xs={6} sm={6} md={6} container direction="column" justify="center" alignItems="flex-start" item><img src={logo}  alt="Logo" /></Grid>
+               <Grid xs={6} sm={6} md={6} container direction="column" justify="center" alignItems="flex-end" item> <Typography variant="h4"  >   Sign Up </Typography></Grid>
               </Grid>
             </Box>
-
             {!created ? signUp : accountCreated}
           </Grid>
         </Paper>
