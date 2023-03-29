@@ -13,6 +13,9 @@ import { useValidPassword, useValidUsername } from '../../hooks/useAuthHooks'
 import { Password, Username } from '../../components/authComponents'
 import * as cognito from '../../libs/cognito'
 import { AuthContext } from '../../contexts/authContext'
+import logo from '../../components/dart-logo.jpg'
+import "../../components/styles.css";
+
 const useStyles = makeStyles({
   root: {
     height: '100vh',
@@ -34,22 +37,18 @@ const SignIn: React.FunctionComponent<{}> = () => {
   const [error, setError] = useState('')
 
   const isValid = !usernameIsValid || username.length === 0 || !passwordIsValid || password.length === 0
-
   const history = useNavigate()
- console.log("authContext 0",AuthContext)
-  const authContext1 = React.useContext(AuthContext)
- console.log("authContext 1",authContext1)
  let authContext = React.useContext(AuthContext)
- console.log("authContext 2",authContext1)
   const signInClicked = async () => {
     try {
 
   console.log("authContext 2",authContext)
-      await signInWithEmail(username, password)
-      history('compare')
+
+  await signInWithEmail(username, password)
+
     } catch (err: any) {
       if (err.code === 'UserNotConfirmedException') {
-        history('verify')
+        history('/dvt/verify')
       } else {
         setError(err.message)
       }
@@ -57,8 +56,13 @@ const SignIn: React.FunctionComponent<{}> = () => {
   }
  async function signInWithEmail(username: string, password: string) {
     try {
-      await cognito.signInWithEmail(username, password)
+    const response =  await cognito.signInWithEmail(username, password)
+    console.log("response",response)
+    if (response!=null) {
       setAuthStatus(AuthStatus.SignedIn)
+       history('/dvt/compare')
+       window.location.reload()
+      }
     } catch (err) {
       setAuthStatus(AuthStatus.SignedOut)
       throw err
@@ -75,7 +79,7 @@ const SignIn: React.FunctionComponent<{}> = () => {
           <Grid container direction="column" justify="center" alignItems="center">
             {/* Title */}
             <Box m={2}>
-              <Typography variant="h3">Sign in</Typography>
+              <Typography variant="h4">Sign in</Typography>
             </Box>
 
             {/* Sign In Form */}

@@ -6,7 +6,8 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
-
+import Typography from "@mui/material/Typography";
+import logo from '../../dart-logo.jpg'
 import Checkbox from "@mui/material/Checkbox";
 import { useEffect, useState } from "react";
 
@@ -36,7 +37,7 @@ function DVTTable(props) {
 
   //alert("DVTTable");
   function redirectToValidation(event) {
-    navigate('dvt');
+    navigate('/dvt/compare');
               }
     function redirectToRecommendation(event) {
    navigate('/dvt/selection');
@@ -194,14 +195,16 @@ function DVTTable(props) {
 
   return (
     <div>
+
       <TableContainer component={Paper}>
         <Table
           sx={{ minWidth: 650 }}
           aria-label="simple table"
           className="dvttblh2"
           style={{ width: "95%", margin: 10 }}
+          align="center"
         >
-          <DVTTableHeader
+         <DVTTableHeader
             cols={cols}
             columnsDsiplayLimit={props.columnsDsiplayLimit}
             selectAllCheckboxHandler={selectAllCheckboxHandler}
@@ -217,17 +220,17 @@ function DVTTable(props) {
           ></DVTTableBody>
         </Table>
       </TableContainer>
-      <div style={{ marginTop: 20, marginBottom: 10 }}>
-        <Button variant="contained" onClick={saveHandler}>
+      <div style={{ marginTop: 20, marginBottom: 10 }} align="center" valign="center">
+        <Button variant="contained" align="center" valign="center" onClick={saveHandler}>
           Save
         </Button> &nbsp;&nbsp;{" "}
-         <Button color="primary" variant="contained" onClick={redirectToValidation}>
+         <Button color="primary" align="center" valign="center" variant="contained" onClick={redirectToValidation}>
             Compare
           </Button> &nbsp;&nbsp;{" "}
-         <Button color="secondary" variant="contained" onClick={redirectToRecommendation}>
+         <Button color="secondary" align="center" valign="center"variant="contained" onClick={redirectToRecommendation}>
              Recommendation
            </Button> &nbsp;&nbsp;{" "}
-      </div>
+      </div><div style={{ marginTop: 20, marginBottom: 10 }} align="center" valign="center">
       <DVTTablePaginator
         dataFetchHandler={fetchDataHandler}
         isUnsavedDataExist={isUnsavedDataExist}
@@ -246,7 +249,7 @@ function DVTTable(props) {
           onApply={applyDetailsModalHandler}
           setData={setmodalDetailsData}
         />
-      )}
+      )}</div>
     </div>
   );
 }

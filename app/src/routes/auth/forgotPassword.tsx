@@ -105,7 +105,7 @@ export default function ForgotPassword() {
       <Typography variant="h5">{`Password Reset`}</Typography>
 
       <Box m={4}>
-        <Button onClick={() => history('/signin')} color="primary" variant="contained">
+        <Button onClick={() => history('/dvt/signin')} color="primary" variant="contained">
           Sign In
         </Button>
       </Box>
@@ -120,7 +120,7 @@ export default function ForgotPassword() {
             {/* Title */}
             <Box m={3}>
               <Grid container direction="row" justify="center" alignItems="center">
-                <Typography variant="h3">Forgot Password</Typography>
+                <Typography variant="h4">Forgot Password</Typography>
               </Grid>
             </Box>
 

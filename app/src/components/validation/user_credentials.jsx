@@ -24,7 +24,7 @@ import { FormStatus } from "./static_data";
 import { Link } from "react-router-dom";
 import LoadingSpinner from "../LoadingSpinner";
 import "../styles.css";
-
+import logo from '../dart-logo.jpg'
 const initialValue = {
   hostname: "ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com",
   port: "5432",
@@ -113,16 +113,19 @@ export default function Validation() {
        setSrcSchemaName(event.value);
        }
 
+function redirectToHome (event){
+navigate("/dvt/menu")
+}
 function handleTableInput (event){
+setTableName(event.value);
  setIsLoading(true);
   setShowRunTable(false);
   setShowTable(false);
-userCred.tableNames=event.target.value;
      let requestParams = { method: "POST", headers: "", body: "" };
              requestParams.headers = { "Content-Type": "application/json" };
              requestParams.body =   JSON.stringify({
-                                                    sourceSchemaName : userCred.schemaNames.split(":")[0],
-                                                    tableName : event.target.value,
+                                                    sourceSchemaName : srcSchemaName,
+                                                    tableName : event.value,
                                         });
              console.log("Data To Submit == ", JSON.stringify(requestParams));
               fetch('http://localhost:8090/dvt/validation/getRunInfo', requestParams)
@@ -139,7 +142,7 @@ userCred.tableNames=event.target.value;
                                           obj.slNo = slnumber;
                                           slnumber++;
                                           console.log("slno", slnumber);
-                                          obj.tableName = userCred.tableNames;
+                                          obj.tableName = event.value;;
                                           obj.mismatchRows = resultData.mismatchRows;
                                           obj.missingRows = resultData.missingRows;
                                           obj.totalRows = resultData.totalRecords;
@@ -262,7 +265,7 @@ userCred.tableNames=event.target.value;
                                                columns: userCred.columnNames,
                                                ignoreColumns:exColumns,
                                                dataFilters:userCred.dataFilters,
-                                               filterType:userCred.filterType,
+                                               uniqueCols:userCred.uniqueCols,
                                                ignoreTables:exTables,
 
                                    });
@@ -289,6 +292,7 @@ userCred.tableNames=event.target.value;
        }
 function getLastRunDetails () {
     //event.preventDefault();
+     setShowTable(false);
     setIsLoading(true);
      let requestParams = { method: "POST", headers: "", body: "" };
         requestParams.headers = { "Content-Type": "application/json" };
@@ -305,7 +309,7 @@ function getLastRunDetails () {
                                                ignoreColumns:userCred.exColumns,
                                                ignoreTables:exTables,
                                                dataFilters:userCred.dataFilters,
-                                               filterType:userCred.filterType
+                                               uniqueCols:userCred.uniqueCols
                                    });
         console.log("Data To Submit == ", JSON.stringify(requestParams));
          fetch('http://localhost:8090/dvt/validation/getLastRunDetails', requestParams)
@@ -320,6 +324,7 @@ function getLastRunDetails () {
 obj.runs=response.runs;
            setRunTableData(response.runs)
            setShowRunTable(true);
+
            setIsLoading(false);
 
            })
@@ -371,7 +376,7 @@ console.log(Array.isArray(runTableData))
         targetUserPassword: userCred.password,
         tableName: userCred.tableNames,
         dataFilters: userCred.dataFilters,
-        filterType: userCred.filterType,
+        uniqueCols: userCred.uniqueCols,
         ignoreTables:exTables,
         ignoreColumns:userCred.exColumns,
       };
@@ -444,9 +449,11 @@ console.log(Array.isArray(runTableData))
 
   return (
     <div>
-      <Grid item xs={12}>
-        <Typography variant="h5">Data Validation And Remediation Tool (DVART)- Validation</Typography>
-      </Grid>
+ <Grid container mb={2} spacing={1} columnSpacing={{ xs: 2 }} justifyContent="center" alignItems="center">
+      <Grid item xs={12} sm={6} md={2}><img src={logo}  alt="Logo"  align="right" valign="bottom"/></Grid><Grid item xs={12} sm={6} md={10}>
+        <Typography variant="h4" align="left" valign="bottom" >Data Validation And Remediation Tool (DVART) </Typography>
+      </Grid></Grid>
+
       <Box mx={{ xs: 1, md: 10 }} px={{ xs: 2 }} sx={{ border: 1, borderColor: "primary.main", borderRadius: 2 }}>
         <Grid container mb={2} spacing={2} columnSpacing={{ xs: 2 }} justifyContent="center" alignItems="center">
           <Grid item xs={12}>
@@ -591,7 +598,7 @@ console.log(Array.isArray(runTableData))
                   label="Table Name"
                    variant="outlined"
                   options={userCred.tableNames}
-                  onChange={handleTableSelection}
+                  onChange={handleTableInput}
               />
           </Grid>
           <Grid item xs={12} md={1}>
@@ -623,11 +630,11 @@ console.log(Array.isArray(runTableData))
                     fullWidth
                     multiline
                     maxRows={4}
-                    name="filterType"
-                    label="Filter Type"
+                    name="uniqueCols"
+                    label="Unique Columns"
                     variant="outlined"
-                    value={userCred.filterType}
-                    error={userCred.filterType === '' && ifFormTouched === FormStatus.MODIFIED}
+                    value={userCred.uniqueCols}
+                    error={userCred.uniqueCols === '' && ifFormTouched === FormStatus.MODIFIED}
                     onChange={handleInput}
                     />
                      </Grid>
@@ -658,6 +665,9 @@ console.log(Array.isArray(runTableData))
               <Button color="primary" variant="contained" onClick={handleRecomm}>
                 Recommendation
               </Button>
+              <Button color="success" variant="contained" onClick={redirectToHome}>
+                              Home
+                            </Button>
             </Stack>
 
           </Grid>

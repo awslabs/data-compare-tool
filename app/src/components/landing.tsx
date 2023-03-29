@@ -11,7 +11,7 @@ import Button from '@material-ui/core/Button'
 import Link from '@material-ui/core/Link'
 import GitHubIcon from '@material-ui/icons/GitHub'
 
-import logoImage from './logo.png'
+import logoImage from './dart-logo.jpg'
 
 const useStyles = makeStyles((theme) => ({
   root: {

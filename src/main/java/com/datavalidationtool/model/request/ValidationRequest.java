@@ -23,10 +23,11 @@ public class ValidationRequest {
     private boolean ignoreColumns;
     private String columns;
     private String filterType;
-    private String filter;
+    private String dataFilters;
     private boolean compareOnlyDate;
     private String connectionType;
     private boolean ignoreTables;
     private boolean checkAdditionalRows;
     private int schemaRunNumber;
+    private String uniqueCols;
 }

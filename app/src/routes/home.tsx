@@ -62,7 +62,7 @@ export default function Home() {
                   <Box mr={3}>
                     <GitHubIcon fontSize="large" />
                   </Box>
-                  <Typography className={classes.title} variant="h3">
+                  <Typography className={classes.title} variant="h4">
                     AWS Cognito Starter Home
                   </Typography>
                 </Grid>
