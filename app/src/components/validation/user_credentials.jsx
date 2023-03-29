@@ -73,6 +73,7 @@ const reducer = (userCred, action) => {
   }
 };
 
+
 export default function Validation() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -564,32 +565,7 @@ console.log(Array.isArray(runTableData))
               />
           </Grid>
 
-                    <Grid item xs={12} md={2}>
-                                       {/*<TextField*/}
-                                       {/*  fullWidth*/}
-                                       {/*  multiline*/}
-                                       {/*  maxRows={4}*/}
-                                       {/*  name="schemaNames"*/}
-                                       {/*  label="Schema Names"*/}
-                                       {/*  variant="outlined"*/}
-                                       {/*  value={userCred.schemaNames}*/}
-                                       {/*  error={userCred.schemaNames === '' && ifFormTouched === FormStatus.MODIFIED}*/}
-                                       {/*  onChange={handleInput}*/}
-                                       {/*/>*/}
-                                         <Select
-                                             isDisabled= {false}
-                                             isLoading= {false}
-                                             isClearable
-                                             isSearchable={false}
-                                             placeholder="Schema Names.."
-                                             defaultValue={userCred.schemaNames[0]}
-                                             name="srcSchemas"
-                                             label="Source Schema"
-                                             variant="outlined"
-                                             options={userCred.schemaNames}
-                                             onChange={handleSrcSchemaChange}
-                                         />
-                                     </Grid>
+
           <Grid item xs={12} md={3}>
             {/*<TextField*/}
             {/*  fullWidth*/}
@@ -605,6 +581,7 @@ console.log(Array.isArray(runTableData))
               <Select
                   isDisabled= {false}
                   isLoading= {false}
+                  isMulti={true}
                   isClearable = {clearable}
                   isSearchable={false}
                   placeholder="Table Names.."
