@@ -22,7 +22,6 @@ import com.datavalidationtool.model.response.RunInfo;
 import com.datavalidationtool.util.JdbcUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.datavalidationtool.model.DatabaseInfo.dbType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -55,15 +54,12 @@ public class ValidationService {
 						validationRequest.setTargetSchemaName(schemas[1].toLowerCase());
 				}
 			}
-  		//	if(dataSource.isPoolInitialized()) {
 	  			long rowNo = 1;
-  				Date date = new Date();
-  				//DateUtil dateUtil = new DateUtil();
-				if (validationRequest.getTableName() != null && !validationRequest.getTableName().isEmpty()
+				if (validationRequest.getTableNames() != null && validationRequest.getTableNames().length>0
 						&& !validationRequest.isIgnoreTables()) {
 					//getCurrentSchemaRunInfo(validationRequest);
 					validationRequest.setSchemaRunNumber(0);
-					String[] tableNameParts = validationRequest.getTableName().split(",");
+					String[] tableNameParts = validationRequest.getTableNames();
   					for (String tableName : tableNameParts) {
 						validationRequest.setTableName(tableName);
 						runId=validate(validationRequest,tableName, null);
@@ -89,9 +85,10 @@ public class ValidationService {
 		RunDetails runDetails = new RunDetails();
 		String query = "SELECT max(schema_run) FROM public.run_details where target_host_name=? and database_name=? and schema_name=?";
 		Connection dbConn=null;
+		PreparedStatement pst =null;
 		try {
 			dbConn= dataSource.getDBConnection();
-			PreparedStatement pst = dbConn.prepareStatement(query);
+			pst = dbConn.prepareStatement(query);
 			pst.setString(1,appProperties.getTargetHost());
 			pst.setString(2,appProperties.getTargetDBName());
 			pst.setString(3,appProperties.getSourceSchemaName());
@@ -110,6 +107,7 @@ public class ValidationService {
 			logger.error(ex.getMessage());
 		}
 		finally {
+			pst.close();
 			if(dbConn!=null)
 			dbConn.close();
 		}
@@ -120,9 +118,10 @@ public class ValidationService {
 		RunDetails runDetails = new RunDetails();
 		String query = "SELECT max(table_run) FROM public.run_details where target_host_name=? and database_name=? and schema_name=? and table_name=?";
 		Connection dbConn=null;
+		PreparedStatement pst =null;
 		try {
 			dbConn= dataSource.getDBConnection();
-			PreparedStatement pst = dbConn.prepareStatement(query);
+			pst = dbConn.prepareStatement(query);
 			pst.setString(1,appProperties.getTargetHost());
 			pst.setString(2,appProperties.getTargetDBName());
 			pst.setString(3,appProperties.getSourceSchemaName());
@@ -142,7 +141,8 @@ public class ValidationService {
 			logger.error(ex.getMessage());
 		}
 		finally {
-			if(dbConn!=null)
+			pst.close();
+			if(dbConn != null)
 				dbConn.close();
 		}
 		return runDetails;
@@ -150,11 +150,12 @@ public class ValidationService {
 
 	public List<RunDetails> addRunDetailsForSelection(RunDetails runDetails) throws Exception {
 		Connection dbConn=null;
+		PreparedStatement pst =null;
 		List<RunDetails> outputRunDetailsList = new ArrayList<>();
 		String query = "insert into public.run_details(source_host_name,target_host_name,database_name,schema_name,table_name,schema_run,table_run,run_id,execution_date) values(?,?,?,?,?,?,?,?,?)";
 		try {
 			dbConn= dataSource.getDBConnection();
-			PreparedStatement pst = dbConn.prepareStatement(query);
+			pst = dbConn.prepareStatement(query);
 			pst.setString(1,runDetails.getSourceHostName());
 			pst.setString(2,runDetails.getTargetHostName());
 			pst.setString(3,runDetails.getDatabaseName());
@@ -170,6 +171,7 @@ public class ValidationService {
 			logger.error("Exception while adding table details");
 			logger.error(ex.getMessage());
 		}finally {
+			pst.close();
 			if(dbConn!=null)
 			dbConn.close();
 		}
@@ -181,25 +183,6 @@ public class ValidationService {
 	 * @param appProperties
 	 * @throws Exception
 	 */
-
-
-	/**
-	 *
-	 * @param columns
-	 * @return
-	 */
-	private List<String> getColumnList(String columns) {
-		List<String> columnsList = new ArrayList<String>();
-		if(columns != null && !columns.isEmpty()) {
-			String[] columnParts = columns.split(",");
-			for (String column : columnParts) {
-				columnsList.add(column.trim());
-			}
-		}
-		return columnsList;
-	}
-
-
 	/**
 	 * 
 	 * @param db
@@ -309,7 +292,6 @@ public class ValidationService {
 				} catch (SQLException e) {
 					e.printStackTrace();
 				}
-				{
 					cst.setString(1, appProperties.getSourceSchemaName());
 					cst.setString(2, appProperties.getTargetSchemaName());
 					cst.setString(3, appProperties.getTableName().equals("")?tableName:appProperties.getTableName());
@@ -320,7 +302,6 @@ public class ValidationService {
 					cst.setBoolean(8, appProperties.isIgnoreColumns());
 					cst.setBoolean(9, appProperties.isCheckAdditionalRows());
 					//cst.registerOutParameter(1, Types.VARCHAR);
-				}
 				rs= cst.executeQuery();
 				while(rs.next()) {
 					String result = rs.getString(1);
@@ -350,7 +331,9 @@ public class ValidationService {
 				logger.error("DB", ex);
 
 			} finally {
+				if(rs!=null)
 				rs.close();
+				if(con!=null)
 				con.close();
 			}
 		} catch (SQLException ex) {
@@ -415,8 +398,10 @@ public class ValidationService {
 		} catch(SQLException ex) {
 			logger.error(ex.getMessage(), ex);
 		} finally {
-		rs.close();
-		conn.close();
+			if(rs!=null)
+				rs.close();
+			if(conn!=null)
+				conn.close();
 		} 
 	}
 	/**
@@ -433,8 +418,8 @@ public class ValidationService {
 		String runId="";
 		try {
 			sourceConn =dataSource.getDBConnection();
-			List<String> ignoreTables = (appProperties.getTableName() != null && !appProperties.getTableName().isEmpty()
-					&& appProperties.isIgnoreTables()) ? Arrays.asList(appProperties.getTableName().split(","))
+			List<String> ignoreTables = (appProperties.getTableNames() != null && appProperties.getTableNames().length>0
+					&& appProperties.isIgnoreTables()) ? Arrays.asList(appProperties.getTableNames())
 					: new ArrayList<String>();
 			rs = sourceConn.getMetaData().getTables(appProperties.getTargetDBName().toLowerCase(), appProperties.getSourceSchemaName().toLowerCase(), null, null);
 			while (rs.next()) {
@@ -445,15 +430,16 @@ public class ValidationService {
 		} catch (SQLException ex) {
 			logger.error(ex.getMessage(), ex);
 		} finally {
-			rs.close();
+
+			if(rs!=null)
+				rs.close();
+			if(sourceConn!=null)
 			sourceConn.close();
 		}
 		if (!tableNames.isEmpty()) {
 			for (String tableName : tableNames) {
-				StringBuilder info = new StringBuilder();
 				appProperties.setTableName(tableName);
 				runId= validate(appProperties,  tableName, columnList);
-				//logger.info(info.toString());
 			}
 		}
 		return runId;
@@ -486,7 +472,7 @@ public class ValidationService {
 		ArrayList<RunInfo> list= new ArrayList<RunInfo>();
 		LastRunDetails lastRunDetails=new LastRunDetails();
 		RunDetails runDetail= RunDetails.builder().schemaName(inputRunDetails.getSourceSchemaName()).tableName(inputRunDetails.getTableName()).validationrequest(true).build();
-		List<RunDetails> rundetails=getLastRunResults(runDetail);
+		List<RunDetails> rundetails=getLastRunResults();
 		HashMap<String,Long> tableList=new HashMap<String,Long>();
 		for(RunDetails runId:rundetails ) {
 			Long rowCount= 0L;
@@ -509,12 +495,13 @@ public class ValidationService {
 
 	}
 
-	private List<RunDetails> getLastRunResults(RunDetails runDetail) throws SQLException {
+	private List<RunDetails> getLastRunResults() throws SQLException {
 		List<RunDetails> outputRunDetailsList = new ArrayList<>();
 		String query = "select * FROM public.run_details order by execution_date desc limit 10";
 		Connection dbConn =null;
+		PreparedStatement pst =null;
 		try { dbConn =dataSource.getDBConnection();
-			PreparedStatement pst = dbConn.prepareStatement(query);
+			pst = dbConn.prepareStatement(query);
 			ResultSet rs = pst.executeQuery();
 
 			while (rs.next()) {
@@ -536,8 +523,8 @@ public class ValidationService {
 			logger.error("Exception while fetching table details");
 			logger.error(ex.getMessage());
 		}finally {
-			if(dbConn!=null)
-				dbConn.close();
+			pst.close();
+			dbConn.close();
 		}
 		return outputRunDetailsList;
 	}

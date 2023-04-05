@@ -36,7 +36,7 @@ public class ValidationController {
 
     @GetMapping(value = "validation/dbDetails")
     @CrossOrigin(origins = "*", allowedHeaders = "*")
-    public ResponseEntity getValidationScreenDetails() throws Exception {
+    public ResponseEntity<?> getValidationScreenDetails() throws Exception {
         var s = service.getValidationDetails();
         return new ResponseEntity(s, HttpStatus.ACCEPTED);
     }
@@ -62,28 +62,11 @@ public class ValidationController {
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @GetMapping("validation/exportData")
     public void exportData(@RequestParam String runId, @RequestParam String tableName, @RequestParam String schemaName, HttpServletResponse response) throws Exception {
-       // ExcelDataService excelDataService = new ExcelDataService();
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         ExportDataRequest exportDataRequest=ExportDataRequest.builder().runId(runId).schemaName(schemaName).tableName(tableName).build();
-       // boolean fileCreated=
-          excelDataService.createExcel(exportDataRequest,response);
+        excelDataService.createExcel(exportDataRequest,response);
         toolRunning = Boolean.FALSE;
-        //if(fileCreated){
-          //  return "Success";
-     //   }
-       // return  "failure";
-    }
-    @GetMapping("/")
-    public String index(Model model) {
-        if(toolRunning.booleanValue()) {
-            model.addAttribute("msg", "Data Compare is in progress.");
-            model.addAttribute("fileName", reportFileName);
-            return "result";
-        } else {
-            reportFileName = "XXX";
-            model.addAttribute("datacompare", null);
-            return "datacompare";
-        }
+
     }
 }
 

@@ -61,7 +61,7 @@ public class RemediateService {
             //324,COL1,COL2;325,COL1,COL2,COL3;326,COL1,COL2,COL3,COL4
             if (newRow)
                 valId = remediateReq.getValId();
-            String colName = remediateReq.getColumn();
+
             //_remediate_missing_exceptions(‘ops$ora’,‘crtdms’,‘ppt_100’,‘ppt_100’,‘433;434;435’)
             //{\"column\":\"id\",\"value\":\"\",\"valId\":377},{\"column\":\"transaction\",\"value\":\"\",\"valId\":377}],[{\"column\":\"country\",\"value\":\"\",\"valId\":377},{\"column\":\"exception_status\",\"value\":\"\",\"valId\":377},{\"column\":\"id\",\"value\":\"\",\"valId\":377},{\"column\":\"transaction\",\"value\":\"\",\"valId\":377}]]"}
             if (remediateReq.getExceptionType().toUpperCase().startsWith("MISSING")) {

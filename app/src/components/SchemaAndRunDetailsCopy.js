@@ -202,7 +202,7 @@ function handleChange(event) {
     setFile(event.target.files[0])
     }
 function redirectToValidation(event) {
-   navigate('/dvt/compare');
+   navigate(-1);
     }
     function handleDataSync (event) {
         //event.preventDefault();

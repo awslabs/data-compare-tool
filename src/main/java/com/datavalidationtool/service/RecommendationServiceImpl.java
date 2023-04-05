@@ -39,10 +39,10 @@ public class RecommendationServiceImpl implements RecommendationService {
     public List<String> getDbSchemaDetails(DatabaseInfo databaseInfo)  {
         List<String> schemaList = new ArrayList<>();
         String query = "SELECT schema_name FROM information_schema.schemata where schema_owner ='postgres'";
-        //String query = "SELECT schema_name FROM information_schema.schemata";
         Connection dbConn =null;
+        PreparedStatement pst=null;
         try { dbConn = dataSource.getDBConnection();
-             PreparedStatement pst = dbConn.prepareStatement(query);
+             pst = dbConn.prepareStatement(query);
              ResultSet rs = pst.executeQuery();
             while (rs.next()){
                 schemaList.add(rs.getString(1));
@@ -57,8 +57,10 @@ public class RecommendationServiceImpl implements RecommendationService {
         }
         finally {
             try {
+                 if(pst!=null)
+                     pst.close();
                 if(dbConn!=null)
-                dbConn.close();
+                    dbConn.close();
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -128,8 +130,9 @@ public class RecommendationServiceImpl implements RecommendationService {
 
         query = queryWithOptionalParam + whereQueryCondition;
         Connection dbConn =null;
+        PreparedStatement pst =null;
         try { dbConn =dataSource.getDBConnection();
-             PreparedStatement pst = dbConn.prepareStatement(query);
+             pst = dbConn.prepareStatement(query);
              ResultSet rs = pst.executeQuery();
 
             while (rs.next()) {
@@ -230,8 +233,9 @@ public class RecommendationServiceImpl implements RecommendationService {
         RunDetails runDetails = new RunDetails();
         String query = "SELECT max(schema_run), max(table_run) FROM public.run_details";
         Connection dbConn =null;
+        PreparedStatement pst =null;
         try { dbConn = dataSource.getDBConnection();
-             PreparedStatement pst = dbConn.prepareStatement(query);
+            pst=dbConn.prepareStatement(query);
              ResultSet rs = pst.executeQuery();
             while (rs.next()) {
                 runDetails.setSchemaRun(rs.getInt(1));
@@ -242,6 +246,8 @@ public class RecommendationServiceImpl implements RecommendationService {
             logger.error("Exception while fetching table details");
             logger.error(ex.getMessage());
         }finally {
+            if(pst!=null)
+              pst.close();
             if(dbConn!=null)
                 dbConn.close();
     }
@@ -249,26 +255,20 @@ public class RecommendationServiceImpl implements RecommendationService {
     }
 
      public RunDetailsSelectionResponse getRunDetailsSelectionResponse(List<RunDetails> runDetails) {
-
         RunDetailsSelectionResponse runDetailsSelectionResponse = new RunDetailsSelectionResponse();
         List<HostDetails> hostDetailsList = new ArrayList<>();
-
         Set<String> uniqueSrcHostNm = runDetails.stream().map(run -> run.getSourceHostName()).collect(Collectors.toSet());
         for (String hostNm : uniqueSrcHostNm) {
-
             HostDetails hostDetails = new HostDetails();
             hostDetails.setHostName(hostNm);
             List<DatabaseDetails> databaseDetailsList = new ArrayList<>();
-
             Set<String> uniqueDbNm = runDetails.stream().filter(rd -> rd.getSourceHostName().equals(hostNm)).map(rd -> rd.getDatabaseName()).collect(Collectors.toSet());
             for (String dbNm : uniqueDbNm) {
                 Set<String> uniqueSchemaNm = runDetails.stream().filter(rd -> rd.getSourceHostName().equals(hostNm) && rd.getDatabaseName().equals(dbNm)).map(rd -> rd.getSchemaName()).collect(Collectors.toSet());
                 DatabaseDetails databaseDetails = new DatabaseDetails();
                 databaseDetails.setDatabaseName(dbNm);
-
                 List<SchemaDetails> schemaDetailsList = new ArrayList<>();
                 for (String schemaNm : uniqueSchemaNm) {
-
                     Set<RunDetails> uniqueSchemaRunDetails = runDetails.stream().filter(rd -> rd.getSourceHostName().equals(hostNm) && rd.getDatabaseName().equals(dbNm) && rd.getSchemaName().equals(schemaNm)).collect(Collectors.toSet());
                     Set<RunWithDate> schemaRun = new TreeSet<>();
                     for(RunDetails uTableRd:uniqueSchemaRunDetails) {
@@ -284,8 +284,6 @@ public class RecommendationServiceImpl implements RecommendationService {
                     SchemaDetails schemaDetails = new SchemaDetails();
                     schemaDetails.setSchemaName(schemaNm);
                     schemaDetails.setSchemaRun(schemaRun);
-
-
                     List<TableDetails> tableDetailsList = new ArrayList<>();
                     Set<String> uniqueTableNm = runDetails.stream().filter(rd -> rd.getSourceHostName().equals(hostNm) && rd.getDatabaseName().equals(dbNm) && rd.getSchemaName().equals(schemaNm)).map(rd -> rd.getTableName()).collect(Collectors.toSet());
                     for (String tableNm : uniqueTableNm) {
@@ -304,14 +302,10 @@ public class RecommendationServiceImpl implements RecommendationService {
                         TableDetails tableDetails = new TableDetails();
                         tableDetails.setTableName(tableNm);
                         tableDetails.setTableRun(tableRun);
-
                         tableDetailsList.add(tableDetails);
-
                     }
-
                     schemaDetails.setTableList(tableDetailsList);
                     schemaDetailsList.add(schemaDetails);
-
                 }
                 databaseDetails.setSchemaList(schemaDetailsList);
                 databaseDetailsList.add(databaseDetails);
@@ -377,54 +371,36 @@ public class RecommendationServiceImpl implements RecommendationService {
 
         List<Map<String,Object>> rsKeyValMapList = new ArrayList<>();
         Connection dbConn =null;
+        PreparedStatement pst=null;
         try { dbConn = dataSource.getDBConnection();
-             //PreparedStatement pst = dbConn.prepareStatement(selectQuery);){
-
             //use below table join query to get source and target records.
-             PreparedStatement pst = dbConn.prepareStatement(tableJoinQuery);
-
+             pst = dbConn.prepareStatement(tableJoinQuery);
              ResultSet rs = pst.executeQuery();
-
             if (rs != null) {
                 // get the resultset metadata
                 ResultSetMetaData rsmd = rs.getMetaData();
-
                 while (rs.next()) {
-
                     Map<String,Object> rsKeyValMap = new HashMap<>();
-
                     for (int _iterator = 0; _iterator < rsmd.getColumnCount(); _iterator++) {
                         // get the SQL column name
                         String columnName = rsmd.getColumnName(_iterator + 1);
-
                         // get the value of the SQL column
                         Object columnValue = rs.getObject(_iterator + 1);
-
                         if(rsKeyValMap.containsKey(columnName)){
                             rsKeyValMap.put("target_"+columnName, columnValue);
-
                         }else{
                             rsKeyValMap.put(columnName, columnValue);
-
                         }
-                        //rsKeyValMap.put(columnName, columnValue);
-
-                        //System.out.println(columnName +" :"+columnValue);
                     }
-                    //System.out.println("-------");
-                    /*
-                    if(null == rsKeyValMap.get("val_log")){
-                        rsKeyValMapList.add(rsKeyValMap);
-                    }*/
                     rsKeyValMapList.add(rsKeyValMap);
                 }
-
             }
-
         } catch (SQLException ex) {
             logger.error("Exception while fetching table details");
             logger.error(ex.getMessage());
         }finally {
+             if(pst!=null)
+                 pst.close();
             if(dbConn!=null)
             dbConn.close();
         }
@@ -440,17 +416,13 @@ public class RecommendationServiceImpl implements RecommendationService {
         adminColumnNameOfValTable.add("val_type");
         adminColumnNameOfValTable.add("exception_rank");
         adminColumnNameOfValTable.add("exception_status");
-        //adminColumnNameOfValTable.add("exception_status");
         return adminColumnNameOfValTable;
     }
 
     public RecommendationResponse getRecommendationResponse(RunDetails inputRunDetails_1, DatabaseInfo databaseInfo, String ValidationTableName) throws Exception {
 
         String tableJoinQuery = getTableJoinQueryForSourceTarget( inputRunDetails_1,  databaseInfo,  ValidationTableName);
-        System.out.println(" tableJoinQuery ->"+tableJoinQuery );
-
         List<Map<String,Object>> rsKeyValMapList = new ArrayList<>();
-
         RecommendationResponse recommendationResponse = new RecommendationResponse();
         recommendationResponse.setTable(inputRunDetails_1.getSchemaName() + "." + ValidationTableName);
         recommendationResponse.setCurrentPage(1);
@@ -470,31 +442,21 @@ public class RecommendationServiceImpl implements RecommendationService {
              //PreparedStatement pst = dbConn.prepareStatement(selectQuery);){
 
              //use below table join query to get source and target records.
-             PreparedStatement pst = dbConn.prepareStatement(tableJoinQuery);
-
+            PreparedStatement pst = dbConn.prepareStatement(tableJoinQuery);
             ResultSet rs = pst.executeQuery();
-
             if (rs != null) {
                 // get the resultset metadata
                 ResultSetMetaData rsmd = rs.getMetaData();
-
                 while (rs.next()) {
-
                     Map<String,Object> rsKeyValMap = new HashMap<>();
-
                     List<RecommendationColumn> recommendationColumns = new ArrayList<>();
-
-
                     for (int _iterator = 0; _iterator < rsmd.getColumnCount(); _iterator++) {
                         // get the SQL column name
                         String columnName = rsmd.getColumnName(_iterator + 1);
-
                         // get the value of the SQL column
                         Object columnValue = rs.getObject(_iterator + 1);
-
                         if(rsKeyValMap.containsKey(columnName)){
                             rsKeyValMap.put("target_"+columnName, columnValue);
-
                         }else{
                             rsKeyValMap.put(columnName, columnValue);
                         }
@@ -505,7 +467,6 @@ public class RecommendationServiceImpl implements RecommendationService {
                             }
                         }
                     }
-
                     Object recommendationCode = null;
                     if("Mismatch".equalsIgnoreCase(rsKeyValMap.get("val_type").toString())){
                         recommendationCode=2;
@@ -516,13 +477,10 @@ public class RecommendationServiceImpl implements RecommendationService {
                     else if("SrcMissing".equalsIgnoreCase(rsKeyValMap.get("val_type").toString())){
                         recommendationCode=3;
                     }
-
                     recommendationRowList.add(new RecommendationRow(recommendationCode,recommendationColumns,rs.getInt(2),null));
                     rsKeyValMapList.add(rsKeyValMap);
                 }
-
             }
-
         } catch (SQLException ex) {
             logger.error("Exception while fetching table details");
             logger.error(ex.getMessage());
@@ -531,7 +489,6 @@ public class RecommendationServiceImpl implements RecommendationService {
             dbConn.close();
     }
         recommendationResponse.setRows(recommendationRowList);
-
         return recommendationResponse;
     }
 
@@ -575,8 +532,6 @@ public class RecommendationServiceImpl implements RecommendationService {
 
     private String getUniqueColumnFromValTable(RunDetails inputRunDetails_1, DatabaseInfo databaseInfo, String ValidationTableName) throws Exception {
         String selectColumnsQuery = "SELECT val_log FROM " + inputRunDetails_1.getSchemaName() + "." + ValidationTableName + " WHERE " + "run_id='" + inputRunDetails_1.getRunId() + "' " + " and val_type='Log-Cols-List'";
-
-        System.out.println("selectColumnsQuery -> " + selectColumnsQuery);
         String logColsList="";
         Connection dbConn =null;
         try { dbConn = dataSource.getDBConnection(); PreparedStatement pst = dbConn.prepareStatement(selectColumnsQuery); ResultSet rs = pst.executeQuery();
@@ -592,41 +547,31 @@ public class RecommendationServiceImpl implements RecommendationService {
             dbConn.close();
         }
         return logColsList;
-
     }
 
     public List<RunDetails> getRunDetails(RunDetails inputRunDetails_1, DatabaseInfo databaseInfo) throws Exception {
-
         List<RunDetails> outputRunDetailsList = new ArrayList<>();
         String query = null;
-
         String queryWithOptionalParam = "SELECT * FROM public.run_details WHERE " +
                 "source_host_name='" + inputRunDetails_1.getSourceHostName() + "' " +
                 "and target_host_name='" + inputRunDetails_1.getTargetHostName() + "' " +
                 "and database_name='" + inputRunDetails_1.getDatabaseName() + "' " +
                 "and schema_name='" + inputRunDetails_1.getSchemaName() + "' ";
-
         if (inputRunDetails_1.getTableName() != null) {
             queryWithOptionalParam = queryWithOptionalParam + "and table_name='" + inputRunDetails_1.getTableName() + "' ";
         }
-
         if (inputRunDetails_1.getSchemaRun() != 0) {
             queryWithOptionalParam = queryWithOptionalParam + "and schema_run='" + inputRunDetails_1.getSchemaRun() + "' ";
         }
-
         if (inputRunDetails_1.getTableRun() != 0) {
             queryWithOptionalParam = queryWithOptionalParam + " and table_run='" + inputRunDetails_1.getTableRun() + "' ";
         }
-
-
         query = queryWithOptionalParam;
         Connection dbConn =null;
         try { dbConn = dataSource.getDBConnection();
              PreparedStatement pst = dbConn.prepareStatement(query);
              ResultSet rs = pst.executeQuery();
-
             while (rs.next()) {
-
                 RunDetails runDetails = new RunDetails();
                 runDetails.setSourceHostName(rs.getString("source_host_name"));
                 runDetails.setTargetHostName(rs.getString("target_host_name"));
@@ -637,10 +582,8 @@ public class RecommendationServiceImpl implements RecommendationService {
                 runDetails.setTableRun(rs.getInt("table_run"));
                 runDetails.setRunId(rs.getString("run_id"));
                 runDetails.setExecutionDate(rs.getString("execution_date"));
-
                 outputRunDetailsList.add(runDetails);
             }
-
         } catch (SQLException ex) {
             logger.error("Exception while fetching table details");
             logger.error(ex.getMessage());
@@ -652,14 +595,13 @@ public class RecommendationServiceImpl implements RecommendationService {
     }
 
     public boolean executeDbProcedure(RunDetails inputRunDetails_1, DatabaseInfo databaseInfo) throws Exception {
-
         boolean executeDbProcedureResult = false;
         Connection dbConn =null;
+        PreparedStatement pst =null;
         try { dbConn = dataSource.getDBConnection();
-             PreparedStatement pst = dbConn.prepareStatement("call helloworld()");
+            pst = dbConn.prepareStatement("call helloworld()");
             pst.execute();
             executeDbProcedureResult = true;
-
         } catch (SQLException ex) {
             logger.error("Exception in execute Db Procedure");
             logger.error(ex.getMessage());
@@ -688,8 +630,6 @@ public class RecommendationServiceImpl implements RecommendationService {
             dbConn = dataSource.getDBConnection();
             PreparedStatement pst = dbConn.prepareStatement(insertQuery);
             updateResult = pst.executeUpdate();
-
-
         } catch (SQLException ex) {
             logger.error("Exception while fetching table details");
             logger.error(ex.getMessage());
@@ -698,8 +638,6 @@ public class RecommendationServiceImpl implements RecommendationService {
             if(dbConn!=null)
             dbConn.close();
         }
-
-
         return updateResult;
     }
 
@@ -804,7 +742,6 @@ public class RecommendationServiceImpl implements RecommendationService {
             ArrayList list = new ArrayList<String>();
             while (rs.next()) {
                 pk = rs.getString(4);
-                System.out.println("getPrimaryKeys(): columnName=" + pk);
                 if(!pk.isEmpty()){
                     recommendationResponse.setUniqueColumns(Arrays.asList(pk.split(",")));
                 }
@@ -849,9 +786,6 @@ public class RecommendationServiceImpl implements RecommendationService {
             excelDataRequest.setResultSet(rs);
         } catch (SQLException e) {
             e.printStackTrace();
-        }
-        finally {
-
         }
         return rs;
     }

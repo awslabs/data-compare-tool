@@ -60,10 +60,8 @@ const reducer = (userCred, action) => {
         };
       }
     case "set_default":
-
       return {
           ...userCred,
-
           userCred : action.payload
       };
     case "reset":
@@ -72,7 +70,6 @@ const reducer = (userCred, action) => {
       throw new Error(`Unknown action type: ${action.type}`);
   }
 };
-
 
 export default function Validation() {
   const [isLoading, setIsLoading] = useState(false);
@@ -87,13 +84,12 @@ export default function Validation() {
   const [showRunTable, setShowRunTable]= useState(false);
   const [runTableData, setRunTableData] = useState([{}]);
   const [exTables, setExTables]= useState(false);
-   const [exColumns, setExColumns]= useState(false);
-   const [tableName, setTableName]= useState("");
-   const [schemaName, setSchemaName]= useState("");
-    const [srcSchemaName, setSrcSchemaName]= useState("");
+  const [exColumns, setExColumns]= useState(false);
+  const [tableNames, setTableNames]= useState("");
+  const [tableName, setTableName]= useState("");
+  const [schemaName, setSchemaName]= useState("");
+  const [srcSchemaName, setSrcSchemaName]= useState("");
   const [data, setData] = useState([{}]);
-
-
   const handleInput = (event) => {
     dispatch({
       type: "update",
@@ -101,120 +97,116 @@ export default function Validation() {
     });
   };
   const handleTabExcludeInput = (event) => {
+  if(tableNames==null || tableNames.length==0){
+    alert("Please select a Table name")
+    return;
+  }
    setExTables(event.target.checked);
   };
     const handleColExcludeInput = (event) => {
+     if(userCred.columnNames==null || userCred.columnNames==''){
+        alert("Please provide a column name")
+        setExColumns('')
+        return;
+      }
        setExColumns(event.target.checked);
        }
- const handleTableSelection = (event) => {
-   setTableName(event.value);
-  };
- const handleSrcSchemaChange = (event) => {
-       setSrcSchemaName(event.value);
-       }
+    const handleSrcSchemaChange = (event) => {
+        setSrcSchemaName(event.value);
+           }
+    function redirectToHome (event){
+    navigate("/dvt/menu")
+    }
+    function handleTableInput (event){
+        var value = Array.from(event, item => item.value)
+        var length = value.length
+        if(length==0){
+        alert("Please select a Table Name")
+                return;
+        }
+        if(srcSchemaName==''){
+        alert("Please select a Source schema")
+        return;
+        }
+        if(schemaName==''){
+          alert("Please select a Target schema")
+          return;
+            }
+        setTableNames(value);
+        setIsLoading(true);
+        setShowRunTable(false);
+        setShowTable(false);
+         let requestParams = { method: "POST", headers: "", body: "" };
+                 requestParams.headers = { "Content-Type": "application/json" };
+                 requestParams.body =   JSON.stringify({sourceSchemaName : srcSchemaName,tableName : value[length-1] });
+                  fetch('http://localhost:8090/dvt/validation/getRunInfo', requestParams)
+              .then((response) => {
+                           if (response.ok) {
+                             return response.json();
+                           }})
+                          .then((resultData) => {
+                                    setIsLoading(false);
+                                        let slnumber = 1;
+                                      let msg = (resultData !== null || resultData!=='')? resultData : "Something went wrong, please try again";
+                                              let obj = {};
+                                              obj.slNo = slnumber;
+                                              slnumber++;
+                                              console.log("slno", slnumber);
+                                              obj.tableName = value[length-1] ;
+                                              obj.mismatchRows = resultData.mismatchRows;
+                                              obj.missingRows = resultData.missingRows;
+                                              obj.totalRows = resultData.totalRecords;
+                                              setTableData(obj);
+                                              setShowTable(true);
+                                              setShowRunTable(false);
+                                              setIsLoading(false);
+                                    })
+                                    .catch((error) => {
+                                    setErrorMessage("Unable to validate the data");
+                                    setIsLoading(false);
+                                    alert(error);
+                                      console.log("Error ::", error);
+                                    });
+                                }
+        let databaseList=[];
+        let clearable = true;
 
-function redirectToHome (event){
-navigate("/dvt/menu")
-}
-function handleTableInput (event){
-setTableName(event.value);
- setIsLoading(true);
-  setShowRunTable(false);
-  setShowTable(false);
-     let requestParams = { method: "POST", headers: "", body: "" };
-             requestParams.headers = { "Content-Type": "application/json" };
-             requestParams.body =   JSON.stringify({
-                                                    sourceSchemaName : srcSchemaName,
-                                                    tableName : event.value,
-                                        });
-             console.log("Data To Submit == ", JSON.stringify(requestParams));
-              fetch('http://localhost:8090/dvt/validation/getRunInfo', requestParams)
-          .then((response) => {
-                       if (response.ok) {
-                         return response.json();
-                       }
-                     })
-                      .then((resultData) => {
-                                setIsLoading(false);
-                                    let slnumber = 1;
-                                  let msg = (resultData !== null || resultData!=='')? resultData : "Something went wrong, please try again";
-                                          let obj = {};
-                                          obj.slNo = slnumber;
-                                          slnumber++;
-                                          console.log("slno", slnumber);
-                                          obj.tableName = event.value;;
-                                          obj.mismatchRows = resultData.mismatchRows;
-                                          obj.missingRows = resultData.missingRows;
-                                          obj.totalRows = resultData.totalRecords;
-                                          setTableData(obj);
-                                          setShowTable(true);
-                                           setShowRunTable(false);
-                                            setIsLoading(false);
-                                })
-                                .catch((error) => {
-                                setErrorMessage("Unable to validate the data");
-                                setIsLoading(false);
-                                alert(error);
-                                  console.log("Error ::", error);
-                                });
-                            }
-
-
-    let databaseList=[];
-    let clearable = true;
     const handleSchemaChange = (event) =>{
         let list= [];
         if(event!=null){
-            console.log('selectedschema '+event.value)
-            //console.log('pageDetails  '+pageDetails[0][0].schemaList)
             initialValue.tableNames=[]
             list=pageDetails[0][0].schemaList.find((schema) =>schema.schemaName==event.value).tableList;
-            //console.log(list);
-            //   console.log('databaseList '+databaseList)
-            //   let list=databaseList[0].schemaList.find((schema) =>schema.schemaName==event.value).tableList;
             for(let j=0;j<list.length;j++){
                 list[j].label=list[j].tableName;
                 list[j].value=list[j].tableName;
             }
-            setSchemaName( event.value);
+            setSchemaName(event.value);
+            setTableNames([]);
+            setTableName('');
+            setTableNames();
         }
-
-
       initialValue.tableNames=list;
       setDummy([]);
-      console.log('initialValue.tableNames  =>   '+JSON.stringify(initialValue.tableNames))
         dispatch({
             type: "reset",
             payload: initialValue,
         });
     }
-
     const [pageDetails,setPageDetails] = useState([]);
     const [dummy,setDummy] = useState([]);
     const fetchPageDetails = () =>{
         fetch('http://localhost:8090/dvt/validation/dbDetails').then((res =>res.json()))//.then((res => JSON.stringify(res)))
             .then((res) =>{
-                //setPageDetails(res.databaseList);
                 pageDetails.push(res.databaseList);
-                console.log('dbdetails '+JSON.stringify(pageDetails));
-                //console.log('dbdetails123 '+JSON.stringify(pageDetails[0][0]));
-                console.log('dbdetails123 '+pageDetails[0][0].databaseName);
-                //initialValue.hostname = res.hostname;
                 let details = initialValue;
-                console.log('details    '+details.hostname);
-                console.log('dbdetails1 '+res.hostName);
                 let d= res
-                console.log('d '+d.hostName)
                 details.hostName=d;
                 initialValue.hostname=res.hostName;
                 initialValue.port = res.port;
                 initialValue.username = res.username;
                 initialValue.password = res.password;
                 databaseList = res.databaseList;
-                console.log('databaseList '+databaseList)
-                console.log(res.databaseList[0].databaseName);
                 initialValue.dbname=res.databaseList[0].databaseName;
-
                 let schemaNamesArray = new Array();
                 for(let i=0;i<res.databaseList[0].schemaList.length;i++){
                     let jsondata={};
@@ -222,20 +214,13 @@ setTableName(event.value);
                     jsondata.value=res.databaseList[0].schemaList[i].schemaName;
                     schemaNamesArray.push(jsondata);
                 }
-
-                console.log('array '+schemaNamesArray)
                 initialValue.schemaNames = schemaNamesArray;
-                console.log('schemaNames'+initialValue.schemaNames)
                 let tableList='';
                 for(let i=0;i<res.databaseList[0].schemaList[0].tableList.length;i++){
                     tableList = tableList.concat(res.databaseList[0].schemaList[0].tableList[i].tableName+', ');
                 }
                 tableList.slice(0,-3);
-                console.log(tableList);
                 initialValue.tableNames=tableList;
-                //initialva
-                //initialValue.dbname = res.databaseList.
-                console.log('details '+details.hostName)
                 dispatch({
                     type: "set_default",
                     payload: details,
@@ -249,7 +234,33 @@ setTableName(event.value);
 
 
  function handleSubmit () {
-    //event.preventDefault();
+     if(schemaName==''){
+        alert("Please select a Target schema")
+        return;
+        }
+     if(srcSchemaName==''){
+         alert("Please select a Source schema")
+         return;
+         }
+     if(tableNames==null || tableNames.length==0){
+        alert("Please select a Table Name")
+        return;
+        }
+     if(exTables!=null || exTables!=''){
+        if(tableNames==null || tableNames.length==0){
+           alert("Please Select a table to exclude")
+           return;
+           }
+        }
+     if(exColumns!=null || exColumns!=''){
+        if(userCred.columnNames==null || userCred.columnNames==''){
+                alert("Please provide a column name")
+                return;
+              }
+           }
+
+    setShowRunTable(false);
+    setShowTable(false);
     setIsLoading(true);
      let requestParams = { method: "POST", headers: "", body: "" };
         requestParams.headers = { "Content-Type": "application/json" };
@@ -261,7 +272,7 @@ setTableName(event.value);
                                                targetPort : userCred.port,
                                                targetUserName :userCred.username,
                                                targetUserPassword :userCred.password,
-                                               tableName : tableName,
+                                               tableNames : tableNames,
                                                columns: userCred.columnNames,
                                                ignoreColumns:exColumns,
                                                dataFilters:userCred.dataFilters,
@@ -321,7 +332,7 @@ function getLastRunDetails () {
            .then((response) => {
              let obj = {};
              obj.schemaName=response.schemaName;
-obj.runs=response.runs;
+             obj.runs=response.runs;
            setRunTableData(response.runs)
            setShowRunTable(true);
 
@@ -336,36 +347,8 @@ obj.runs=response.runs;
            });
        }
 
-const object = {"runInfo":[{"totalRecords":0,"table":"ppt_100","missingRows":2,"mismatchRows":3,"lastRunDate":"2023-03-01 12:41:30.163"},{"totalRecords":0,"table":"ppt_100","missingRows":2,"mismatchRows":3,"lastRunDate":"2023-02-28 15:19:50.387"},{"totalRecords":0,"table":"ppt_20","missingRows":0,"mismatchRows":0,"lastRunDate":"2023-02-24 13:23:07.334"},{"totalRecords":0,"table":"ppt_2","missingRows":0,"mismatchRows":0,"lastRunDate":"2023-02-24 13:22:40.587"},{"totalRecords":0,"table":"ppt_19","missingRows":0,"mismatchRows":0,"lastRunDate":"2023-02-24 13:22:13.871"},{"totalRecords":0,"table":"ppt_18","missingRows":0,"mismatchRows":0,"lastRunDate":"2023-02-24 13:21:47.144"},{"totalRecords":0,"table":"ppt_17","missingRows":0,"mismatchRows":0,"lastRunDate":"2023-02-24 13:21:20.391"},{"totalRecords":0,"table":"ppt_16","missingRows":0,"mismatchRows":0,"lastRunDate":"2023-02-24 13:20:53.7"},{"totalRecords":0,"table":"ppt_15","missingRows":0,"mismatchRows":0,"lastRunDate":"2023-02-24 13:20:26.97"},{"totalRecords":0,"table":"ppt_14","missingRows":0,"mismatchRows":0,"lastRunDate":"2023-02-24 13:20:00.299"}]}
-console.log("runTableData",runTableData)
-//console.log("runTableData 1 ",runTableData.runs.map((item) => item.table))
-console.log(Array.isArray(runTableData))
-//
-// Instead, map over the items property rather than the parent object
-//const result =runTableData.runInfo.map((item) => item.table);
-
-//console.log(result); // ["item 1 data", "item 2 data"]
-/*async handleTableInput(event) {
-    event.preventDefault();
-    const {item} = this.state;
-
-    await fetch('http://localhost:8090/validation/compareData' + (item.id ? '/' + item.id : ''), {
-        method: 'POST',
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(item),
-    });
-    this.props.history.push('/dvt/selection');
-}*/
-
-
-
   useEffect(() => {
     if (isEntireFormValid) {
-      //console.log("User details: Valid" + JSON.stringify(userCred));
-
       var params = {
         targetSchemaName: userCred.schemaNames[0],
         sourceSchemaName: "",
@@ -398,43 +381,15 @@ console.log(Array.isArray(runTableData))
           }
         })
         .then((data) => {
-          //console.log("Data is ", data);
-          ////////////////////////////////////////////////////////////////// ---> navigate here to next page
         })
         .catch((error) => {
           console.log("An Unexpected Error occured..");
        })
-
-      //navigate("http://localhost:8090/host-run-details/selection", userCred);
       navigate('/dvt/recommend',userCred);
-
     } else {
       console.log("User details: Invalid" + JSON.stringify(userCred));
     }
    }, [isEntireFormValid]);
-
-  function handleSubmitold() {
-    setIsEntireFormValid(null);
-    if (ifFormTouched === FormStatus.UNTOUCHED) {
-      setIfFormTouched(FormStatus.MODIFIED);
-    }
-
-    if (
-      userCred.hostname === "" ||
-      userCred.port === "" ||
-      userCred.dbname === "" ||
-      userCred.username === "" ||
-      userCred.password === "" ||
-      userCred.schemaNames.length === 0 ||
-      userCred.tableNames.length === 0 ||
-      userCred.columnNames.length === 0 ||
-      userCred.dataFilters.length=== 0
-    ) {
-      setIsEntireFormValid(false);
-    } else {
-      setIsEntireFormValid(true);
-    }
-  }
 
   function handleReset() {
     setIfFormTouched(FormStatus.UNTOUCHED);
@@ -562,7 +517,7 @@ console.log(Array.isArray(runTableData))
                   isLoading= {false}
                   isClearable
                   isSearchable={false}
-                  placeholder="Schema Names.."
+                  placeholder="Target Schema"
                   defaultValue={userCred.schemaNames[0]}
                   name="schemas"
                   label="Target Schema"
@@ -571,7 +526,32 @@ console.log(Array.isArray(runTableData))
                   onChange={handleSchemaChange}
               />
           </Grid>
-
+ <Grid item xs={12} md={2}>
+                                       {/*<TextField*/}
+                                       {/*  fullWidth*/}
+                                       {/*  multiline*/}
+                                       {/*  maxRows={4}*/}
+                                       {/*  name="schemaNames"*/}
+                                       {/*  label="Schema Names"*/}
+                                       {/*  variant="outlined"*/}
+                                       {/*  value={userCred.schemaNames}*/}
+                                       {/*  error={userCred.schemaNames === '' && ifFormTouched === FormStatus.MODIFIED}*/}
+                                       {/*  onChange={handleInput}*/}
+                                       {/*/>*/}
+                                         <Select
+                                             isDisabled= {false}
+                                             isLoading= {false}
+                                             isClearable
+                                             isSearchable={false}
+                                             placeholder="Source Schema "
+                                             defaultValue={userCred.schemaNames[0]}
+                                             name="srcSchemas"
+                                             label="Source Schema"
+                                             variant="outlined"
+                                             options={userCred.schemaNames}
+                                             onChange={handleSrcSchemaChange}
+                                         />
+                                     </Grid>
 
           <Grid item xs={12} md={3}>
             {/*<TextField*/}
@@ -591,12 +571,12 @@ console.log(Array.isArray(runTableData))
                   isMulti={true}
                   isClearable = {clearable}
                   isSearchable={false}
+                  hideSelectedOptions={false}
                   placeholder="Table Names.."
                   defaultValue={userCred.tableNames[0]}
-                  //value={''}
                   name="tables"
                   label="Table Name"
-                   variant="outlined"
+                  variant="outlined"
                   options={userCred.tableNames}
                   onChange={handleTableInput}
               />
@@ -651,8 +631,6 @@ console.log(Array.isArray(runTableData))
                                             onChange={handleInput}
                                           />
                                         </Grid>
-
-
           <Grid item md={3}></Grid>
           <Grid item md={6}>
             <Stack direction="row" spacing={2} style={{ justifyContent: "space-evenly" }}>
@@ -672,7 +650,6 @@ console.log(Array.isArray(runTableData))
 
           </Grid>
           <Grid item md={3}></Grid>
-
          <Grid item md={5}></Grid>
         <Grid item md={2}>{isLoading ? <LoadingSpinner /> : ""}</Grid>
         <Grid item md={4}></Grid>
@@ -731,7 +708,6 @@ console.log(Array.isArray(runTableData))
                     <TableCell align="center">Missing Rows</TableCell>
                     <TableCell align="center">Mismatch Rows</TableCell>
                      <TableCell align="center">Run Date</TableCell>
-
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -745,7 +721,6 @@ console.log(Array.isArray(runTableData))
                                      <TableCell align="center">{element.mismatchRows}</TableCell>
                                     <TableCell align="center">{element.lastRunDate}</TableCell>
                                   </TableRow>
-
    );
  })}
           </TableBody>

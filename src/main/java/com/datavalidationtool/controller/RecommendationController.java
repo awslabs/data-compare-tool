@@ -79,15 +79,11 @@ public class RecommendationController {
 
     @PostMapping("/recommendation/upload")
     public ResponseEntity<?> handleFileUpload(@RequestParam("file") MultipartFile file ) throws Exception {
-        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-        String timeStampStr=timestamp.toString().replace(" ","");
-        String fileName = file.getOriginalFilename() ;//context.getContextPath()+ File.separator+ "upload"+File.separator+file.getOriginalFilename();
+        String fileName = file.getOriginalFilename() ;
         try {
             byte[] bytes = file.getBytes();
               Path path = Paths.get(fileName);
               Files.write(path, bytes);
-          // file.transferTo( new File(  fileName.replace(".xlsx", timeStampStr.substring(0,18)+".xlsx")));
-            //file.transferTo( new File(  fileName));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }

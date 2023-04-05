@@ -62,13 +62,13 @@ public class ExcelDataService {
     public int executeDBCall(SchemaData dbUpdateData) throws SQLException {
         ResultSet rs = null;
         Connection con = null;
+        CallableStatement cst = null;
         int rowsUpdates = 0;
         try {
 
             if (dataSource.isPoolInitialized()) {
                 con = dataSource.getDBConnection();
                 String dbFunction = "{ call fn_remediate_mismatch_exceptions_dvt2(?,?,?,?,?,?) }";
-                CallableStatement cst = null;
                 try {
                     cst = con.prepareCall(dbFunction);
                 } catch (SQLException e) {
@@ -92,6 +92,9 @@ public class ExcelDataService {
         } finally {
             JdbcUtil jdbcUtil = new JdbcUtil();
             JdbcUtil.closeResultSet(rs);
+            if(cst!=null)
+            cst.close();
+            if(con!=null)
             con.close();
         }
 
@@ -120,6 +123,7 @@ public class ExcelDataService {
         } finally {
             JdbcUtil jdbcUtil = new JdbcUtil();
             JdbcUtil.closeResultSet(rs);
+            if(con!=null)
             con.close();
         }
 
@@ -160,8 +164,8 @@ public class ExcelDataService {
         } finally {
             JdbcUtil jdbcUtil = new JdbcUtil();
             JdbcUtil.closeResultSet(rs);
-            ;
-            con.close();
+            if(con!=null)
+             con.close();
         }
         return rowsUpdates;
     }
@@ -224,7 +228,6 @@ public class ExcelDataService {
                                     if (index < lastRow && (index>(firstRow + 2))) {
                                         strInsertValue = strInsertValue + ";";
                                     }
-
                                     details.setMissingPresent(true);
                                 }
                                 //fn_remediate_mismatch_exceptions_dvt2(‘a888c0794d9aba2991ecf5d0830a26af’,’440,id,transaction,country;439,id,transaction,country;438,id,transaction,country;437,id,transaction,country;’,’ops$ora’,‘crtdms’,‘ppt_100’,‘ppt_100’)
@@ -254,8 +257,9 @@ public class ExcelDataService {
             recDataExcel.close();
         } catch (IOException e) {
             throw e;
+        }finally{
+            inputStream.close();
         }
-
         return details;
     }
 
@@ -379,7 +383,8 @@ public class ExcelDataService {
                     } catch (IOException e) {
                         e.printStackTrace();
                     } finally {
-                        con.close();
+                        if(con!=null)
+                           con.close();
                     }
                 }
             }

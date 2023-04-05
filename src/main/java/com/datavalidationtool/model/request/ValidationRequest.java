@@ -14,6 +14,7 @@ public class ValidationRequest {
     private int connectionPoolMaxSize;
     private String sourceSchemaName;
     private String targetSchemaName;
+    private String[] tableNames;
     private String tableName;
     private String targetDBName;
     private String targetHost;
