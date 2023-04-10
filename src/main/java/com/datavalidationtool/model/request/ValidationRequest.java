@@ -1,12 +1,14 @@
 package com.datavalidationtool.model.request;
 
 import lombok.*;
+import org.springframework.stereotype.Component;
 
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
+@Component
 public class ValidationRequest {
     private String primaryKeys;
     private String sql;

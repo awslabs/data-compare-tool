@@ -88,12 +88,9 @@ public class FetchValidationDetailsService {
             hostDetails.setDatabaseList(new ArrayList<>() {{
                 add(databaseDetails);
             }});
-
         }catch (Exception ex){
-
         }finally{
             conn.close();
-
         }
         return hostDetails;
     }

@@ -35,6 +35,7 @@
     "react-scripts": "5.0.1",
     "react-select": "^5.7.0",
     "react-table": "^7.8.0",
+    "serve": "^14.2.0",
     "styled-components": "latest",
     "typescript": "^4.7.4",
     "web-vitals": "^2.1.4",

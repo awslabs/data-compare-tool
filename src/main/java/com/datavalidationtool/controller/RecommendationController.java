@@ -34,7 +34,6 @@ import java.util.*;
 @RequestMapping("/dvt")
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 public class RecommendationController {
-
     @Autowired
     RecommendationService recommendationService;
     @Autowired
@@ -45,13 +44,13 @@ public class RecommendationController {
     RemediateService remediateService;
 
     //http://localhost:8080/recommendation/test
-    @GetMapping("/recommendation/test")
+    @GetMapping("recommendation/test")
     public String recommendationApiTest() {
         return recommendationService.recommendationApiTest();
     }
 
     //http://localhost:8080/dvt/recommendation/recommendation-selection?sourceHostName=localhost
-    @GetMapping("/recommendation/recommendation-selection")
+    @GetMapping("recommendation/recommendation-selection")
     public Object getHostRunDetailsSelectionResponse() throws Exception {
         List<RunDetails> runDetailBeans = recommendationService.getHostRunDetailsForSelection();
         if (!runDetailBeans.isEmpty()) {
@@ -61,7 +60,7 @@ public class RecommendationController {
     }
 
 
-    @PostMapping(path = "/recommendation/recommendation-data/v2")
+    @PostMapping(path = "recommendation/recommendation-data/v2")
     RecommendationResponse getRecommendationResponseV2(@RequestBody RecommendationRequest recRequest) throws Exception {
         RunDetails runDetails=RunDetails.builder().runId(recRequest.getRunId()).tableName(recRequest.getTableName()).schemaName(recRequest.getSchemaName()).build();
         RecommendationResponse  recommendationResponse= new RecommendationResponse();
@@ -72,12 +71,12 @@ public class RecommendationController {
     }
 
 
-    @PostMapping("/remediation/remediate-data")
+    @PostMapping("remediation/remediate-data")
     public int insertRunDetailsRecord(@RequestBody RemediateRequest remediateRequest) throws Exception {
         return remediateService.remediateData(remediateRequest);
     }
 
-    @PostMapping("/recommendation/upload")
+    @PostMapping("recommendation/upload")
     public ResponseEntity<?> handleFileUpload(@RequestParam("file") MultipartFile file ) throws Exception {
         String fileName = file.getOriginalFilename() ;
         try {

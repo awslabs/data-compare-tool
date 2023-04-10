@@ -28,6 +28,9 @@ import org.springframework.stereotype.Service;
 import java.sql.*;
 import java.util.Date;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 @Service
 public class ValidationService {
 	public Logger logger = LoggerFactory.getLogger("CompareService");
@@ -35,11 +38,13 @@ public class ValidationService {
 	public DataSource dataSource;
 	@Autowired
 	public RecommendationService recommendationService;
+
 	/**
 	 * 
 	 * @param validationRequest
 	 */
 	public String validateData(ValidationRequest validationRequest) {
+		String runIds="";
 		String runId="";
 		try {
 			String[] schemaParts=null;
@@ -60,20 +65,33 @@ public class ValidationService {
 					//getCurrentSchemaRunInfo(validationRequest);
 					validationRequest.setSchemaRunNumber(0);
 					String[] tableNameParts = validationRequest.getTableNames();
-  					for (String tableName : tableNameParts) {
+  				//	for (String tableName : tableNameParts) {
+					//	validationRequest.setTableName(tableName);
+					//	runId=validate(validationRequest,tableName, null);
+  				//	}
+
+					ExecutorService executor = Executors.newFixedThreadPool(tableNameParts.length);
+					CompareData compareData=null;
+					for (String tableName : tableNameParts) {
 						validationRequest.setTableName(tableName);
-						runId=validate(validationRequest,tableName, null);
-  					}
-		  			
+						 compareData=new CompareData(validationRequest,dataSource,tableName);
+						//compareData1.setValidationRequest(validationRequest);
+						executor.execute(compareData);
+
+					}
+					executor.shutdown();
+					while (!executor.isTerminated()) {
+						//appProperties.setTableName(tableName);
+					}
+					//get last one
+					String runIdTmp= compareData.getRunId();
+					runId=runId+"\n"+runIdTmp;
   				} else {
 					getCurrentSchemaRunInfo(validationRequest);
   					for (String schemaName : schemaParts) {
 						 runId= compareSchema(validationRequest, /*getSourceConn(), getTargetConn(),*/  null);
 					}
   				}
-		//	} else {
-  				//logger.info("Either Source or Target DB connection is not established.");
-  			//}
 	  	} catch (Exception ex) {
 	  		logger.error(ex.getMessage(), ex);
 	  	} finally {
@@ -284,7 +302,6 @@ public class ValidationService {
 				 start = System.currentTimeMillis();
 				long keySize = 0;
 				long valSize = 0;
-				//fn_post_mig_data_validation_dvt2_include_exclude('ops$ora','crtdms','grade','grade','id','','comments',true,false)
 				String dbFunction = "{ call fn_post_mig_data_validation_dvt2_include_exclude(?,?,?,?,?,?,?,?,?) }";
 				CallableStatement cst = null ;
 				try {
@@ -301,7 +318,6 @@ public class ValidationService {
 					cst.setString(7, appProperties.getColumns()!=null?appProperties.getColumns():"");
 					cst.setBoolean(8, appProperties.isIgnoreColumns());
 					cst.setBoolean(9, appProperties.isCheckAdditionalRows());
-					//cst.registerOutParameter(1, Types.VARCHAR);
 				rs= cst.executeQuery();
 				while(rs.next()) {
 					String result = rs.getString(1);
@@ -437,10 +453,17 @@ public class ValidationService {
 			sourceConn.close();
 		}
 		if (!tableNames.isEmpty()) {
+			ExecutorService executor = Executors.newFixedThreadPool(tableNames.size());
+			CompareData compareData=null;
 			for (String tableName : tableNames) {
-				appProperties.setTableName(tableName);
-				runId= validate(appProperties,  tableName, columnList);
+				compareData = new CompareData(appProperties,dataSource,tableName);
 			}
+			executor.shutdown();
+			while (!executor.isTerminated()) {
+			}
+			//get last one
+			String runIdTmp= compareData.getRunId();
+			runId=runId+"\n"+runIdTmp;
 		}
 		return runId;
 	}
@@ -573,4 +596,5 @@ public class ValidationService {
 		return count;
 
 	}
+
 }

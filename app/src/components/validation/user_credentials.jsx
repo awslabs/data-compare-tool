@@ -670,7 +670,6 @@ function getLastRunDetails () {
                    <TableCell align="center">Table Total Rows</TableCell>
                   <TableCell align="center">Missing Rows</TableCell>
                   <TableCell align="center">Mismatch Rows</TableCell>
-
                 </TableRow>
               </TableHead>
               <TableBody>

@@ -3,6 +3,7 @@ import { AuthenticationDetails, CognitoUser, CognitoUserAttribute, CognitoUserPo
 const userPoolId = process.env.REACT_APP_USERPOOL_ID
 const clientId = process.env.REACT_APP_CLIENT_ID
 
+
 console.log(`userpool id=${userPoolId}`)
 console.log(`client id=${clientId}`)
 
@@ -11,7 +12,7 @@ const poolData = {
   ClientId: `${clientId}`,
 }
 
-const userPool: CognitoUserPool = new CognitoUserPool(poolData)
+const userPool = new CognitoUserPool(poolData)
 
 let currentUser: any = userPool.getCurrentUser()
 

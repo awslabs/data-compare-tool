@@ -173,11 +173,10 @@ function reducer(state, action) {
         loadingTableRun: false,
         showTable: true,
 
-        tableRunsToBeLoaded: data1.hostDetailsList
-          .find(() => hostNameSelected)
-          .databaseList.find(() => dbNameSelected)
-          .schemaList.find(() => schemaNameSelected)
-          .tableList.find((tableName) => tableName.value === action.tableName).tableRun,
+        tableRunsToBeLoaded: data1.hostDetailsList.find(() => hostNameSelected)
+                                          .databaseList.find((db) => db.value === dbNameSelected)
+                                          .schemaList.find((schema) => schema.value === schemaNameSelected)
+                                          .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun,
       };
     case CLEAR:
     default:
@@ -420,8 +419,6 @@ function handleSubmit(event) {
     tableNameSelected = event.value;
     dispatch({ type: POPULATE_TABLE_RUN, tableName: event.value });
   };
-
-
   const handleOnTableRunClick = (event) => {
     tableRunSelected = event.value;
     let tempArr = [];
@@ -429,45 +426,43 @@ function handleSubmit(event) {
     for (
       let i = 0,
         len = data1.hostDetailsList
-          .find(() => hostNameSelected)
-          .databaseList.find(() => dbNameSelected)
-          .schemaList.find(() => schemaNameSelected)
-          .tableList.find(obj => { return obj.tableName === tableNameSelected;
-                                                              }) .tableRun.length;
+              .find(() => hostNameSelected)
+              .databaseList.find((db) => db.value === dbNameSelected)
+              .schemaList.find((schema) => schema.value === schemaNameSelected)
+              .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun.length;
+
       i < len;
       i++
     ) {
       let obj = {};
       obj.slNo = slnumber;
         setTableData(tempArr);
-
       obj.tableName = data1.hostDetailsList
-        .find(() => hostNameSelected)
-        .databaseList.find(() => dbNameSelected)
-        .schemaList.find(() => schemaNameSelected)
-        .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableName;
-      obj.tableRun = data1.hostDetailsList
-        .find(() => hostNameSelected)
-        .databaseList.find(() => dbNameSelected)
-        .schemaList.find(() => schemaNameSelected)
-        .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].run;
-      obj.runDate = data1.hostDetailsList
-        .find(() => hostNameSelected)
-        .databaseList.find(() => dbNameSelected)
-        .schemaList.find(() => schemaNameSelected)
-        .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].executionDate;
-      obj.runId = data1.hostDetailsList
-             .find(() => hostNameSelected)
-             .databaseList.find(() => dbNameSelected)
-             .schemaList.find(() => schemaNameSelected)
-             .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].runId;
-      obj.schemaName = data1.hostDetailsList
-             .find(() => hostNameSelected)
-             .databaseList.find(() => dbNameSelected)
-             .schemaList.find(() => schemaNameSelected)
-             .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].schemaName;
+                      .find(() => hostNameSelected)
+                      .databaseList.find((db) => db.value === dbNameSelected)
+                      .schemaList.find((schema) => schema.value === schemaNameSelected)
+                      .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableName;
+         obj.tableRun = data1.hostDetailsList
+                        .find(() => hostNameSelected)
+                        .databaseList.find((db) => db.value === dbNameSelected)
+                        .schemaList.find((schema) => schema.value === schemaNameSelected)
+                        .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].run;
+        obj.runDate = data1.hostDetailsList
+                      .find(() => hostNameSelected)
+                      .databaseList.find((db) => db.value === dbNameSelected)
+                      .schemaList.find((schema) => schema.value === schemaNameSelected)
+                      .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].executionDate;
+        obj.runId = data1.hostDetailsList
+                    .find(() => hostNameSelected)
+                    .databaseList.find((db) => db.value === dbNameSelected)
+                    .schemaList.find((schema) => schema.value === schemaNameSelected)
+                    .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].runId;
+        obj.schemaName = data1.hostDetailsList
+                        .find(() => hostNameSelected)
+                        .databaseList.find((db) => db.value === dbNameSelected)
+                        .schemaList.find((schema) => schema.value === schemaNameSelected)
+                        .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].schemaName;
               console.log("random", obj.tableRun);
-
       if(obj.tableRun==tableRunSelected){
        tempArr.push(obj);
         slnumber++;
@@ -480,45 +475,46 @@ function handleSubmit(event) {
     dispatch({ type: POPULATE_TABLE_RUN, tableName: event.value });
     let tempArr = [];
     let slnumber = 1;
+    console.log(" list.....",data1.hostDetailsList
+                                                   .find(() => hostNameSelected)
+                                                   .databaseList.find((db) => db.value === dbNameSelected)
+                                                   .schemaList.find((schema) => schema.value === schemaNameSelected)
+                                                   .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun.length)
     for (
       let i = 0,
-        len = data1.hostDetailsList
-          .find(() => hostNameSelected)
-          .databaseList.find(() => dbNameSelected)
-          .schemaList.find(() => schemaNameSelected)
-          .tableList.find((table) => table.value === tableNameSelected).tableRun.length;
+        len = data1.hostDetailsList.find(() => hostNameSelected)
+             .databaseList.find((db) => db.value === dbNameSelected)
+             .schemaList.find((schema) => schema.value === schemaNameSelected)
+             .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun.length;
       i < len;
       i++
     ) {
+
       let obj = {};
       obj.slNo = slnumber;
         setTableData(tempArr);
       slnumber++;
-      obj.tableName = data1.hostDetailsList
-        .find(() => hostNameSelected)
-        .databaseList.find(() => dbNameSelected)
-        .schemaList.find(() => schemaNameSelected)
-        .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableName;
-      obj.tableRun = data1.hostDetailsList
-        .find(() => hostNameSelected)
-        .databaseList.find(() => dbNameSelected)
-        .schemaList.find(() => schemaNameSelected)
-        .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].run;
-      obj.runDate = data1.hostDetailsList
-        .find(() => hostNameSelected)
-        .databaseList.find(() => dbNameSelected)
-        .schemaList.find(() => schemaNameSelected)
-        .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].executionDate;
-      obj.runId = data1.hostDetailsList
-             .find(() => hostNameSelected)
-             .databaseList.find(() => dbNameSelected)
-             .schemaList.find(() => schemaNameSelected)
-             .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].runId;
-      obj.schemaName = data1.hostDetailsList
-             .find(() => hostNameSelected)
-             .databaseList.find(() => dbNameSelected)
-             .schemaList.find(() => schemaNameSelected)
-             .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].schemaName;
+      obj.tableName = data1.hostDetailsList.find(() => hostNameSelected)
+                                   .databaseList.find((db) => db.value === dbNameSelected)
+                                   .schemaList.find((schema) => schema.value === schemaNameSelected)
+                                   .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableName;
+      obj.tableRun = data1.hostDetailsList.find(() => hostNameSelected)
+                                  .databaseList.find((db) => db.value === dbNameSelected)
+                                  .schemaList.find((schema) => schema.value === schemaNameSelected)
+                                  .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].run;
+      obj.runDate = data1.hostDetailsList.find(() => hostNameSelected)
+                                 .databaseList.find((db) => db.value === dbNameSelected)
+                                 .schemaList.find((schema) => schema.value === schemaNameSelected)
+                                 .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].executionDate;
+
+      obj.runId = data1.hostDetailsList.find(() => hostNameSelected)
+                               .databaseList.find((db) => db.value === dbNameSelected)
+                               .schemaList.find((schema) => schema.value === schemaNameSelected)
+                               .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].runId;
+      obj.schemaName = data1.hostDetailsList.find(() => hostNameSelected)
+                                    .databaseList.find((db) => db.value === dbNameSelected)
+                                    .schemaList.find((schema) => schema.value === schemaNameSelected)
+                                    .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].schemaName;
               console.log("random", obj);
 
        tempArr.push(obj);
