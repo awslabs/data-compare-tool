@@ -147,7 +147,7 @@ function reducer(state, action) {
         loadingSchemaRun: false,
 
         schemaRunsToBeLoaded: data1.hostDetailsList
-          .find(() => hostNameSelected)
+          .find(((host) => host.value === hostNameSelected) )
           .databaseList.find(() => dbNameSelected)
           .schemaList.find((schema) => schema.value === action.schemaName).schemaRun,
         tableNamesToBeLoaded: [],
@@ -161,7 +161,7 @@ function reducer(state, action) {
         loadingTableName: false,
 
         tableNamesToBeLoaded: data1.hostDetailsList
-          .find(() => hostNameSelected)
+          .find(((host) => host.value === hostNameSelected) )
           .databaseList.find(() => dbNameSelected)
           .schemaList.find((schema) => schema.value === action.schemaName).tableList,
         tableRunsToBeLoaded: [],
@@ -173,7 +173,7 @@ function reducer(state, action) {
         loadingTableRun: false,
         showTable: true,
 
-        tableRunsToBeLoaded: data1.hostDetailsList.find(() => hostNameSelected)
+        tableRunsToBeLoaded: data1.hostDetailsList.find(((host) => host.value === hostNameSelected) )
                                           .databaseList.find((db) => db.value === dbNameSelected)
                                           .schemaList.find((schema) => schema.value === schemaNameSelected)
                                           .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun,
@@ -201,7 +201,7 @@ function handleChange(event) {
     setFile(event.target.files[0])
     }
 function redirectToValidation(event) {
-   navigate(-1);
+   navigate('/dvt/compare');
     }
     function handleDataSync (event) {
         //event.preventDefault();
@@ -426,7 +426,7 @@ function handleSubmit(event) {
     for (
       let i = 0,
         len = data1.hostDetailsList
-              .find(() => hostNameSelected)
+              .find(((host) => host.value === hostNameSelected) )
               .databaseList.find((db) => db.value === dbNameSelected)
               .schemaList.find((schema) => schema.value === schemaNameSelected)
               .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun.length;
@@ -438,27 +438,27 @@ function handleSubmit(event) {
       obj.slNo = slnumber;
         setTableData(tempArr);
       obj.tableName = data1.hostDetailsList
-                      .find(() => hostNameSelected)
+                      .find(((host) => host.value === hostNameSelected) )
                       .databaseList.find((db) => db.value === dbNameSelected)
                       .schemaList.find((schema) => schema.value === schemaNameSelected)
                       .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableName;
          obj.tableRun = data1.hostDetailsList
-                        .find(() => hostNameSelected)
+                        .find(((host) => host.value === hostNameSelected) )
                         .databaseList.find((db) => db.value === dbNameSelected)
                         .schemaList.find((schema) => schema.value === schemaNameSelected)
                         .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].run;
         obj.runDate = data1.hostDetailsList
-                      .find(() => hostNameSelected)
+                      .find(((host) => host.value === hostNameSelected) )
                       .databaseList.find((db) => db.value === dbNameSelected)
                       .schemaList.find((schema) => schema.value === schemaNameSelected)
                       .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].executionDate;
         obj.runId = data1.hostDetailsList
-                    .find(() => hostNameSelected)
+                   .find(((host) => host.value === hostNameSelected) )
                     .databaseList.find((db) => db.value === dbNameSelected)
                     .schemaList.find((schema) => schema.value === schemaNameSelected)
                     .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].runId;
         obj.schemaName = data1.hostDetailsList
-                        .find(() => hostNameSelected)
+                        .find(((host) => host.value === hostNameSelected) )
                         .databaseList.find((db) => db.value === dbNameSelected)
                         .schemaList.find((schema) => schema.value === schemaNameSelected)
                         .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].schemaName;
@@ -476,13 +476,13 @@ function handleSubmit(event) {
     let tempArr = [];
     let slnumber = 1;
     console.log(" list.....",data1.hostDetailsList
-                                                   .find(() => hostNameSelected)
+                                                   .find(((host) => host.value === hostNameSelected) )
                                                    .databaseList.find((db) => db.value === dbNameSelected)
                                                    .schemaList.find((schema) => schema.value === schemaNameSelected)
                                                    .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun.length)
     for (
       let i = 0,
-        len = data1.hostDetailsList.find(() => hostNameSelected)
+        len = data1.hostDetailsList.find(((host) => host.value === hostNameSelected) )
              .databaseList.find((db) => db.value === dbNameSelected)
              .schemaList.find((schema) => schema.value === schemaNameSelected)
              .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun.length;
@@ -494,24 +494,24 @@ function handleSubmit(event) {
       obj.slNo = slnumber;
         setTableData(tempArr);
       slnumber++;
-      obj.tableName = data1.hostDetailsList.find(() => hostNameSelected)
+      obj.tableName = data1.hostDetailsList.find(((host) => host.value === hostNameSelected) )
                                    .databaseList.find((db) => db.value === dbNameSelected)
                                    .schemaList.find((schema) => schema.value === schemaNameSelected)
                                    .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableName;
-      obj.tableRun = data1.hostDetailsList.find(() => hostNameSelected)
+      obj.tableRun = data1.hostDetailsList.find(((host) => host.value === hostNameSelected) )
                                   .databaseList.find((db) => db.value === dbNameSelected)
                                   .schemaList.find((schema) => schema.value === schemaNameSelected)
                                   .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].run;
-      obj.runDate = data1.hostDetailsList.find(() => hostNameSelected)
+      obj.runDate = data1.hostDetailsList.find(((host) => host.value === hostNameSelected) )
                                  .databaseList.find((db) => db.value === dbNameSelected)
                                  .schemaList.find((schema) => schema.value === schemaNameSelected)
                                  .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].executionDate;
 
-      obj.runId = data1.hostDetailsList.find(() => hostNameSelected)
+      obj.runId = data1.hostDetailsList.find(((host) => host.value === hostNameSelected) )
                                .databaseList.find((db) => db.value === dbNameSelected)
                                .schemaList.find((schema) => schema.value === schemaNameSelected)
                                .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].runId;
-      obj.schemaName = data1.hostDetailsList.find(() => hostNameSelected)
+      obj.schemaName = data1.hostDetailsList.find(((host) => host.value === hostNameSelected) )
                                     .databaseList.find((db) => db.value === dbNameSelected)
                                     .schemaList.find((schema) => schema.value === schemaNameSelected)
                                     .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].schemaName;

@@ -34,7 +34,7 @@ const initialValue = {
   password: "postgres",
   schemaNames: ["ops$ora:crtdms"],
   tableNames: "ppt_100",
-  columnNames: "id",
+  columnNames: '',
   exTables:false,
   exColumns:false,
   showTable:false,
@@ -252,7 +252,7 @@ export default function Validation() {
            return;
            }
         }
-     if(exColumns!=null || exColumns!=''){
+     if(exColumns){
         if(userCred.columnNames==null || userCred.columnNames==''){
                 alert("Please provide a column name")
                 return;
