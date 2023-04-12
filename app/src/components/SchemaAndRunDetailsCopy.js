@@ -1,4 +1,4 @@
-import React, { useReducer, useEffect,file, setFile, useState } from "react";
+import React, { useReducer, useEffect,file, setFile, useState,useMemo } from "react";
 import Select from "react-select";
 import TableContainer from "@mui/material/TableContainer";
 import Paper from "@mui/material/Paper";
@@ -18,7 +18,8 @@ import Stack from "@mui/material/Stack";
 import { Link } from "react-router-dom";
 import LoadingSpinner from "./LoadingSpinner";
 import "./styles.css";
-import logo from './dart-logo.jpg'
+import logo from './dart-logo.jpg';
+import Pagination from './pagination/pagination';
 const CLEAR = "clear";
 
 const POPULATE_DATABASE = "populateDatabase";
@@ -26,26 +27,7 @@ const POPULATE_SCHEMA = "populateSchema";
 const POPULATE_SCHEMA_RUN = "populateSchemaRun";
 const POPULATE_TABLE = "populateTable";
 const POPULATE_TABLE_RUN = "populateTableRun";
-let data = [
-  {
-    slNo: 1,
-    tableName: "table1",
-    tableRun: "Run-1",
-    runDate: "2022-12-14",
-  },
-  {
-    slNo: 2,
-    tableName: "table2",
-    tableRun: "Run-2",
-    runDate: "2022-12-14",
-  },
-  {
-    slNo: 3,
-    tableName: "table3",
-    tableRun: "Run-3",
-    runDate: "2022-12-14",
-  },
-];
+let data = [];
 
 // export const data1 = {
 //     'hostDetailsList': [{
@@ -91,6 +73,7 @@ let data = [
 //     }]
 // }
 
+let PageSize = 2;
 const data1 = {};
 const initialState = {
   disableHostName: false,
@@ -194,6 +177,7 @@ function Nestedselect() {
   const [isLoading, setIsLoading] = useState(false);
   const [post, setPost] = useState([]);
   const [tableData, setTableData] = useState(data);
+    const [currentPage, setCurrentPage] = useState(1);
    //const API = 'https://mocki.io/v1/e29d853b-1a21-456d-b8a3-35d5f27da66f';
   const API = 'http://localhost:8090/dvt/recommendation/recommendation-selection';
   const [file, setFile] = useState()
@@ -521,6 +505,13 @@ function handleSubmit(event) {
     }
     setTableData(tempArr);
   };
+
+    const currentTableData = useMemo(() => {
+        const firstPageIndex = (currentPage - 1) * PageSize;
+        const lastPageIndex = firstPageIndex + PageSize;
+        return tableData.slice(firstPageIndex, lastPageIndex);
+        console.log('page table data',tableData)
+    }, [currentPage]);
   // @ts-ignore
   let navigate = useNavigate();
   const redirectToRecommendation =  (event) => {
@@ -671,7 +662,7 @@ function handleSubmit(event) {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {tableData.map((row) => (
+                {currentTableData.map((row) => (
                   <TableRow key={row.slNo} sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
                     <TableCell scope="row">{row.slNo}</TableCell>
                     <TableCell className="tablename" align="left">{row.tableName}</TableCell>
@@ -693,7 +684,7 @@ function handleSubmit(event) {
                          onClick={downloadReport} disabled={isLoading} >
                           Download
                           </Button>
-                           <a href={'http://localhost:8090/dvt/validation/exportData?runId='+row.runId+'&schemaName='+row.schemaName+'&tableName='+row.tableName} class="btn btn-primary">link</a>
+                           <a href={'http://localhost:8090/dvt/validation/exportData?runId='+row.runId+'&schemaName='+row.schemaName+'&tableName='+row.tableName} className="btn btn-primary">link</a>
                       </Box>
                     </TableCell>
                   </TableRow>
@@ -704,7 +695,13 @@ function handleSubmit(event) {
 
           </TableContainer>
                    {" "} &nbsp;&nbsp;{" "}{" "} &nbsp;&nbsp;{" "}
-
+            <Pagination
+                className="pagination-bar"
+                currentPage={currentPage}
+                totalCount={tableData.length}
+                pageSize={PageSize}
+                onPageChange={page => setCurrentPage(page)}
+            />
         </div>
       )}
  <Grid item xs={3}>
