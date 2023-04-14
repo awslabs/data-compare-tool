@@ -31,7 +31,8 @@ public class RemediateService {
         String strInsertValue = "";
         int rowsUpdated = 0;
         SchemaData details = buildUpdatRequest(remediateRequest);
-        details.setSourceSchemaName("ops$ora");
+        details.setSourceSchemaName(remediateRequest.getSchemaName());
+        //TODO: need to remove this
         details.setTargetSchemaName("crtdms");
         if (details.isMismatchPresent()) {
             rowsUpdated = excelDataService.executeDBCall(details);
@@ -101,7 +102,7 @@ public class RemediateService {
             index++;
         }
         //to avoid any , or ; at the end
-        if(strUpdateValue.lastIndexOf(',')==(strUpdateValue.length()-1) || strUpdateValue.lastIndexOf(';')==(strUpdateValue.length()-1))
+        if(strUpdateValue!=null && !strUpdateValue.equals("") &&(strUpdateValue.lastIndexOf(',')==(strUpdateValue.length()-1) || strUpdateValue.lastIndexOf(';')==(strUpdateValue.length()-1)))
             strUpdateValue= strUpdateValue.substring(0,strUpdateValue.length()-1);
         details.setDataUpdateStr(strUpdateValue);
         details.setDataInsertStr(strInsertValue);
