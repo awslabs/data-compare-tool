@@ -511,7 +511,8 @@ function handleSubmit(event) {
         const lastPageIndex = firstPageIndex + PageSize;
         return tableData.slice(firstPageIndex, lastPageIndex);
         console.log('page table data',tableData)
-    }, [currentPage]);
+    }, [currentPage,tableData]);
+
   // @ts-ignore
   let navigate = useNavigate();
   const redirectToRecommendation =  (event) => {
