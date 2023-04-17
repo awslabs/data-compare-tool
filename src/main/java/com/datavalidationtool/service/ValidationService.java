@@ -26,7 +26,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.sql.*;
-import java.util.Date;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -40,7 +39,7 @@ public class ValidationService {
 	public RecommendationService recommendationService;
 
 	/**
-	 * 
+	 *
 	 * @param validationRequest
 	 */
 	public String validateData(ValidationRequest validationRequest) {
@@ -65,27 +64,28 @@ public class ValidationService {
 					//getCurrentSchemaRunInfo(validationRequest);
 					validationRequest.setSchemaRunNumber(0);
 					String[] tableNameParts = validationRequest.getTableNames();
-  				//	for (String tableName : tableNameParts) {
-					//	validationRequest.setTableName(tableName);
-					//	runId=validate(validationRequest,tableName, null);
-  				//	}
-
 					ExecutorService executor = Executors.newFixedThreadPool(tableNameParts.length);
 					CompareData compareData=null;
 					for (String tableName : tableNameParts) {
 						validationRequest.setTableName(tableName);
-						 compareData=new CompareData(validationRequest,dataSource,tableName);
-						//compareData1.setValidationRequest(validationRequest);
-						executor.execute(compareData);
-
+						validationRequest.setRunId(UUID.randomUUID().toString());
+						if (validationRequest.getChunkSize() == 0){
+							compareData = new CompareData(validationRequest, dataSource, tableName);
+						   executor.execute(compareData);
+					}else{
+						generateChunks(validationRequest);
+					}
+						addRunDetails(validationRequest);
 					}
 					executor.shutdown();
 					while (!executor.isTerminated()) {
 						//appProperties.setTableName(tableName);
 					}
 					//get last one
-					String runIdTmp= compareData.getRunId();
-					runId=runId+"\n"+runIdTmp;
+					if (compareData != null) {
+						String runIdTmp = compareData.getRunId();
+						runId = runId + "\n" + runIdTmp;
+					}
   				} else {
 					getCurrentSchemaRunInfo(validationRequest);
   					for (String schemaName : schemaParts) {
@@ -99,6 +99,76 @@ public class ValidationService {
 		}
     return runId;
 	}
+
+	private void addRunDetails(ValidationRequest validationRequest) {
+
+			RunDetails runDetails = null;
+			try {
+			runDetails = getCurrentTableRunInfo(validationRequest);
+			runDetails.setSchemaRun(validationRequest.getSchemaRunNumber());
+			runDetails.setRunId(validationRequest.getRunId());
+			runDetails.setSourceHostName(validationRequest.getTargetHost());
+			runDetails.setTargetHostName(validationRequest.getTargetHost());
+			runDetails.setDatabaseName(validationRequest.getTargetDBName());
+			runDetails.setSchemaName(validationRequest.getSourceSchemaName());
+			runDetails.setTableName(validationRequest.getTableName());
+			Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+			runDetails.setExecutionTime(timestamp);
+				addRunDetailsForSelection(runDetails);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+
+
+	private void generateChunks(ValidationRequest valRequest) throws SQLException {
+		Long totalRecords = getTableCount(valRequest);
+		Connection dbConn=null;
+		getTablePrimaryKeys(valRequest);
+		int ntileSize = (int) (totalRecords / valRequest.getChunkSize());
+		ntileSize = (ntileSize <= 0) ? 1 : ntileSize;
+		StringBuilder sql = new StringBuilder();
+		String pKey=valRequest.getPrimaryKeys()!=null ? valRequest.getPrimaryKeys():valRequest.getUniqueCols();
+		/*if(isHasNoUniqueKey()) {
+			sql.append("SELECT row_number()  OVER (ORDER BY ").append(cols).append(" ) nt FROM ").append(schemaName)
+					.append(".").append(tableName);
+		} else {*/
+			sql.append("SELECT min(").append(pKey).append(") AS startRange, max(").append(pKey)
+					.append(") AS endRange,count(*) AS chunkSize, nt FROM (SELECT ").append(valRequest.getPrimaryKeys()).append(" ,ntile(")
+					.append(ntileSize).append(") OVER (ORDER BY ").append(pKey).append(" ) nt FROM ").append(valRequest.getSourceSchemaName())
+					.append(".").append(valRequest.getTableName()).append(" ) as a GROUP BY nt ORDER BY nt");
+		//}
+
+		logger.info("Fetch Chunks SQL Query: " + sql.toString());
+		dbConn= dataSource.getDBConnection();
+		Statement stmt = dbConn.createStatement();
+		ResultSet rs = stmt.executeQuery(sql.toString());
+		ExecutorService executor = Executors.newFixedThreadPool(ntileSize);
+		CompareData compareData=null;
+		String runId="";
+		int count=0;
+		while (rs.next()) {
+			int columnType= rs.getMetaData().getColumnType(1);
+			long startRange=0;
+			long endRange=0;
+			startRange = rs.getLong("startRange");
+			endRange = rs.getLong("endRange");
+			long chunkSize = rs.getLong("chunkSize");
+			StringBuilder condition = new StringBuilder();
+			condition.append(pKey).append(" >=").append(startRange).append(" and ").append(pKey).append(" <= ").append(endRange);
+			valRequest.setDataFilters(condition.toString());
+			compareData=new CompareData(valRequest,dataSource,valRequest.getTableName());
+			executor.execute(compareData);
+			}
+			executor.shutdown();
+			while (!executor.isTerminated()) {
+				//appProperties.setTableName(tableName);
+			}
+			String runIdTmp= compareData.getRunId();
+			runId=runId+"\n"+runIdTmp;
+	}
+
+
 	public RunDetails getCurrentSchemaRunInfo(ValidationRequest appProperties) throws Exception {
 		RunDetails runDetails = new RunDetails();
 		String query = "SELECT max(schema_run) FROM public.run_details where target_host_name=? and database_name=? and schema_name=?";
@@ -596,5 +666,34 @@ public class ValidationService {
 		return count;
 
 	}
+private void getTablePrimaryKeys(ValidationRequest valRequest) throws SQLException {
+	Map<Integer, String> primaryKeyMap= new HashMap<Integer, String>();
+	StringBuffer primaryKey=new StringBuffer();
+	Connection dbConn=null;
+	ResultSet rs =null;
+	try {
+		dbConn= dataSource.getDBConnection();
+		rs = dbConn.getMetaData().getPrimaryKeys(null, valRequest.getSourceSchemaName().toLowerCase(), valRequest.getTableName());
+		while (rs.next()) {
+			String colName = rs.getString("COLUMN_NAME");
+			Integer pkPosition = rs.getInt("KEY_SEQ");
+			primaryKey.append(colName).append(",");
+		}
+		//primaryKey.deleteCharAt(primaryKey.length()-1);
+		if(primaryKey.length()>0) {
+			valRequest.setPrimaryKeys(primaryKey.substring(0, (primaryKey.length() - 2)));
+		}else{
+			valRequest.setPrimaryKeys(valRequest.getUniqueCols());
+		}
+
+} catch (SQLException ex) {
+		logger.error(ex.getMessage(), ex);
+	} finally {
+		if(rs!=null)
+			rs.close();
+		if(dbConn!=null)
+			dbConn.close();
+	}
+}
 
 }

@@ -139,7 +139,7 @@ function fetchRecData(tableName,schemaName, runId, pageNumber)
 
     requestBody.runId=data.runId;
     requestBody.tableName=data.table;
-    requestBody.schemaName="";
+    requestBody.schemaName=searchParams.get("schemaName");
     requestBody.exceptionType="";
     requestBody.columnDetails=dataToSubmit;
     requestParams.body=JSON.stringify(requestBody)

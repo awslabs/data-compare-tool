@@ -33,4 +33,7 @@ public class ValidationRequest {
     private boolean checkAdditionalRows;
     private int schemaRunNumber;
     private String uniqueCols;
+    private long chunkSize;
+    private String runId;
+
 }
