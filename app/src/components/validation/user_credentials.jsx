@@ -278,7 +278,7 @@ export default function Validation() {
                                                dataFilters:userCred.dataFilters,
                                                uniqueCols:userCred.uniqueCols,
                                                ignoreTables:exTables,
-                                               chunkSize:userCred.fetchSize,
+
                                    });
         console.log("Data To Submit == ", JSON.stringify(requestParams));
          fetch('http://localhost:8090/dvt/validation/compareData', requestParams)
@@ -320,8 +320,7 @@ function getLastRunDetails () {
                                                ignoreColumns:userCred.exColumns,
                                                ignoreTables:exTables,
                                                dataFilters:userCred.dataFilters,
-                                               uniqueCols:userCred.uniqueCols,
-                                               fetchSize:userCred.fetchSize,
+                                               uniqueCols:userCred.uniqueCols
                                    });
         console.log("Data To Submit == ", JSON.stringify(requestParams));
          fetch('http://localhost:8090/dvt/validation/getLastRunDetails', requestParams)
@@ -363,7 +362,6 @@ function getLastRunDetails () {
         uniqueCols: userCred.uniqueCols,
         ignoreTables:exTables,
         ignoreColumns:userCred.exColumns,
-        fetchSize: userCred.fetchSize,
       };
 
       var fetchContent = {
@@ -419,7 +417,7 @@ function getLastRunDetails () {
           <Grid item xs={12}>
             <Typography> Schema Details </Typography>
           </Grid>
-          <Grid item xs={3}>
+          <Grid item xs={12}>
             <TextField
               fullWidth
               autoFocus
@@ -433,7 +431,7 @@ function getLastRunDetails () {
               onChange={handleInput}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={1}>
+          <Grid item xs={12} sm={6} md={4}>
             <TextField
               fullWidth
               size="small"
@@ -448,7 +446,7 @@ function getLastRunDetails () {
               onKeyPress={(e) => !/[0-9]/.test(e.key) && e.preventDefault()}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={2}>
+          <Grid item xs={12} sm={6} md={4}>
             <TextField
               p={0}
               fullWidth
@@ -462,12 +460,12 @@ function getLastRunDetails () {
               onChange={handleInput}
             />
           </Grid>
-          <Grid item xs={12} md={2}>
+          <Grid item xs={12} md={4}>
             <FormGroup>
               <FormControlLabel control={<Checkbox name="usessl" value={userCred.usessl} onChange={handleInput} />} label="SSL Mode" />
             </FormGroup>
           </Grid>
-          <Grid item xs={12} sm={6} md={2}>
+          <Grid item xs={12} sm={6} md={4}>
             <TextField
               fullWidth
               size="small"
@@ -480,7 +478,7 @@ function getLastRunDetails () {
               onChange={handleInput}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={2}>
+          <Grid item xs={12} sm={6} md={4}>
             <TextField
               fullWidth
               size="small"
@@ -620,7 +618,7 @@ function getLastRunDetails () {
                     onChange={handleInput}
                     />
                      </Grid>
-                        <Grid item xs={12} md={6}>
+                        <Grid item xs={12} md={8}>
                                           <TextField
                                             fullWidth
                                             multiline
@@ -632,19 +630,7 @@ function getLastRunDetails () {
                                             error={userCred.dataFilters === '' && ifFormTouched === FormStatus.MODIFIED}
                                             onChange={handleInput}
                                           />
-                                        </Grid><Grid item xs={4} md={2}>
-                                                                   <TextField
-                                                                   fullWidth
-                                                                   multiline
-                                                                   maxRows={4}
-                                                                   name="fetchSize"
-                                                                   label="Chunk Size"
-                                                                   variant="outlined"
-                                                                   value={userCred.fetchSize}
-                                                                   error={userCred.fetchSize === '' && ifFormTouched === FormStatus.MODIFIED}
-                                                                   onChange={handleInput}
-                                                                   />
-                                                                    </Grid>
+                                        </Grid>
           <Grid item md={3}></Grid>
           <Grid item md={6}>
             <Stack direction="row" spacing={2} style={{ justifyContent: "space-evenly" }}>

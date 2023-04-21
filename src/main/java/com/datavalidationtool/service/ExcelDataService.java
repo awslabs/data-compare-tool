@@ -146,6 +146,7 @@ public class ExcelDataService {
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
+
                 cst.setString(1, dbUpdateData.getSourceSchemaName());
                 cst.setString(2, dbUpdateData.getTargetSchemaName());
                 cst.setString(3, dbUpdateData.getTableName().replace("_val", "").substring(dbUpdateData.getTableName().indexOf(".") + 1));

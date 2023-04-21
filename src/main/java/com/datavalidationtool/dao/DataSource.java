@@ -48,7 +48,7 @@ public class DataSource {
             hkDataSource.setConnectionTestQuery("select 1");
             hkDataSource.addDataSourceProperty("socketTimeout", 600000);
             hkDataSource.setMaxLifetime(600000);
-            hkDataSource.setMaximumPoolSize(60);
+            hkDataSource.setMaximumPoolSize(10);
             logger.info("Pool initialized in DS=== %s" , hkDataSource.getMaximumPoolSize());
             this.isPoolInitialized=true;
         }

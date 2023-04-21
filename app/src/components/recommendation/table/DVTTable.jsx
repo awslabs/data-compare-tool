@@ -10,13 +10,18 @@ import Typography from "@mui/material/Typography";
 import logo from '../../dart-logo.jpg'
 import Checkbox from "@mui/material/Checkbox";
 import { useEffect, useState } from "react";
+
+
 import DVTTableHeader from "./DVTTableHeader";
 import DVTTableBody from "./DVTTableBody";
 import DVTTableModal from "./DVTTableModal";
 import Button from "@mui/material/Button";
 import DVTTablePaginator from "./DVTTablePaginator";
+
 import { useNavigate } from "react-router-dom";
+
 import "../css/Recommendation.css";
+
 function DVTTable(props) {
   //const [data, setData] = useState(dataFromFile1);
   const data = props.data;
@@ -24,14 +29,17 @@ function DVTTable(props) {
   const [modalOpenFlag, setModalOpenFlag] = useState(false);
   const [modalDetailsData, setmodalDetailsData] = useState([]);
   const [modalDetailsDataRowIndex, setModalDetailsDataRowIndex] = useState(-1);
+
   const navigate = useNavigate();
+
   console.log("Entered DVTTable ", selectedRows.length);
   console.log("Entered DVTTable Data", setmodalDetailsData);
+
   //alert("DVTTable");
   function redirectToValidation(event) {
-   navigate('/dvt/compare');
-    }
-  function redirectToRecommendation(event) {
+    navigate('/dvt/compare');
+              }
+    function redirectToRecommendation(event) {
    navigate('/dvt/selection');
             }
   function isUnsavedDataExist() {
@@ -44,9 +52,24 @@ function DVTTable(props) {
     navigate("/dvt/recommend?table=" + data.table + "&page=" + pageNumber, {
       replace: true,
     });
+    /*
+      if (pageNumber === 1) {
+        setData(dataFromFile1);
+      } else if (pageNumber === 2) {
+        setData(dataFromFile2);
+      } else {
+        setData(dataFromFile3);
+      }
+      */
   };
 
   const isSelected = (value) => {
+    /*console.log(
+      "Is selected ",
+      value,
+      selectedRows,
+      selectedRows.indexOf(parseInt("" + value))
+    );*/
     let isPresent = false;
     selectedRows.map((val) => {
       if (val === "" + value) {
