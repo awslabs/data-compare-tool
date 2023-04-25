@@ -43,68 +43,43 @@ public class CompareData implements Runnable {
     }
     private String runId;
 
-    public CompareData(ValidationRequest validationRequest, DataSource dataSource,String tableName) {
+    public String getChunkFilter() {
+        return chunkFilter;
+    }
+
+    public void setChunkFilter(String chunkFilter) {
+        this.chunkFilter = chunkFilter;
+    }
+
+    private String chunkFilter;
+
+    public CompareData(ValidationRequest validationRequest, DataSource dataSource,String tableName,String chunkFilter) {
         this.validationRequest = validationRequest;
         this.runId=new String();
         this.dataSource=dataSource;
         this.tableName=tableName;
+        this.chunkFilter=chunkFilter;
     }
     @Override
     public void run() {
         Thread.currentThread().setName("CompareData for Table"+tableName);
+        this.validationRequest.setTableName(tableName);
+        String filter=getChunkFilter();
+        StringBuilder info =new StringBuilder();
+        logger.info("Filter...."+validationRequest.getDataFilters());;
         long start = System.currentTimeMillis();
-        Map<String, String> tempSource = new HashMap<String, String>();
-        Map<String, String> tempTarget = new HashMap<String, String>();
-        List<String> tempSourceFailTuple = new ArrayList<String>();
-        List<String> tempTargetFailTuple = new ArrayList<String>();
-        long end = System.currentTimeMillis();
-        long timeTaken = end - start;
-        long diffInSeconds = (end - start) / 1000;
-        try {
-            validationRequest.setTableName(tableName);
-           String runId= validate(validationRequest,tableName);
-            try {
-                Thread.sleep(2000); //wait 2 seconds
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-           System.out.println("runId...."+runId);
-            System.out.println("table name ..."+tableName);
             setRunId(runId);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        StringBuilder info = new StringBuilder();
-        info.append("\n----------------------------------------------------------"+diffInSeconds);
-    }
-
-    private String validate(ValidationRequest validationRequest,String tableName) throws Exception {
-        long start = System.currentTimeMillis();
-        StringBuilder info = new StringBuilder();
-        String runId="";
-        long usedMemory = 0;
-        try {
-            //checkIfTableExistsInPg(appProperties.getTargetSchemaName().toLowerCase(), tableName.toLowerCase(), "POSTGRESQL"/*, targetConn*/);
-            long rowCount=0;
-            info.append("Schema: ");
-            info.append(validationRequest.getTargetSchemaName());
-            info.append(" , Table: ");
-            info.append(tableName);
-            int i;
-            info = new StringBuilder();
-            info.append("\n###############################################################\n");
-            //logger.info(info.toString());
             Statement stmt = null;
             ResultSet rs = null;
             Connection con=null;
-            try {
+
+        try {
                 con =  dataSource.getDBConnection() ;
-                //stmt = getConnection().createStatement();
+               // System.out.println("con metadata"+ con.getMetaData());
                 stmt = con.createStatement();
-                start = System.currentTimeMillis();
                 long keySize = 0;
                 long valSize = 0;
-                String dbFunction = "{ call fn_post_mig_data_validation_dvt2_include_exclude(?,?,?,?,?,?,?,?,?) }";
+                String dbFunction = "{ call fn_post_mig_data_validation_dvt2_include_exclude(?,?,?,?,?,?,?,?,?,?) }";
                 CallableStatement cst = null ;
                 try {
                     cst = con.prepareCall(dbFunction);
@@ -116,33 +91,20 @@ public class CompareData implements Runnable {
                 cst.setString(3, tableName);
                 cst.setString(4, tableName);
                 cst.setString(5, validationRequest.getUniqueCols()!=null?validationRequest.getUniqueCols():"");
-                cst.setString(6, validationRequest.getDataFilters()!=null?validationRequest.getDataFilters():"");
+                cst.setString(6, filter!=null?filter:"");
                 cst.setString(7, validationRequest.getColumns()!=null?validationRequest.getColumns():"");
                 cst.setBoolean(8, validationRequest.isIgnoreColumns());
                 cst.setBoolean(9, validationRequest.isCheckAdditionalRows());
+                cst.setString(10, validationRequest.getRunId());
+            logger.info(" Filter...in thread."+filter);
                 rs= cst.executeQuery();
                 while(rs.next()) {
                     String result = rs.getString(1);
-                    logger.info("Table "+validationRequest.getTableName(), result);
+                    //logger.info("Table "+validationRequest.getTableName(), result);
                     if(result.contains("Validation complete for Run Id")) {
                         runId = result.substring(31, 63);
                         logger.info("Run Id " ,runId);
                     }
-                }
-                if(!runId.isBlank()) {
-                    if(validationRequest.getTableName().equals(""))
-                        validationRequest.setTableName(tableName);
-                    RunDetails runDetails = getCurrentTableRunInfo(validationRequest);
-                    runDetails.setSchemaRun(validationRequest.getSchemaRunNumber());
-                    runDetails.setRunId(runId);
-                    runDetails.setSourceHostName(validationRequest.getTargetHost());
-                    runDetails.setTargetHostName(validationRequest.getTargetHost());
-                    runDetails.setDatabaseName(validationRequest.getTargetDBName());
-                    runDetails.setSchemaName(validationRequest.getSourceSchemaName());
-                    runDetails.setTableName(tableName);
-                    Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-                    runDetails.setExecutionTime(timestamp);
-                    addRunDetailsForSelection(runDetails);
                 }
             } catch (SQLException ex) {
 
@@ -150,27 +112,35 @@ public class CompareData implements Runnable {
                 logger.error("DB", ex);
 
             } finally {
-                if(rs!=null)
-                    rs.close();
-                if(con!=null)
-                    con.close();
+                if(rs!=null) {
+                    try {
+                        rs.close();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if(con!=null) {
+                    try {
+                        con.close();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
-        } catch (SQLException ex) {
-
-            ex.printStackTrace();
-            logger.error("db", ex);
-
-        }
         long end = System.currentTimeMillis();
         long timeTaken = end - start;
-        info = new StringBuilder();
-        info.append("\n----------------------------------------------------\n");
-        info.append("Finished writing comparison results for "+timeTaken);
-        info.append(validationRequest.getSourceSchemaName());
-        info.append(".");
+        long diffInSeconds = (end - start) / 1000;
+        info.append("Schema: ");
+        info.append(validationRequest.getTargetSchemaName());
+        info.append(" , Table: ");
         info.append(tableName);
+        info.append(" , Total time taken: ");
+        info.append(diffInSeconds);
         logger.info(info.toString());
-        return runId;
+        int i;
+        info = new StringBuilder();
+        info.append("\n###############################################################\n");
+        logger.info(info.toString());
     }
     public RunDetails getCurrentTableRunInfo(ValidationRequest appProperties) throws Exception {
         RunDetails runDetails = new RunDetails();

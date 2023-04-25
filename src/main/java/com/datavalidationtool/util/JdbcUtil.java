@@ -1,8 +1,5 @@
 package com.datavalidationtool.util;
 
-import com.datavalidationtool.dao.DataSource;
-import com.datavalidationtool.model.DatabaseInfo;
-import com.datavalidationtool.model.request.ValidationRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;

@@ -4,9 +4,6 @@ import com.datavalidationtool.dao.DataSource;
 import com.datavalidationtool.model.ExcelDataRequest;
 import com.datavalidationtool.model.SchemaData;
 import com.datavalidationtool.model.request.ExportDataRequest;
-import com.datavalidationtool.model.request.ValidationRequest;
-import com.datavalidationtool.model.response.HostDetails;
-import com.datavalidationtool.model.response.SchemaDetails;
 import com.datavalidationtool.util.JdbcUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,8 +37,6 @@ import java.util.HashMap;
 @RequiredArgsConstructor
 public class ExcelDataService {
     private static final long MAX_ROWS_IN_SHEET = 100000;
-    @Autowired
-    private FetchValidationDetailsService service;
     @Autowired
     public DataSource dataSource;
 
@@ -146,7 +141,6 @@ public class ExcelDataService {
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
-
                 cst.setString(1, dbUpdateData.getSourceSchemaName());
                 cst.setString(2, dbUpdateData.getTargetSchemaName());
                 cst.setString(3, dbUpdateData.getTableName().replace("_val", "").substring(dbUpdateData.getTableName().indexOf(".") + 1));
@@ -285,7 +279,7 @@ public class ExcelDataService {
         DatabaseMetaData meta = con.getMetaData();
         ResultSet rs = meta.getPrimaryKeys(null, details.getSourceSchemaName(), details.getTableName());
         ResultSet rs1 = meta.getColumns(null, details.getSourceSchemaName(), details.getTableName(), null);
-        java.util.ArrayList list = new java.util.ArrayList<String>();
+        ArrayList list = new ArrayList<String>();
         String pk = null;
         while (rs.next()) {
             //pk = rs.getString("COLUMN_NAME");
@@ -412,7 +406,7 @@ public class ExcelDataService {
             DatabaseMetaData meta = con.getMetaData();
             rs = meta.getPrimaryKeys(null, excelDataRequest.getSchemaName(), excelDataRequest.getTableName());
             ResultSet rs1 = meta.getColumns(null, excelDataRequest.getSchemaName(), excelDataRequest.getTableName(), null);
-            java.util.ArrayList list = new java.util.ArrayList<String>();
+            ArrayList list = new ArrayList<String>();
             while (rs.next()) {
                 //pk = rs.getString("COLUMN_NAME");
                 pk = rs.getString(4);

@@ -760,13 +760,13 @@ public class RecommendationServiceImpl implements RecommendationService {
             excelDataRequest.setColList(list);
             String preparedQuery="";
             if(!excelDataRequest.isValidationRequest())
-                preparedQuery=  "SELECT SRC.*, DENSE_RANK () OVER ( ORDER BY SRC.id  ASC) EXCEPTION_RANK FROM \n" +
+                preparedQuery=  "SELECT SRC.*, DENSE_RANK () OVER ( ORDER BY SRC.val_id  ASC) EXCEPTION_RANK FROM \n" +
                     "(SELECT RUN_ID, VAL_ID, UPPER(VAL_TYPE) AS EXCEPTION_STATUS,"+stb.toString()+" FROM "+excelDataRequest.getSchemaName()+"."+excelDataRequest.getTableName()+"_val \n" +
                     "WHERE RUN_ID = ? \n" +
                     "AND UPPER(VAL_TYPE) IN ('MISMATCH_SRC','MISMATCH_TRG','MISSING','EXTRA_RECORD') \n" +
                     ") SRC ORDER BY EXCEPTION_RANK ASC,VAL_ID ASC;\n";
             else {
-                preparedQuery = "SELECT SRC.*, DENSE_RANK () OVER ( ORDER BY SRC.id  ASC) EXCEPTION_RANK FROM \n" +
+                preparedQuery = "SELECT SRC.*, DENSE_RANK () OVER ( ORDER BY SRC.val_id  ASC) EXCEPTION_RANK FROM \n" +
                         "(SELECT RUN_ID, VAL_ID, UPPER(VAL_TYPE) AS EXCEPTION_STATUS,"+stb.toString()+" FROM "+excelDataRequest.getSchemaName()+"."+excelDataRequest.getTableName()+"_val \n" +
                         "WHERE RUN_ID IN ( SELECT RUN_ID FROM "+excelDataRequest.getSchemaName()+"."+excelDataRequest.getTableName()+"_val ORDER BY VAL_ID DESC LIMIT 1 ) \n" +
                         "AND UPPER(VAL_TYPE) IN ('MISMATCH_SRC','MISMATCH_TRG','MISSING','LOG-END','EXTRA_RECORD')  \n" +

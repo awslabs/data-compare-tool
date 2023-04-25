@@ -97,6 +97,7 @@ const initialState = {
 };
 
 function reducer(state, action) {
+console.log("ddddddd",data1);
   switch (action.type) {
     case POPULATE_DATABASE:
       return {
@@ -117,7 +118,7 @@ function reducer(state, action) {
         disableSchemaName: false,
         loadingSchemaName: false,
 
-        schemaNamesToBeLoaded: data1.hostDetailsList.find(() => hostNameSelected).databaseList.find((dbname) => dbname.value === action.dbName).schemaList, //this has to be same in handler
+        schemaNamesToBeLoaded: data1.hostDetailsList.find((hostname) => hostname.value === hostNameSelected).databaseList.find((dbname) => dbname.value === action.dbName).schemaList, //this has to be same in handler
         schemaRunsToBeLoaded: [],
         tableNamesToBeLoaded: [],
         tableRunsToBeLoaded: [],
@@ -129,24 +130,20 @@ function reducer(state, action) {
         disableSchemaRun: true,
         loadingSchemaRun: false,
 
-        schemaRunsToBeLoaded: data1.hostDetailsList
-          .find(((host) => host.value === hostNameSelected) )
-          .databaseList.find(() => dbNameSelected)
-          .schemaList.find((schema) => schema.value === action.schemaName).schemaRun,
+        schemaRunsToBeLoaded: data1.hostDetailsList.find((hostname) => hostname.value === hostNameSelected).databaseList.find((dbname) => dbname.value === dbNameSelected).schemaList.find((schema) => schema.value === schemaNameSelected).schemaRun,
         tableNamesToBeLoaded: [],
         tableRunsToBeLoaded: [],
         //this has to be same in handler
       };
     case POPULATE_TABLE:
-      return {
+     return {
         ...state,
         disableTableName: false,
         loadingTableName: false,
 
-        tableNamesToBeLoaded: data1.hostDetailsList
-          .find(((host) => host.value === hostNameSelected) )
-          .databaseList.find(() => dbNameSelected)
-          .schemaList.find((schema) => schema.value === action.schemaName).tableList,
+        tableNamesToBeLoaded: data1.hostDetailsList.find(((host) => host.value === hostNameSelected) )
+                                                                        .databaseList.find((db) => db.value === dbNameSelected)
+                                                                        .schemaList.find((schema) => schema.value === schemaNameSelected).tableList,
         tableRunsToBeLoaded: [],
       };
     case POPULATE_TABLE_RUN:
@@ -177,7 +174,7 @@ function Nestedselect() {
   const [isLoading, setIsLoading] = useState(false);
   const [post, setPost] = useState([]);
   const [tableData, setTableData] = useState(data);
-    const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
    //const API = 'https://mocki.io/v1/e29d853b-1a21-456d-b8a3-35d5f27da66f';
   const API = 'http://localhost:8090/dvt/recommendation/recommendation-selection';
   const [file, setFile] = useState()
@@ -338,7 +335,7 @@ function handleSubmit(event) {
   const handleOnSchemaNameClick = (event) => {
     schemaNameSelected = event.value;
     console.log("showtablesc", state.showTable);
-    dispatch({ type: POPULATE_SCHEMA_RUN, schemaName: event.value });
+    //dispatch({ type: POPULATE_SCHEMA_RUN, schemaName: event.value });
     dispatch({ type: POPULATE_TABLE, schemaName: event.value });
   };
 
@@ -662,7 +659,7 @@ function handleSubmit(event) {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {currentTableData.map((row) => (
+                {tableData.map((row) => (
                   <TableRow key={row.slNo} sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
                     <TableCell scope="row">{row.slNo}</TableCell>
                     <TableCell className="tablename" align="left">{row.tableName}</TableCell>
