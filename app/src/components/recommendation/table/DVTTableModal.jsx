@@ -38,7 +38,7 @@ function DVTTableModal(props) {
     top: "50%",
     left: "50%",
     transform: "translate(-50%, -50%)",
-    width: 500,
+    width: 1200,
     bgcolor: "background.paper",
     border: "2px solid #000",
     boxshadow: 24,
@@ -176,9 +176,8 @@ function DVTTableModal(props) {
                   <TableBody>
                     {modalDetailsData.columns.map((eachCol, index) => (
                       <TableRow key={index}>
-                        <TableCell>{eachCol.colName}</TableCell>
-                        <TableCell>{eachCol.srcValue}</TableCell>
-
+                        <TableCell ><div className="text-wrap">{eachCol.colName}</div></TableCell>
+                        <TableCell ><div className="text-wrap">{eachCol.srcValue}</div></TableCell>
                         {isNonEditableColumn(eachCol.colName) ? (
                           <TableCell>{eachCol.targetValue}</TableCell>
                         ) : (

@@ -648,7 +648,7 @@ function handleSubmit(event) {
         <div>
           <TableContainer component={Paper} align="center" className="dvttbl">
                    {" "} &nbsp;&nbsp;{" "}{" "} &nbsp;&nbsp;{" "}
-            <Table sx={{ minWidth: 900, border: 1, borderColor: "primary.main", borderRadius: 2, width: 100 }} aria-label="simple table">
+            <Table sx={{ minWidth: 1400, border: 1, borderColor: "primary.main", borderRadius: 2, width: 100 }} aria-label="simple table">
               <TableHead>
                 <TableRow>
                   <TableCell>Sl No.</TableCell>

@@ -32,13 +32,14 @@ const initialValue = {
   usessl: false,
   username: "postgres",
   password: "postgres",
-  schemaNames: ["ops$ora:crtdms"],
-  tableNames: "ppt_100",
+  schemaNames: [],
+  tableNames: "",
   columnNames: '',
   exTables:false,
   exColumns:false,
   showTable:false,
   showRunTable:false,
+  incremental:false,
 };
 
 const reducer = (userCred, action) => {
@@ -89,6 +90,7 @@ export default function Validation() {
   const [tableName, setTableName]= useState("");
   const [schemaName, setSchemaName]= useState("");
   const [srcSchemaName, setSrcSchemaName]= useState("");
+  const [incremental, setIncremental]= useState(false);
   const [data, setData] = useState([{}]);
   const handleInput = (event) => {
     dispatch({
@@ -111,6 +113,10 @@ export default function Validation() {
       }
        setExColumns(event.target.checked);
        }
+
+     const handleIncrementalInput = (event) => {
+              setIncremental(event.target.checked);
+              }
     const handleSrcSchemaChange = (event) => {
         setSrcSchemaName(event.value);
            }
@@ -151,11 +157,20 @@ export default function Validation() {
                                               let obj = {};
                                               obj.slNo = slnumber;
                                               slnumber++;
+                                              if(resultData.incremental)
+                                              {obj.incremental="Yes";
+                                              }else{
+                                              obj.incremental="No";
+                                              }
                                               console.log("slno", slnumber);
                                               obj.tableName = value[length-1] ;
                                               obj.mismatchRows = resultData.mismatchRows;
                                               obj.missingRows = resultData.missingRows;
                                               obj.totalRows = resultData.totalRecords;
+                                              obj.dataFilters = resultData.dataFilters;
+                                              obj.uniqueCols = resultData.uniqueColumns;
+                                              obj.chunkColumns = resultData.chunkColumns;
+                                              obj.chunkSize = resultData.chunkSize;
                                               setTableData(obj);
                                               setShowTable(true);
                                               setShowRunTable(false);
@@ -195,6 +210,7 @@ export default function Validation() {
     const [pageDetails,setPageDetails] = useState([]);
     const [dummy,setDummy] = useState([]);
     const fetchPageDetails = () =>{
+    setIsLoading(true);
         fetch('http://localhost:8090/dvt/validation/dbDetails').then((res =>res.json()))//.then((res => JSON.stringify(res)))
             .then((res) =>{
                 pageDetails.push(res.databaseList);
@@ -226,7 +242,10 @@ export default function Validation() {
                     payload: details,
                 });
             })
-            .catch(err => {throw new Error(err)})
+               .catch((error) => {
+                        setErrorMessage("Unable to validate the data");
+                        })
+            setIsLoading(false);
     }
     useEffect(() => {
         fetchPageDetails();
@@ -258,7 +277,6 @@ export default function Validation() {
                 return;
               }
            }
-
     setShowRunTable(false);
     setShowTable(false);
     setIsLoading(true);
@@ -277,8 +295,10 @@ export default function Validation() {
                                                ignoreColumns:exColumns,
                                                dataFilters:userCred.dataFilters,
                                                uniqueCols:userCred.uniqueCols,
+                                               chunkColumns:userCred.chunkColumns,
                                                ignoreTables:exTables,
                                                chunkSize:userCred.fetchSize,
+                                               incremental:incremental,
                                    });
         console.log("Data To Submit == ", JSON.stringify(requestParams));
          fetch('http://localhost:8090/dvt/validation/compareData', requestParams)
@@ -291,8 +311,8 @@ export default function Validation() {
            .then((resultData) => {
            setIsLoading(false);
              let msg = (resultData !== null || resultData!=='')? resultData : "Something went wrong, please try again";
-             alert(msg);
-             navigate("/dvt/selection");
+             alert("Validation Successful");
+          //   navigate("/dvt/selection");
            })
            .catch((error) => {
            setErrorMessage("Unable to validate the data");
@@ -321,6 +341,7 @@ function getLastRunDetails () {
                                                ignoreTables:exTables,
                                                dataFilters:userCred.dataFilters,
                                                uniqueCols:userCred.uniqueCols,
+                                               chunkColumns:userCred.chunkColumns,
                                                fetchSize:userCred.fetchSize,
                                    });
         console.log("Data To Submit == ", JSON.stringify(requestParams));
@@ -336,7 +357,6 @@ function getLastRunDetails () {
              obj.runs=response.runs;
            setRunTableData(response.runs)
            setShowRunTable(true);
-
            setIsLoading(false);
 
            })
@@ -350,6 +370,7 @@ function getLastRunDetails () {
 
   useEffect(() => {
     if (isEntireFormValid) {
+    setIsLoading(true);
       var params = {
         targetSchemaName: userCred.schemaNames[0],
         sourceSchemaName: "",
@@ -361,9 +382,11 @@ function getLastRunDetails () {
         tableName: userCred.tableNames,
         dataFilters: userCred.dataFilters,
         uniqueCols: userCred.uniqueCols,
+        chunkColumns:userCred.chunkColumns,
         ignoreTables:exTables,
         ignoreColumns:userCred.exColumns,
         fetchSize: userCred.fetchSize,
+        incremental:incremental,
       };
 
       var fetchContent = {
@@ -388,8 +411,9 @@ function getLastRunDetails () {
           console.log("An Unexpected Error occured..");
        })
       navigate('/dvt/recommend',userCred);
+      setIsLoading(false);
     } else {
-      console.log("User details: Invalid" + JSON.stringify(userCred));
+      console.log("User details: Invalid");
     }
    }, [isEntireFormValid]);
 
@@ -607,7 +631,7 @@ function getLastRunDetails () {
                         <FormControlLabel control={<Checkbox name="exColumns" value={exColumns} onChange={handleColExcludeInput} />} label="Exclude" />
                       </FormGroup>
                     </Grid>
-    <Grid item xs={4} md={4}>
+    <Grid item xs={4} md={3}>
                     <TextField
                     fullWidth
                     multiline
@@ -620,31 +644,49 @@ function getLastRunDetails () {
                     onChange={handleInput}
                     />
                      </Grid>
-                        <Grid item xs={12} md={6}>
-                                          <TextField
-                                            fullWidth
-                                            multiline
-                                            maxRows={4}
-                                            name="dataFilters"
-                                            label="Data Filters"
-                                            variant="outlined"
-                                            value={userCred.dataFilters}
-                                            error={userCred.dataFilters === '' && ifFormTouched === FormStatus.MODIFIED}
-                                            onChange={handleInput}
-                                          />
-                                        </Grid><Grid item xs={4} md={2}>
+
+                                          <Grid item xs={12} md={4}>
+                                                                                    <TextField
+                                                                                      fullWidth
+                                                                                      multiline
+                                                                                      maxRows={4}
+                                                                                      name="dataFilters"
+                                                                                      label="Data Filters"
+                                                                                      variant="outlined"
+                                                                                      value={userCred.dataFilters}
+                                                                                      error={userCred.dataFilters === '' && ifFormTouched === FormStatus.MODIFIED}
+                                                                                      onChange={handleInput}
+                                                                                    />
+                                        </Grid> <Grid item xs={12} md={3}>
+                                                                                         <TextField
+                                                                                           fullWidth
+                                                                                           multiline
+                                                                                           maxRows={4}
+                                                                                           name="chunkColumns"
+                                                                                           label="Chunk Columns"
+                                                                                           variant="outlined"
+                                                                                           value={userCred.chunkColumns}
+                                                                                           error={userCred.chunkColumns === '' && ifFormTouched === FormStatus.MODIFIED}
+                                                                                           onChange={handleInput}
+                                                                                         /></Grid> <Grid item xs={3} md={1}>
                                                                    <TextField
                                                                    fullWidth
                                                                    multiline
                                                                    maxRows={4}
                                                                    name="fetchSize"
-                                                                   label="Chunk Size"
+                                                                   label="No. of Chunks"
                                                                    variant="outlined"
                                                                    value={userCred.fetchSize}
                                                                    error={userCred.fetchSize === '' && ifFormTouched === FormStatus.MODIFIED}
                                                                    onChange={handleInput}
                                                                    />
                                                                     </Grid>
+                                                                 <Grid item xs={3} md={1}>
+                                                                     <FormGroup>
+                                                                      <FormControlLabel control={<Checkbox name="incremental"  onChange={handleIncrementalInput} value={incremental}  />} label="Incremental Run" />
+                                                                       </FormGroup>
+                                                                       </Grid>
+
           <Grid item md={3}></Grid>
           <Grid item md={6}>
             <Stack direction="row" spacing={2} style={{ justifyContent: "space-evenly" }}>
@@ -676,7 +718,7 @@ function getLastRunDetails () {
  { showTable && (
         <div>
           <TableContainer component={Paper} align="center" className="dvttbl">
-            <Table sx={{ minWidth: 900, border: 1, borderColor: "primary.main", borderRadius: 2, width: 200 }} aria-label="simple table">
+            <Table sx={{ minWidth: 1600, border: 1, borderColor: "primary.main", borderRadius: 2, width: 200 }} aria-label="simple table">
               <TableHead>
                 <TableRow>
                   <TableCell>Sl No.</TableCell>
@@ -684,6 +726,11 @@ function getLastRunDetails () {
                    <TableCell align="center">Table Total Rows</TableCell>
                   <TableCell align="center">Missing Rows</TableCell>
                   <TableCell align="center">Mismatch Rows</TableCell>
+                  <TableCell align="center">Unique Columns</TableCell>
+                  <TableCell align="center">Data Filter</TableCell>
+                  <TableCell align="center">Chunk Column</TableCell>
+                  <TableCell align="center">No. of Chunks</TableCell>
+                  <TableCell align="center">Incremental</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -693,9 +740,12 @@ function getLastRunDetails () {
                     <TableCell align="center">{tableData.totalRows}</TableCell>
                     <TableCell align="center">{tableData.missingRows}</TableCell>
                     <TableCell align="center">{tableData.mismatchRows}</TableCell>
-
+                    <TableCell align="center">{tableData.uniqueCols}</TableCell>
+                    <TableCell align="center">{tableData.dataFilters}</TableCell>
+                    <TableCell align="center">{tableData.chunkColumns}</TableCell>
+                    <TableCell align="center">{tableData.chunkSize}</TableCell>
+                    <TableCell align="center">{tableData.incremental}</TableCell>
                   </TableRow>
-
               </TableBody>
             </Table>
             {" "} &nbsp;&nbsp;{" "}
@@ -712,7 +762,7 @@ function getLastRunDetails () {
  { showRunTable && (
  <div style={{ marginTop: 10, marginBottom: 10 }}>
    <TableContainer component={Paper} align="center" className="dvttbl">
-              <Table sx={{ minWidth: 900, border: 1, borderColor: "primary.main", borderRadius: 2, width: 200 }} aria-label="simple table">
+              <Table sx={{ minWidth: 1600, border: 1, borderColor: "primary.main", borderRadius: 2, width: 200 }} aria-label="simple table">
                 <TableHead>
                   <TableRow>
                     <TableCell>Sl No.</TableCell>
@@ -721,10 +771,23 @@ function getLastRunDetails () {
                     <TableCell align="center">Missing Rows</TableCell>
                     <TableCell align="center">Mismatch Rows</TableCell>
                      <TableCell align="center">Run Date</TableCell>
+                      <TableCell align="center">Unique Columns</TableCell>
+                      <TableCell align="center">Data Filter</TableCell>
+                      <TableCell align="center">Chunk Column</TableCell>
+                      <TableCell align="center">No. of Chunks</TableCell>
+                      <TableCell align="center">Incremental</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
+
                  {runTableData.map((element,index) => {
+                 var incrtext="";
+                 if(element.incremental){
+                 incrtext="Yes";
+                 }
+                 else{
+                 incrtext="No";
+                 }
                    return (
                  <TableRow key={index+1} sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
                                     <TableCell scope="row">{index+1}</TableCell>
@@ -733,6 +796,11 @@ function getLastRunDetails () {
                                     <TableCell align="center">{element.missingRows}</TableCell>
                                      <TableCell align="center">{element.mismatchRows}</TableCell>
                                     <TableCell align="center">{element.lastRunDate}</TableCell>
+                                    <TableCell align="center">{element.uniqueCols}</TableCell>
+                                    <TableCell align="center">{element.dataFilters}</TableCell>
+                                    <TableCell align="center">{element.chunkColumns}</TableCell>
+                                    <TableCell align="center">{element.chunkSize}</TableCell>
+                                    <TableCell align="center">{incrtext}</TableCell>
                                   </TableRow>
    );
  })}

@@ -17,4 +17,11 @@ public class RunInfo {
     long mismatchRows;
     String duration;
     String lastRunDate;
+    String uniqueColumns;
+    String chunkColumns;
+    String dataFilters;
+    int chunkSize;
+    boolean incremental;
+
+
 }

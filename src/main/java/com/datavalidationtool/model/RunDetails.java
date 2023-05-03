@@ -24,7 +24,14 @@ public class RunDetails {
     private String executionDate;
     private String colNames;
     private Timestamp executionTime;
-    private boolean validationrequest;
+    private boolean validationRequest;
+    private String dataFilters;
+    private String uniqueColumns;
+    private String chunkColumn;
+    private int chunkSize;
+    private boolean incremental;
+
+
 
     public RunDetails() {
     }

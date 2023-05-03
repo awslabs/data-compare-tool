@@ -643,7 +643,7 @@ public class RecommendationServiceImpl implements RecommendationService {
 
     public RecommendationResponse getRecommendationResponseV2(RunDetails runDetails) throws Exception {
         RecommendationResponse recommendationResponse = new RecommendationResponse();
-        ExcelDataRequest excelDataRequest = ExcelDataRequest.builder().runId(runDetails.getRunId()).schemaName(runDetails.getSchemaName()).tableName(runDetails.getTableName()).validationRequest(runDetails.isValidationrequest()).build();
+        ExcelDataRequest excelDataRequest = ExcelDataRequest.builder().runId(runDetails.getRunId()).schemaName(runDetails.getSchemaName()).tableName(runDetails.getTableName()).validationRequest(runDetails.isValidationRequest()).build();
         Connection con=null;
        try{  con=dataSource.getDBConnection();
         ResultSet resultSet = getResultSet(excelDataRequest, recommendationResponse,con);
