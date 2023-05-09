@@ -37,6 +37,9 @@ export default props => {
       <a className="menu-item" href="/dvt/selection">
         Remediation
       </a>
+         <a className="menu-item" href="/dvt/addschedules">
+              schedules
+            </a>
         <a className="menu-item" href="/dvt/signin" onClick={handleSignout} >
               Sign out
             </a>

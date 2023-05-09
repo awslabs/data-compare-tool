@@ -47,8 +47,9 @@ public class DataSource {
             hkDataSource.setPassword(awsSecret.getPassword());
             hkDataSource.setConnectionTestQuery("select 1");
             hkDataSource.addDataSourceProperty("socketTimeout", 600000);
-            hkDataSource.setMaxLifetime(600000);
-            hkDataSource.setMaximumPoolSize(60);
+            hkDataSource.setMaxLifetime(300000);
+            hkDataSource.setMaximumPoolSize(100);
+            hkDataSource.setIdleTimeout(600000);
             logger.info("Pool initialized in DS=== %s" , hkDataSource.getMaximumPoolSize());
             this.isPoolInitialized=true;
         }

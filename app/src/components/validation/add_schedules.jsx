@@ -25,6 +25,11 @@ import { Link } from "react-router-dom";
 import LoadingSpinner from "../LoadingSpinner";
 import "../styles.css";
 import logo from '../dart-logo.jpg'
+import DatePicker from "react-datepicker";
+
+import DateTimePicker from 'react-datetime-picker';
+import "react-datepicker/dist/react-datepicker.css";
+
 const initialValue = {
   hostname: "ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com",
   port: "5432",
@@ -84,15 +89,27 @@ export default function Validation() {
   const [showTable, setShowTable]= useState(false);
   const [showRunTable, setShowRunTable]= useState(false);
   const [runTableData, setRunTableData] = useState([{}]);
+  const [showScheduleTable, setShowScheduleTable]= useState(false);
+  const [scheduleTableData, setScheduleTableData] = useState([{}]);
   const [exTables, setExTables]= useState(false);
   const [exColumns, setExColumns]= useState(false);
   const [tableNames, setTableNames]= useState("");
+
   const [tableName, setTableName]= useState("");
   const [schemaName, setSchemaName]= useState("");
   const [srcSchemaName, setSrcSchemaName]= useState("");
-  const [checkAdditionalRows, setCheckAdditionalRows]= useState(false);
   const [incremental, setIncremental]= useState(false);
   const [data, setData] = useState([{}]);
+  const [value, onClick]= useState("");
+
+  const [scheduleDate, setScheduleDate]= useState(new Date());
+  const [scheduleEndDate, setScheduleEndDate]= useState(new Date());
+  const [reoccurrence, setReoccurrence]= useState(false);
+  const [dayFrequency, setDayFrequency]= useState("");
+  const [timeFrequency, setTimeFrequency]= useState("");
+  const [timeOccurrence, setTimeOccurrence]= useState("");
+  const [numOccurrence, setNumOccurrence]= useState("");
+
   const handleInput = (event) => {
     dispatch({
       type: "update",
@@ -116,13 +133,10 @@ export default function Validation() {
        }
 
      const handleIncrementalInput = (event) => {
-              setIncremental(event.target.checked);
-              }
-     const handleAdditionalRowsInput = (event) => {
-           setCheckAdditionalRows(event.target.checked);
-         }
+      setIncremental(event.target.checked);
+      }
     const handleSrcSchemaChange = (event) => {
-        setSrcSchemaName(event.value);
+     setSrcSchemaName(event.value);
            }
     function redirectToHome (event){
     navigate("/dvt/menu")
@@ -145,6 +159,7 @@ export default function Validation() {
         setTableNames(value);
         setIsLoading(true);
         setShowRunTable(false);
+        setShowScheduleTable(false);
         setShowTable(false);
          let requestParams = { method: "POST", headers: "", body: "" };
                  requestParams.headers = { "Content-Type": "application/json" };
@@ -178,6 +193,7 @@ export default function Validation() {
                                               setTableData(obj);
                                               setShowTable(true);
                                               setShowRunTable(false);
+                                              setShowScheduleTable(false);
                                               setIsLoading(false);
                                     })
                                     .catch((error) => {
@@ -190,7 +206,17 @@ export default function Validation() {
         let databaseList=[];
         let clearable = true;
 
-    const handleSchemaChange = (event) =>{
+const handleDayFrequencyChange = (event) =>{
+      if(event!=null){
+            setDayFrequency(event.value);
+            }
+     }
+const handleTimeFrequencyChange = (event) =>{
+      if(event!=null){
+            setTimeFrequency(event.value);
+            }
+     }
+const handleSchemaChange = (event) =>{
         let list= [];
         if(event!=null){
             initialValue.tableNames=[]
@@ -282,6 +308,7 @@ export default function Validation() {
               }
            }
     setShowRunTable(false);
+    setShowScheduleTable(false)
     setShowTable(false);
     setIsLoading(true);
      let requestParams = { method: "POST", headers: "", body: "" };
@@ -289,11 +316,6 @@ export default function Validation() {
         requestParams.body =   JSON.stringify({
                                                targetSchemaName : schemaName,
                                                sourceSchemaName : srcSchemaName,
-                                               targetDBName : userCred.dbname,
-                                               targetHost : userCred.hostname,
-                                               targetPort : userCred.port,
-                                               targetUserName :userCred.username,
-                                               targetUserPassword :userCred.password,
                                                tableNames : tableNames,
                                                columns: userCred.columnNames,
                                                ignoreColumns:exColumns,
@@ -303,10 +325,16 @@ export default function Validation() {
                                                ignoreTables:exTables,
                                                chunkSize:userCred.fetchSize,
                                                incremental:incremental,
-                                               checkAdditionalRows:checkAdditionalRows,
+                                               scheduleTime:scheduleDate,
+                                               reoccurrence:reoccurrence,
+                                               dayFrequency:dayFrequency,
+                                               scheduleEndDate:scheduleEndDate,
+                                               timeOccurrence:userCred.timeOccurrence,
+                                               timeFrequency:timeFrequency,
+                                               numOccurrence:userCred.numOccurrence,
                                    });
         console.log("Data To Submit == ", JSON.stringify(requestParams));
-         fetch('http://localhost:8090/dvt/validation/compareData', requestParams)
+         fetch('http://localhost:8090/dvt/schedule/addSchedule', requestParams)
 
      .then((response) => {
              if (response.ok) {
@@ -316,7 +344,7 @@ export default function Validation() {
            .then((resultData) => {
            setIsLoading(false);
              let msg = (resultData !== null || resultData!=='')? resultData : "Something went wrong, please try again";
-             alert("Validation Successful");
+             alert("Added schedules");
           //   navigate("/dvt/selection");
            })
            .catch((error) => {
@@ -361,7 +389,8 @@ function getLastRunDetails () {
              obj.schemaName=response.schemaName;
              obj.runs=response.runs;
            setRunTableData(response.runs)
-           setShowRunTable(true);
+           setShowRunTable(true)
+           setShowScheduleTable(false);
            setIsLoading(false);
 
            })
@@ -372,6 +401,49 @@ function getLastRunDetails () {
              console.log("Error ::", error);
            });
        }
+function getScheduleDetails () {
+    setShowTable(false);
+    setIsLoading(true);
+     let requestParams = { method: "POST", headers: "", body: "" };
+        requestParams.headers = { "Content-Type": "application/json" };
+        requestParams.body =   JSON.stringify({
+                                               targetSchemaName : schemaName,
+                                               sourceSchemaName : srcSchemaName,
+                                               targetDBName : userCred.dbname,
+                                               targetHost : userCred.hostname,
+                                               targetPort : userCred.port,
+                                               targetUserName :userCred.username,
+                                               targetUserPassword :userCred.password,
+                                               tableName : tableName,
+                                               columns: userCred.columnNames,
+                                               ignoreColumns:userCred.exColumns,
+                                               ignoreTables:exTables,
+                                               dataFilters:userCred.dataFilters,
+                                               uniqueCols:userCred.uniqueCols,
+                                               chunkColumns:userCred.chunkColumns,
+                                               fetchSize:userCred.fetchSize,
+                                   });
+        console.log("Data To Submit == ", JSON.stringify(requestParams));
+         fetch('http://localhost:8090/dvt/schedule/getSchedule', requestParams)
+     .then((response) => {
+             if (response.ok) {
+               return response.json();
+             }
+           })
+           .then((response) => {
+           setScheduleTableData(response)
+           setShowScheduleTable(true);
+           setIsLoading(false);
+
+           })
+           .catch((error) => {
+           setErrorMessage("Unable to validate the data");
+           setIsLoading(false);
+            alert("Something went wrong, please try again");
+             console.log("Error ::", error);
+           });
+       }
+
 
   useEffect(() => {
     if (isEntireFormValid) {
@@ -432,12 +504,20 @@ function getLastRunDetails () {
         navigate("/dvt/selection");
     }
       const [state] = useReducer(reducer);
-
+const frequency = [
+  { value: 'D', label: 'daily' },
+  { value: 'W', label: 'weekly' },
+  { value: 'M', label: 'monthly' }
+]
+const frequencyDay = [
+  { value: 'MI', label: 'minute' },
+  { value: 'H', label: 'hour' },
+]
   return (
     <div>
  <Grid container mb={2} spacing={1} columnSpacing={{ xs: 2 }} justifyContent="center" alignItems="center">
       <Grid item xs={12} sm={6} md={2}><img src={logo}  alt="Logo"  align="right" valign="bottom"/></Grid><Grid item xs={12} sm={6} md={10}>
-        <Typography variant="h4" align="left" valign="bottom" >Data Validation And Remediation Tool (DVART) </Typography>
+        <Typography variant="h4" align="left" valign="bottom" >Validation Schedules </Typography>
       </Grid></Grid>
 
       <Box mx={{ xs: 1, md: 10 }} px={{ xs: 2 }} sx={{ border: 1, borderColor: "primary.main", borderRadius: 2 }}>
@@ -445,84 +525,13 @@ function getLastRunDetails () {
           <Grid item xs={12}>
             <Typography></Typography>
           </Grid>
-          <Grid item xs={12}>
-            <Typography> Schema Details </Typography>
-          </Grid>
-          <Grid item xs={3}>
-            <TextField
-              fullWidth
-              autoFocus
-              size="small"
-              required
-              name="hostname"
-              label="Hostname"
-              variant="outlined"
-              value={userCred.hostname}
-              error={userCred.hostname === "" && ifFormTouched === FormStatus.MODIFIED}
-              onChange={handleInput}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={1}>
-            <TextField
-              fullWidth
-              size="small"
-              required
-              name="port"
-              label="Port"
-              type="number"
-              variant="outlined"
-              value={userCred.port}
-              error={userCred.port === "" && ifFormTouched === FormStatus.MODIFIED}
-              onChange={handleInput}
-              onKeyPress={(e) => !/[0-9]/.test(e.key) && e.preventDefault()}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={2}>
-            <TextField
-              p={0}
-              fullWidth
-              size="small"
-              required
-              name="dbname"
-              label="Database"
-              variant="outlined"
-              value={userCred.dbname}
-              error={userCred.dbname === "" && ifFormTouched === FormStatus.MODIFIED}
-              onChange={handleInput}
-            />
-          </Grid>
-          <Grid item xs={12} md={2}>
-            <FormGroup>
-              <FormControlLabel control={<Checkbox name="usessl" value={userCred.usessl} onChange={handleInput} />} label="SSL Mode" />
-            </FormGroup>
-          </Grid>
-          <Grid item xs={12} sm={6} md={2}>
-            <TextField
-              fullWidth
-              size="small"
-              required
-              name="username"
-              label="Username"
-              variant="outlined"
-              value={userCred.username}
-              error={userCred.username === "" && ifFormTouched === FormStatus.MODIFIED}
-              onChange={handleInput}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={2}>
-            <TextField
-              fullWidth
-              size="small"
-              required
-              name="password"
-              label="Password"
-              type="password"
-              variant="outlined"
-              value={userCred.password}
-              error={userCred.password === "" && ifFormTouched === FormStatus.MODIFIED}
-              onChange={handleInput}
-            />
-          </Grid>
+
+
+
+
+
+
+
           <Grid item xs={12} md={4}></Grid>
         </Grid>
         <Divider pb={2} />
@@ -584,7 +593,7 @@ function getLastRunDetails () {
                                          />
                                      </Grid>
 
-          <Grid item xs={12} md={2}>
+          <Grid item xs={12} md={3}>
             {/*<TextField*/}
             {/*  fullWidth*/}
             {/*  multiline*/}
@@ -610,17 +619,13 @@ function getLastRunDetails () {
                   variant="outlined"
                   options={userCred.tableNames}
                   onChange={handleTableInput}
-              /> </Grid>
-            <Grid item xs={12} md={1}>
-              <FormGroup>
-                <FormControlLabel control={<Checkbox name="exTables" value={exTables} onChange={handleTabExcludeInput} />} label="Exclude" />
-                 </FormGroup>
-
-          </Grid><Grid item xs={3} md={1}>
-                 <FormGroup>
-                 <FormControlLabel control={<Checkbox name="checkAdditionalRows"  onChange={handleAdditionalRowsInput} value={checkAdditionalRows}  />} label="Two Way" />
-                 </FormGroup>
+              />
           </Grid>
+          <Grid item xs={12} md={1}>
+                      <FormGroup>
+                        <FormControlLabel control={<Checkbox name="exTables" value={exTables} onChange={handleTabExcludeInput} />} label="Exclude" />
+                      </FormGroup>
+                    </Grid>
           <Grid item xs={12} md={3}>
             <TextField
               fullWidth
@@ -692,19 +697,129 @@ function getLastRunDetails () {
                                                                     </Grid>
                                                                  <Grid item xs={3} md={1}>
                                                                      <FormGroup>
-                                                                      <FormControlLabel control={<Checkbox name="incremental"  onChange={handleIncrementalInput} value={incremental}  />} label="Incremental Run" />
+                                                                      <FormControlLabel control={<Checkbox name="incremental"  onChange={handleIncrementalInput} value={incremental}  />} label="CDC Run" />
                                                                        </FormGroup>
                                                                        </Grid>
 
-          <Grid item md={3}></Grid>
-          <Grid item md={6}>
+
+<Grid item xs={1} md={2}>
+            <Typography>Select Start Date and Time</Typography>
+          </Grid><Grid item xs={1} md={2}>
+                     <DatePicker
+                          multiline
+                          selected={scheduleDate}
+                          onChange={(date) => setScheduleDate(date)}
+                          timeInputLabel="Time:"
+                          dateFormat="MM/dd/yyyy h:mm aa"
+                          showTimeInput
+                          name="scheduleDate"
+                          label="Schedule Date"
+                          variant="outlined"
+                          value={userCred.scheduleDate}
+                        />
+                     </Grid>
+                     <Grid item xs={1} md={2}>
+
+                                            <FormGroup>
+                                            <FormControlLabel control={<Checkbox name="reoccurrence"  onChange={handleIncrementalInput} value={incremental}  />} label="Reoccurrence" />
+                                            </FormGroup>
+                                            </Grid>
+                      <Grid item xs={12} md={2}>
+
+                                                              <Select
+                                                                  isDisabled= {false}
+                                                                  isLoading= {false}
+                                                                  isClearable
+                                                                  isSearchable={false}
+                                                                  placeholder="Frequency"
+                                                                  defaultValue={frequency[0]}
+                                                                  name="dayFrequency"
+                                                                  label="Frequency"
+                                                                  variant="outlined"
+                                                                  options={frequency}
+                                                                  onChange={handleDayFrequencyChange}
+                                                              />
+
+
+                               </Grid>
+ <Grid item xs={1} md={2}>
+                                   <Typography> Select End Date and Time</Typography>
+                                 </Grid><Grid item xs={1} md={2}>
+                                            <DatePicker
+                                                 multiline
+                                                 selected={scheduleDate}
+                                                 onChange={(date) => setScheduleEndDate(date)}
+                                                 timeInputLabel="Time:"
+                                                 dateFormat="MM/dd/yyyy h:mm aa"
+                                                 showTimeInput
+                                                 name="scheduleEndDate"
+                                                 label="Schedule End Date"
+                                                 variant="outlined"
+                                                 value={userCred.scheduleEndDate}
+                                               />
+                                            </Grid>
+                                            <Grid item xs={1} md={2}>
+                                                        <Typography>Reoccurrence of every</Typography>
+                                                      </Grid>
+                       <Grid item xs={3} md={1}>
+
+                       <TextField
+                           fullWidth
+                           multiline
+                           maxRows={4}
+                           name="timeOccurrence"
+                           label="Time"
+                           variant="outlined"
+                           value={userCred.timeOccurrence}
+                           error={userCred.timeOccurrence === '' && ifFormTouched === FormStatus.MODIFIED}
+                           onChange={handleInput}
+                       />
+                       </Grid>
+
+<Grid item xs={12} md={1}>
+
+                                                              <Select
+                                                                  isDisabled= {false}
+                                                                  isLoading= {false}
+                                                                  isClearable
+                                                                  isSearchable={false}
+                                                                  placeholder="Frequency"
+                                                                  defaultValue={frequencyDay[0]}
+                                                                  name="timeFrequency"
+                                                                  label="Frequency"
+                                                                  variant="outlined"
+                                                                  options={frequencyDay}
+                                                                  onChange={handleTimeFrequencyChange}
+                                                              />
+
+
+                               </Grid>
+<Grid item xs={3} md={2}>
+
+                       <TextField
+                           fullWidth
+                           multiline
+                           maxRows={4}
+                           name="numOccurrence"
+                           label="Number of occurrences"
+                           variant="outlined"
+                           value={userCred.numOccurrence}
+                           error={userCred.numOccurrence === '' && ifFormTouched === FormStatus.MODIFIED}
+                           onChange={handleInput}
+                       />
+                       </Grid>
+<Grid item md={6}></Grid>
+      <Grid item md={1}></Grid>    <Grid item md={7}>
             <Stack direction="row" spacing={2} style={{ justifyContent: "space-evenly" }}>
               <Button color="secondary" variant="contained" onClick={handleSubmit} disabled={isLoading}>
-                Compare
+                Add Schedules
               </Button>
-              <Button color="success" variant="contained" onClick={getLastRunDetails}>
-                Last Run Info
+              <Button color="success" variant="contained" onClick={getScheduleDetails}>
+                View Schedules
               </Button>
+                 <Button color="success" variant="contained" onClick={getLastRunDetails}>
+                             Last Run Info
+                           </Button>
               <Button color="primary" variant="contained" onClick={handleRecomm}>
                 Recommendation
               </Button>
@@ -714,7 +829,7 @@ function getLastRunDetails () {
             </Stack>
 
           </Grid>
-          <Grid item md={3}></Grid>
+
          <Grid item md={5}></Grid>
         <Grid item md={2}>{isLoading ? <LoadingSpinner /> : ""}</Grid>
         <Grid item md={4}></Grid>
@@ -820,6 +935,57 @@ function getLastRunDetails () {
       </div>
        )}
       </Grid>
+
+      { showScheduleTable && (
+              <Grid item xs={12}>
+                      <Typography variant="h5">Schedule Details</Typography>
+                    </Grid> )}
+      <Grid item xs={12} md={6}>
+       { showScheduleTable && (
+       <div style={{ marginTop: 10, marginBottom: 10 }}>
+         <TableContainer component={Paper} align="center" className="dvttbl">
+                    <Table sx={{ minWidth: 1600, border: 1, borderColor: "primary.main", borderRadius: 2, width: 200 }} aria-label="simple table">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Sl No.</TableCell>
+                          <TableCell align="center">Source Schema</TableCell>
+                           <TableCell align="center">Target Schema</TableCell>
+                          <TableCell align="center">Table</TableCell>
+                          <TableCell align="center">Schedule Time</TableCell>
+                           <TableCell align="center">Status</TableCell>
+                            <TableCell align="center">Run Id</TableCell>
+                            <TableCell align="center">Data Filter</TableCell>
+                            <TableCell align="center">Chunk Column</TableCell>
+                            <TableCell align="center">No. of Chunks</TableCell>
+                            <TableCell align="center">Duration</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+
+                       {scheduleTableData.map((element,index) => {
+                         return (
+                       <TableRow key={index+1} sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
+                                          <TableCell scope="row">{index+1}</TableCell>
+                                           <TableCell scope="row">{element.sourceSchemaName}</TableCell>
+                                            <TableCell scope="row">{element.targetSchemaName}</TableCell>
+                                          <TableCell scope="row">{element.table}</TableCell>
+                                          <TableCell align="center">{element.scheduleTime}</TableCell>
+                                          <TableCell align="center">{element.status}</TableCell>
+                                           <TableCell align="center">{element.runId}</TableCell>
+                                          <TableCell align="center">{element.dataFilters}</TableCell>
+                                          <TableCell align="center">{element.chunkColumns}</TableCell>
+                                          <TableCell align="center">{element.chunkSize}</TableCell>
+                                          <TableCell align="center">{element.duration}</TableCell>
+                                        </TableRow>
+         );
+       })}
+                </TableBody>
+                 </Table>
+                 {" "} &nbsp;&nbsp;{" "}{" "} &nbsp;&nbsp;{" "}
+                 </TableContainer>
+            </div>
+             )}
+            </Grid>
  {" "} &nbsp;&nbsp;{" "}
       </Box>
     </div>

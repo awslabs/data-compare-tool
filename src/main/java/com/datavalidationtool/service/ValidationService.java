@@ -71,9 +71,13 @@ public class ValidationService {
 						validationRequest.setRunId(UUID.randomUUID().toString());
 						if (validationRequest.getChunkSize() == 0){
 							compareData = new CompareData(validationRequest, dataSource, tableName,null);
-						   executor.execute(compareData);
+						    executor.execute(compareData);
+							//validationRequest.setEndRange(endRange);
+							runId=validationRequest.getRunId();
 					}else{
-						generateChunks(validationRequest);
+							long endRange=generateChunks(validationRequest);
+							validationRequest.setEndRange(endRange);
+							runId=validationRequest.getRunId();
 					}
 						addRunDetails(validationRequest);
 					}
@@ -83,8 +87,8 @@ public class ValidationService {
 					}
 					//get last one
 					if (compareData != null) {
-						String runIdTmp = compareData.getRunId();
-						runId = runId + "\n" + runIdTmp;
+						runId = compareData.getRunId();
+
 					}
   				} else {
 					getCurrentSchemaRunInfo(validationRequest);
@@ -122,6 +126,7 @@ public class ValidationService {
 			runDetails.setChunkColumn(validationRequest.getChunkColumns());
 			runDetails.setChunkSize(validationRequest.getChunkSize());
 			runDetails.setIncremental(validationRequest.isIncremental());
+			runDetails.setChunkEnd(validationRequest.getEndRange());
 			Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 			runDetails.setExecutionTime(timestamp);
 				addRunDetailsForSelection(runDetails);
@@ -131,14 +136,23 @@ public class ValidationService {
 		}
 
 
-	private void generateChunks(ValidationRequest valRequest) throws SQLException {
+	private long generateChunks(ValidationRequest valRequest) throws SQLException {
 		Long totalRecords = getTableCount(valRequest);
 		Connection dbConn=null;
 		getTablePrimaryKeys(valRequest);
 		int ntileSize =  valRequest.getChunkSize();
 		ntileSize = (ntileSize <= 0) ? 1 : ntileSize;
 		StringBuilder sql = new StringBuilder();
-		String pKey=valRequest.getPrimaryKeys()!=null ? valRequest.getPrimaryKeys():valRequest.getChunkColumns();
+		long filterEndValue=0;
+		long filterStrtValue=0;
+		if(valRequest.isIncremental()) {
+			filterStrtValue=getChunkStartValue(valRequest);
+			filterEndValue = getChunkEndValue(valRequest);
+			if(valRequest.getDataFilters()==null || valRequest.getDataFilters().isEmpty()){
+				valRequest.setDataFilters(valRequest.getChunkColumns()+ " >= " +filterStrtValue+ " and "+valRequest.getChunkColumns()+" <= " +filterEndValue);
+			}
+		}
+		String pKey=(valRequest.getPrimaryKeys()!=null && !valRequest.getPrimaryKeys().equals("")) ? valRequest.getPrimaryKeys():valRequest.getChunkColumns();
 		/*if(isHasNoUniqueKey()) {
 			sql.append("SELECT row_number()  OVER (ORDER BY ").append(cols).append(" ) nt FROM ").append(schemaName)
 					.append(".").append(tableName);
@@ -158,11 +172,11 @@ public class ValidationService {
 
 		String runId="";
 		int count=0;
+		long endRange=0;
+		long startRange=0;
 		while (rs.next()) {
 			CompareData compareData=null;
 			int columnType= rs.getMetaData().getColumnType(1);
-			long startRange=0;
-			long endRange=0;
 			startRange = rs.getLong("startRange");
 			endRange = rs.getLong("endRange");
 			long chunkSize = rs.getLong("chunkSize");
@@ -171,15 +185,16 @@ public class ValidationService {
 			//valRequest.setDataFilters(condition.toString());
 			compareData=new CompareData(valRequest,dataSource,valRequest.getTableName(),condition.toString());
 			executor.execute(compareData);
-			String runIdTmp= compareData.getRunId();
-			runId=runId+"\n"+runIdTmp;
+			runId= compareData.getRunId();
+
 			}
 			executor.shutdown();
 			while (!executor.isTerminated()) {
 				//appProperties.setTableName(tableName);
 			}
-
+		return endRange;
 	}
+
 
 
 	public RunDetails getCurrentSchemaRunInfo(ValidationRequest appProperties) throws Exception {
@@ -204,7 +219,7 @@ public class ValidationService {
 			}
 
 		} catch (SQLException ex) {
-			logger.error("Exception while fetching table details");
+			logger.error("Exception while fetching table details in getCurrentSchemaRunInfo");
 			logger.error(ex.getMessage());
 		}
 		finally {
@@ -238,7 +253,7 @@ public class ValidationService {
 			}
 
 		} catch (SQLException ex) {
-			logger.error("Exception while fetching table details");
+			logger.error("Exception while fetching table details in getCurrentTableRunInfo");
 			logger.error(ex.getMessage());
 		}
 		finally {
@@ -253,7 +268,7 @@ public class ValidationService {
 		Connection dbConn=null;
 		PreparedStatement pst =null;
 		List<RunDetails> outputRunDetailsList = new ArrayList<>();
-		String query = "insert into public.run_details(source_host_name,target_host_name,database_name,schema_name,table_name,schema_run,table_run,run_id,execution_date, data_filter, unique_columns, chunk_column, chunk_size,incremental) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+		String query = "insert into public.run_details(source_host_name,target_host_name,database_name,schema_name,table_name,schema_run,table_run,run_id,execution_date, data_filter, unique_columns, chunk_column, chunk_size,incremental,chunk_end) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 		try {
 			dbConn= dataSource.getDBConnection();
 			pst = dbConn.prepareStatement(query);
@@ -271,6 +286,7 @@ public class ValidationService {
 			pst.setString(12,runDetails.getChunkColumn());
 			pst.setInt(13,runDetails.getChunkSize());
 			pst.setBoolean(14,runDetails.isIncremental());
+			pst.setLong(15,runDetails.getChunkEnd());
 			int count= pst.executeUpdate();
             logger.info("added run details count",count);
 		} catch (SQLException ex) {
@@ -442,19 +458,25 @@ public class ValidationService {
 	}
 
 	public RunInfo getRunInfo(ValidationRequest inputRunDetails) throws Exception {
-		long rowCount= getTableCount(inputRunDetails);
-		RunDetails runDetails= RunDetails.builder().schemaName(inputRunDetails.getSourceSchemaName()).tableName(inputRunDetails.getTableName()).validationRequest(true).build();
-		RecommendationResponse recommendationResponse = recommendationService.getRecommendationResponseV2(runDetails);
 		inputRunDetails.setRunDetailsLimit(1);
-		RunInfo runInfo=getLastRunDetails(inputRunDetails).getRuns().get(0);//buildRunInfo(recommendationResponse,rowCount);
+		RunInfo runInfo=null;
+		List<RunInfo> runInfoList=getLastRunDetails(inputRunDetails,inputRunDetails.getTableName()).getRuns();
+		if(runInfoList!=null && runInfoList.size()>0) {
+			runInfo=runInfoList.get(0);//buildRunInfo(recommendationResponse,rowCount);
+		}else{
+			long rowCount= getTableCount(inputRunDetails);
+			RunDetails runDetails= RunDetails.builder().schemaName(inputRunDetails.getSourceSchemaName()).tableName(inputRunDetails.getTableName()).validationRequest(true).build();
+			RecommendationResponse recommendationResponse = recommendationService.getRecommendationResponseV2(runDetails);
+			runInfo=buildRunInfo(recommendationResponse,rowCount);
+		}
 		return runInfo;
 	}
 
-	public LastRunDetails getLastRunDetails(ValidationRequest inputRunDetails) throws Exception {
+	public LastRunDetails getLastRunDetails(ValidationRequest inputRunDetails, String tableName) throws Exception {
 		ArrayList<RunInfo> list= new ArrayList<RunInfo>();
 		LastRunDetails lastRunDetails=new LastRunDetails();
 		RunDetails runDetail= RunDetails.builder().schemaName(inputRunDetails.getSourceSchemaName()).tableName(inputRunDetails.getTableName()).validationRequest(true).build();
-		List<RunDetails> rundetails=getLastRunResults(inputRunDetails.getRunDetailsLimit()!=0?inputRunDetails.getRunDetailsLimit():10);
+		List<RunDetails> rundetails=getLastRunResults(inputRunDetails.getRunDetailsLimit()!=0?inputRunDetails.getRunDetailsLimit():10,tableName);
 		HashMap<String,Long> tableList=new HashMap<String,Long>();
 		for(RunDetails runId:rundetails ) {
 			Long rowCount= 0L;
@@ -482,15 +504,22 @@ public class ValidationService {
 
 	}
 
-	private List<RunDetails> getLastRunResults(int limit) throws SQLException {
+	private List<RunDetails> getLastRunResults(int limit,String tableName) throws SQLException {
 		List<RunDetails> outputRunDetailsList = new ArrayList<>();
-		String query = "select * FROM public.run_details order by execution_date desc limit "+limit;
+		String query = "select * FROM public.run_details ";
+		if(tableName!=null && !tableName.isBlank())
+			query = "select * FROM public.run_details where table_name = ?";
+		query= query+ " order by execution_date desc limit ?" ;
 		Connection dbConn =null;
 		PreparedStatement pst =null;
 		try { dbConn =dataSource.getDBConnection();
 			pst = dbConn.prepareStatement(query);
+			if(tableName!=null && !tableName.isBlank()) {
+				pst.setString(1, tableName);
+				pst.setInt(2, limit);
+			}else
+				pst.setInt(1, limit);
 			ResultSet rs = pst.executeQuery();
-
 			while (rs.next()) {
 
 				RunDetails runDetails = new RunDetails();
@@ -512,7 +541,7 @@ public class ValidationService {
 			}
 
 		} catch (SQLException ex) {
-			logger.error("Exception while fetching table details");
+			logger.error("Exception while fetching table details in getLastRunResults");
 			logger.error(ex.getMessage());
 		}finally {
 			pst.close();
@@ -538,6 +567,7 @@ public class ValidationService {
 		}
 		runInfo.setMismatchRows(mismatch);
 		runInfo.setMissingRows(missing);
+
 		return runInfo;
 	}
 
@@ -555,7 +585,7 @@ public class ValidationService {
 			}
 
 		} catch (SQLException ex) {
-			logger.error("Exception while fetching table details");
+			logger.error("Exception while fetching table details in getTableCount");
 			logger.error(ex.getMessage());
 		}
 		finally {
@@ -594,5 +624,56 @@ private void getTablePrimaryKeys(ValidationRequest valRequest) throws SQLExcepti
 			dbConn.close();
 	}
 }
+	private long getChunkEndValue(ValidationRequest inputRunDetails) throws SQLException {
+		String query = "SELECT max( "+inputRunDetails.getChunkColumns()+") from "+ inputRunDetails.getSourceSchemaName()+"."+inputRunDetails.getTableName();
+		long count=0;
+		Connection dbConn=null;
+		try {
+			dbConn= dataSource.getDBConnection();
+			Statement pst = dbConn.createStatement();
+			ResultSet rs = pst.executeQuery(query);
+			while (rs.next()) {
+				// If it is a schema run
+				count=rs.getLong(1);
+			}
 
+		} catch (SQLException ex) {
+			logger.error("Exception while fetching table details in getChunkEndValue");
+			logger.error(ex.getMessage());
+		}
+		finally {
+			if(dbConn!=null)
+				dbConn.close();
+		}
+		return count;
+
+	}
+
+	private long getChunkStartValue(ValidationRequest valRequest) throws SQLException {
+		String query = "SELECT chunk_end from public.run_details where table_name=? and incremental=true and database_name=? and schema_name=? order by execution_date desc";
+		long count=0;
+		Connection dbConn=null;
+		try {
+			dbConn= dataSource.getDBConnection();
+			PreparedStatement pst = dbConn.prepareStatement(query);
+			pst.setString(1, valRequest.getTableName());
+			pst.setString(2, valRequest.getTargetDBName());
+			pst.setString(3, valRequest.getSourceSchemaName());
+			ResultSet rs = pst.executeQuery();
+			while (rs.next()) {
+				// If it is a schema run
+				count=rs.getLong(1);
+				break;
+			}
+
+		} catch (SQLException ex) {
+			logger.error("Exception while fetching table details in getChunkStartValue");
+			logger.error(ex.getMessage());
+		}
+		finally {
+			if(dbConn!=null)
+				dbConn.close();
+		}
+		return count;
+	}
 }

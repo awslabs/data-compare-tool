@@ -110,6 +110,9 @@ function fetchRecData(tableName,schemaName, runId, pageNumber)
         return "mismatch";
       case 3:
         return "missing_src";
+       case 3:
+        return "Additional_tgt";
+
     }
   }
   function summaryContinueHandler() {

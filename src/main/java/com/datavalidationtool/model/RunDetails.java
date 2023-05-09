@@ -30,6 +30,7 @@ public class RunDetails {
     private String chunkColumn;
     private int chunkSize;
     private boolean incremental;
+    private long chunkEnd;
 
 
 

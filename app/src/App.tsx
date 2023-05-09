@@ -12,6 +12,9 @@ import VerifyCode from './routes/auth/verify'
 import RequestCode from './routes/auth/requestCode'
 import ForgotPassword from './routes/auth/forgotPassword'
 import ChangePassword from './routes/auth/changePassword'
+import AddSchedules from './components/validation/add_schedules'
+import ViewSchedules from './components/validation/add_schedules'
+import ViewScheduleRuns from './components/validation/add_schedules'
 import Landing from './routes/landing'
 import Home from './routes/home'
 import logo from "./logo.svg";
@@ -61,6 +64,9 @@ const MainRoute: React.FunctionComponent = () => (
                   <Route path="http://localhost:8090/compareData" element={<Validation />}></Route>
                    <Route path="/dvt/compare" element={<Validation />}></Route>
                     <Route path="/dvt/menu" element={<Menu />}></Route>
+                    <Route path="/dvt/addSchedules" element={<AddSchedules />}></Route>
+                    <Route path="/dvt/viewSchedules" element={<ViewSchedules />}></Route>
+                     <Route path="/dvt/viewScheduleRuns" element={<ViewScheduleRuns />}></Route>
                     <Route path="/" element={<Menu />}></Route>
                     <Route path="*" element={<Menu />}></Route>
         </Routes>

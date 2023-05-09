@@ -38,5 +38,6 @@ public class ValidationRequest {
     private String chunkColumns;
     private boolean incremental;
     private int runDetailsLimit;
+    private long endRange;
 
 }

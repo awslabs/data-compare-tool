@@ -48,7 +48,7 @@ public class ValidationController {
 
     @PostMapping(value = "validation/getLastRunDetails")
     public LastRunDetails getLastRunDetails(@RequestBody ValidationRequest validationRequest) throws Exception {
-        LastRunDetails runDetailBeans = validationService.getLastRunDetails(validationRequest);
+        LastRunDetails runDetailBeans = validationService.getLastRunDetails(validationRequest,null);
         return runDetailBeans;
     }
 

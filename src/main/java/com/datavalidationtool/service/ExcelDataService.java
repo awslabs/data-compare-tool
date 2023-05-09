@@ -63,7 +63,7 @@ public class ExcelDataService {
 
             if (dataSource.isPoolInitialized()) {
                 con = dataSource.getDBConnection();
-                String dbFunction = "{ call fn_remediate_mismatch_exceptions_dvt2(?,?,?,?,?,?) }";
+                String dbFunction = "{ call fn_remediate_mismatch_exceptions_dvt2(?,?,?,?,?) }";
                 try {
                     cst = con.prepareCall(dbFunction);
                 } catch (SQLException e) {
@@ -72,9 +72,9 @@ public class ExcelDataService {
                 cst.setString(1, dbUpdateData.getRunId());
                 cst.setString(2, dbUpdateData.getDataUpdateStr());
                 cst.setString(3, dbUpdateData.getSourceSchemaName());
-                cst.setString(4, dbUpdateData.getTargetSchemaName());
+               // cst.setString(4, dbUpdateData.getTargetSchemaName());
+                cst.setString(4, dbUpdateData.getTableName().replace("_val", "").substring(dbUpdateData.getTableName().indexOf(".") + 1));
                 cst.setString(5, dbUpdateData.getTableName().replace("_val", "").substring(dbUpdateData.getTableName().indexOf(".") + 1));
-                cst.setString(6, dbUpdateData.getTableName().replace("_val", "").substring(dbUpdateData.getTableName().indexOf(".") + 1));
                 rs = cst.executeQuery();
                 while (rs.next()) {
                     String rowsUpdates1 = rs.getString(1);
@@ -92,9 +92,7 @@ public class ExcelDataService {
             if(con!=null)
             con.close();
         }
-
         return rowsUpdates;
-
     }
 
     public int executeDBCallV2(SchemaData dbUpdateData) throws SQLException {
@@ -121,9 +119,7 @@ public class ExcelDataService {
             if(con!=null)
             con.close();
         }
-
         return rowsUpdates;
-
     }
 
     public int executeDBInsertCall(SchemaData dbUpdateData) throws SQLException {
@@ -134,7 +130,7 @@ public class ExcelDataService {
         try {
             if (dataSource.isPoolInitialized()) {
                 con = dataSource.getDBConnection();
-                String dbFunction = "{ call fn_remediate_missing_exceptions(?,?,?,?,?) }";
+                String dbFunction = "{ call fn_remediate_missing_exceptions(?,?,?,?) }";
                 CallableStatement cst = null;
                 try {
                     cst = con.prepareCall(dbFunction);
@@ -142,10 +138,10 @@ public class ExcelDataService {
                     e.printStackTrace();
                 }
                 cst.setString(1, dbUpdateData.getSourceSchemaName());
-                cst.setString(2, dbUpdateData.getTargetSchemaName());
+              //  cst.setString(2, dbUpdateData.getTargetSchemaName());
+                cst.setString(2, dbUpdateData.getTableName().replace("_val", "").substring(dbUpdateData.getTableName().indexOf(".") + 1));
                 cst.setString(3, dbUpdateData.getTableName().replace("_val", "").substring(dbUpdateData.getTableName().indexOf(".") + 1));
-                cst.setString(4, dbUpdateData.getTableName().replace("_val", "").substring(dbUpdateData.getTableName().indexOf(".") + 1));
-                cst.setString(5, dbUpdateData.getDataInsertStr());
+                cst.setString(4, dbUpdateData.getDataInsertStr());
                 rs = cst.executeQuery();
                 while (rs.next()) {
                     String rowsUpdates1 = rs.getString(1);
@@ -258,8 +254,6 @@ public class ExcelDataService {
     }
 
     private boolean isTargetDataLatest(Workbook excelWorkbook, SchemaData details) throws SQLException {
-
-
         if (dataSource.isPoolInitialized()) {
             Connection con = dataSource.getDBConnection();
             ResultSet resultSet = getLatestData(con, details);
@@ -292,7 +286,6 @@ public class ExcelDataService {
         pstmt.setString(2, pk);
         pstmt.setString(3, pk);
         ResultSet values = pstmt.executeQuery();
-
         while (rs1.next()) {
             String col = rs1.getString("COLUMN_NAME");
 

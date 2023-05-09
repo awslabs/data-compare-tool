@@ -33,7 +33,7 @@ public class RemediateService {
         SchemaData details = buildUpdatRequest(remediateRequest);
         details.setSourceSchemaName(remediateRequest.getSchemaName());
         //TODO: need to remove this
-        details.setTargetSchemaName("ops$brdb");
+       // details.setTargetSchemaName("ops$brdb");
         if (details.isMismatchPresent()) {
             rowsUpdated = excelDataService.executeDBCall(details);
         }

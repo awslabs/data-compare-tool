@@ -101,13 +101,8 @@ public class CompareData implements Runnable {
                 while(rs.next()) {
                     String result = rs.getString(1);
                     //logger.info("Table "+validationRequest.getTableName(), result);
-                    if(result.contains("Validation complete for Run Id")) {
-                        runId = result.substring(31, 63);
-                        logger.info("Run Id " ,runId);
-                    }
                 }
             } catch (SQLException ex) {
-
                 ex.printStackTrace();
                 logger.error("DB", ex);
 
@@ -165,7 +160,7 @@ public class CompareData implements Runnable {
             }
 
         } catch (SQLException ex) {
-            logger.error("Exception while fetching table details");
+            logger.error("Exception while fetching table details in getCurrentTableRunInfo");
             logger.error(ex.getMessage());
         }
         finally {

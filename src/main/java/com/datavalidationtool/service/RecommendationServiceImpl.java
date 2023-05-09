@@ -85,10 +85,10 @@ public class RecommendationServiceImpl implements RecommendationService {
             }
 
         } catch (SQLException ex) {
-            logger.error("SQL Exception while fetching table details");
+            logger.error("SQL Exception while fetching table details in getSchemaTableDetails");
             logger.error(ex.getMessage());
         } catch (Exception e) {
-            logger.error("Generic Exception while fetching table details");
+            logger.error("Generic Exception while fetching table details in getSchemaTableDetails");
             logger.error(e.getMessage());
             throw new RuntimeException(e);
         }
@@ -152,7 +152,7 @@ public class RecommendationServiceImpl implements RecommendationService {
             }
 
         } catch (SQLException ex) {
-            logger.error("Exception while fetching table details");
+            logger.error("Exception while fetching table details in getRunDetailsWithOptional");
             logger.error(ex.getMessage());
         }
         return outputRunDetailsList;
@@ -185,7 +185,7 @@ public class RecommendationServiceImpl implements RecommendationService {
             }
 
         } catch (SQLException ex) {
-            logger.error("Exception while fetching table details");
+            logger.error("Exception while fetching table details in getHostRunDetails");
             logger.error(ex.getMessage());
         }finally {
             if(dbConn!=null)
@@ -220,7 +220,7 @@ public class RecommendationServiceImpl implements RecommendationService {
             }
 
         } catch (SQLException ex) {
-            logger.error("Exception while fetching table details");
+            logger.error("Exception while fetching table details in getHostRunDetailsForSelection");
             logger.error(ex.getMessage());
         }finally {
             if(dbConn!=null)
@@ -243,7 +243,7 @@ public class RecommendationServiceImpl implements RecommendationService {
             }
 
         } catch (SQLException ex) {
-            logger.error("Exception while fetching table details");
+            logger.error("Exception while fetching table details in getCurrentRunInfo");
             logger.error(ex.getMessage());
         }finally {
             if(pst!=null)
@@ -347,7 +347,7 @@ public class RecommendationServiceImpl implements RecommendationService {
                 valIdList.add(rs.getInt("val_id"));
             }
         } catch (SQLException ex) {
-            logger.error("Exception while fetching table details");
+            logger.error("Exception while fetching table details in getValIdFromValidationTable");
             logger.error(ex.getMessage());
         }finally {
             if(dbConn!=null)
@@ -396,7 +396,7 @@ public class RecommendationServiceImpl implements RecommendationService {
                 }
             }
         } catch (SQLException ex) {
-            logger.error("Exception while fetching table details");
+            logger.error("Exception while fetching table details in getEntireValidationTable");
             logger.error(ex.getMessage());
         }finally {
              if(pst!=null)
@@ -482,7 +482,7 @@ public class RecommendationServiceImpl implements RecommendationService {
                 }
             }
         } catch (SQLException ex) {
-            logger.error("Exception while fetching table details");
+            logger.error("Exception while fetching table details in getRecommendationResponse");
             logger.error(ex.getMessage());
         }finally {
             if(dbConn!=null)
@@ -540,7 +540,7 @@ public class RecommendationServiceImpl implements RecommendationService {
                 logColsList = rs.getString("val_log");
             }
         } catch (SQLException ex) {
-            logger.error("Exception while fetching table details");
+            logger.error("Exception while fetching table details in getUniqueColumnFromValTable");
             logger.error(ex.getMessage());
         }finally {
             if(dbConn!=null)
@@ -585,7 +585,7 @@ public class RecommendationServiceImpl implements RecommendationService {
                 outputRunDetailsList.add(runDetails);
             }
         } catch (SQLException ex) {
-            logger.error("Exception while fetching table details");
+            logger.error("Exception while fetching table details in getRunDetails");
             logger.error(ex.getMessage());
         }finally {
             if(dbConn!=null)
@@ -631,7 +631,7 @@ public class RecommendationServiceImpl implements RecommendationService {
             PreparedStatement pst = dbConn.prepareStatement(insertQuery);
             updateResult = pst.executeUpdate();
         } catch (SQLException ex) {
-            logger.error("Exception while fetching table details");
+            logger.error("Exception while fetching table details insertRunDetailsRecord");
             logger.error(ex.getMessage());
         }
         finally {
@@ -676,7 +676,8 @@ public class RecommendationServiceImpl implements RecommendationService {
                 if ("Mismatch_src".equalsIgnoreCase(resultSet.getObject(3).toString()) ||
                         "Missing".equalsIgnoreCase(resultSet.getObject(3).toString())) {
                     srcValueMap.put(resultSet.getObject(4), rsKeyValMap);
-                } else if ("Mismatch_trg".equalsIgnoreCase(resultSet.getObject(3).toString())) {
+                } else if ("Mismatch_trg".equalsIgnoreCase(resultSet.getObject(3).toString())||
+                        "EXTRA_RECORD".equalsIgnoreCase(resultSet.getObject(3).toString())) {
                     tgtValueMap.put(resultSet.getObject(4), rsKeyValMap);
                 }
 
@@ -713,6 +714,38 @@ public class RecommendationServiceImpl implements RecommendationService {
                     }
                 }
                 recommendationRowList.add(new RecommendationRow(recommendationCode, recommendationColumns,valIdMap.get(srcKey),durationText));
+            }
+            for (Object tgtKey : tgtValueMap.keySet()) {
+                rowCount++;
+                List<RecommendationColumn> recommendationColumns = new ArrayList<>();
+                Object recommendationCode = 1;
+                Map<String, Object> tgtValue = tgtValueMap.get(tgtKey);
+                Map<String, Object> srcValue = new HashMap<>();
+                if (srcValueMap.containsKey(tgtKey)) {
+                    srcValue = srcValueMap.get(tgtKey);
+                }
+                for (Object tgtColumns : tgtValue.keySet()) {
+                    if (!AdminColumnNameOfValTable.contains(tgtColumns.toString())) {
+                        if (srcValue.containsKey(tgtColumns)) {
+                            recommendationColumns.add(new RecommendationColumn(tgtColumns.toString(), srcValue.get(tgtColumns), tgtValue.get(tgtColumns)));
+                        } else {
+                            recommendationColumns.add(new RecommendationColumn(tgtColumns.toString(), srcValue.get(tgtColumns), tgtValue.get(tgtColumns)));
+                        }
+                    }
+                    if ("exception_status".equalsIgnoreCase(tgtColumns.toString())) {
+                        if ("Mismatch_src".equalsIgnoreCase(tgtValue.get(tgtColumns).toString())) {
+                            recommendationCode = 2;
+                        } else if ("Missing".equalsIgnoreCase(tgtValue.get(tgtColumns).toString())) {
+                            recommendationCode = 1;
+                        } else if ("Mismatch_trg".equalsIgnoreCase(tgtValue.get(tgtColumns).toString())) {
+                            recommendationCode = 3;
+                        }else{
+                            recommendationCode = 4;
+                            //durationText=resultSet.getString(4);
+                        }
+                    }
+                }
+                recommendationRowList.add(new RecommendationRow(recommendationCode, recommendationColumns,valIdMap.get(tgtKey),durationText));
             }
         }
 

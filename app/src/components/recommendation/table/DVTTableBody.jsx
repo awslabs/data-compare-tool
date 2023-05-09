@@ -29,6 +29,8 @@ console.log(" in tableBody",props);
         return "missing_trgt";
       case 2:
         return "mismatch";
+      case 4:
+        return "Additional_tgt";
       case 3:
         return "missing_src";
     }
