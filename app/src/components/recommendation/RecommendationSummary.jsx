@@ -5,6 +5,7 @@ import { Checkbox } from "@mui/material";
 import "./css/Recommendation.css";
 import Typography from "@mui/material/Typography";
 import logo from '../dart-logo.jpg'
+import Header from '../Header.jsx';
 import Grid from "@mui/material/Grid";
 function RecommendationSummary(props) {
   console.log("Entered RecommendationSummary.jsx..");

@@ -25,6 +25,7 @@ import { Link } from "react-router-dom";
 import LoadingSpinner from "../LoadingSpinner";
 import "../styles.css";
 import logo from '../dart-logo.jpg'
+import Header from '../Header.jsx';
 import DatePicker from "react-datepicker";
 
 import DateTimePicker from 'react-datetime-picker';
@@ -135,6 +136,10 @@ export default function Validation() {
      const handleIncrementalInput = (event) => {
       setIncremental(event.target.checked);
       }
+
+      const handleReoccurrenceInput = (event) => {
+            setReoccurrence(event.target.checked);
+            }
     const handleSrcSchemaChange = (event) => {
      setSrcSchemaName(event.value);
            }
@@ -444,7 +449,6 @@ function getScheduleDetails () {
            });
        }
 
-
   useEffect(() => {
     if (isEntireFormValid) {
     setIsLoading(true);
@@ -465,7 +469,6 @@ function getScheduleDetails () {
         fetchSize: userCred.fetchSize,
         incremental:incremental,
       };
-
       var fetchContent = {
         method: "POST",
         headers: {
@@ -474,7 +477,6 @@ function getScheduleDetails () {
         },
         body: JSON.stringify(params),
       };
-
       let url = "http://localhost:8090/validation/compareData";
       fetch(url, fetchContent)
         .then((response) => {
@@ -515,9 +517,10 @@ const frequencyDay = [
 ]
   return (
     <div>
+    <Header />
  <Grid container mb={2} spacing={1} columnSpacing={{ xs: 2 }} justifyContent="center" alignItems="center">
-      <Grid item xs={12} sm={6} md={2}><img src={logo}  alt="Logo"  align="right" valign="bottom"/></Grid><Grid item xs={12} sm={6} md={10}>
-        <Typography variant="h4" align="left" valign="bottom" >Validation Schedules </Typography>
+     <Grid item xs={12} sm={6} md={11}>
+        <Typography variant="h4" align="center" valign="bottom" > Validation Schedules </Typography>
       </Grid></Grid>
 
       <Box mx={{ xs: 1, md: 10 }} px={{ xs: 2 }} sx={{ border: 1, borderColor: "primary.main", borderRadius: 2 }}>
@@ -716,12 +719,13 @@ const frequencyDay = [
                           label="Schedule Date"
                           variant="outlined"
                           value={userCred.scheduleDate}
+
                         />
                      </Grid>
                      <Grid item xs={1} md={2}>
 
                                             <FormGroup>
-                                            <FormControlLabel control={<Checkbox name="reoccurrence"  onChange={handleIncrementalInput} value={incremental}  />} label="Reoccurrence" />
+                                            <FormControlLabel control={<Checkbox name="reoccurrence"  onChange={handleReoccurrenceInput} value={reoccurrence}  />} label="Reoccurrence" />
                                             </FormGroup>
                                             </Grid>
                       <Grid item xs={12} md={2}>
@@ -732,7 +736,7 @@ const frequencyDay = [
                                                                   isClearable
                                                                   isSearchable={false}
                                                                   placeholder="Frequency"
-                                                                  defaultValue={frequency[0]}
+                                                                  defaultValue=""
                                                                   name="dayFrequency"
                                                                   label="Frequency"
                                                                   variant="outlined"
@@ -747,7 +751,7 @@ const frequencyDay = [
                                  </Grid><Grid item xs={1} md={2}>
                                             <DatePicker
                                                  multiline
-                                                 selected={scheduleDate}
+                                                 selected={scheduleEndDate}
                                                  onChange={(date) => setScheduleEndDate(date)}
                                                  timeInputLabel="Time:"
                                                  dateFormat="MM/dd/yyyy h:mm aa"
@@ -784,7 +788,7 @@ const frequencyDay = [
                                                                   isClearable
                                                                   isSearchable={false}
                                                                   placeholder="Frequency"
-                                                                  defaultValue={frequencyDay[0]}
+                                                                  defaultValue=""
                                                                   name="timeFrequency"
                                                                   label="Frequency"
                                                                   variant="outlined"

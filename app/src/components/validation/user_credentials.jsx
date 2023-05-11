@@ -25,6 +25,7 @@ import { Link } from "react-router-dom";
 import LoadingSpinner from "../LoadingSpinner";
 import "../styles.css";
 import logo from '../dart-logo.jpg'
+import Header from '../Header.jsx';
 const initialValue = {
   hostname: "ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com",
   port: "5432",
@@ -435,20 +436,17 @@ function getLastRunDetails () {
 
   return (
     <div>
- <Grid container mb={2} spacing={1} columnSpacing={{ xs: 2 }} justifyContent="center" alignItems="center">
-      <Grid item xs={12} sm={6} md={2}><img src={logo}  alt="Logo"  align="right" valign="bottom"/></Grid><Grid item xs={12} sm={6} md={10}>
-        <Typography variant="h4" align="left" valign="bottom" >Data Validation And Remediation Tool (DVART) </Typography>
-      </Grid></Grid>
+    <Header />
+    <Box mx={{xs: '50px', md: '100px'}}>
 
-      <Box mx={{ xs: 1, md: 10 }} px={{ xs: 2 }} sx={{ border: 1, borderColor: "primary.main", borderRadius: 2 }}>
-        <Grid container mb={2} spacing={2} columnSpacing={{ xs: 2 }} justifyContent="center" alignItems="center">
-          <Grid item xs={12}>
-            <Typography></Typography>
-          </Grid>
+      <Box  px={{ xs: 2 }} sx={{ border: 1, borderColor: "primary.main", borderRadius: 2, "max-width": "1400px", 'min-width': '700px',width: 'auto' }}>
+
+        <Grid container mb={'20px'} mt={'20px'} spacing={2} columnSpacing={{ xs: 2 }} justifyContent="left" alignItems="center" >
+
           <Grid item xs={12}>
             <Typography> Schema Details </Typography>
           </Grid>
-          <Grid item xs={3}>
+          <Grid item xs={12} md={6}>
             <TextField
               fullWidth
               autoFocus
@@ -462,7 +460,7 @@ function getLastRunDetails () {
               onChange={handleInput}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={1}>
+          <Grid item xs={12} md={2}>
             <TextField
               fullWidth
               size="small"
@@ -477,7 +475,7 @@ function getLastRunDetails () {
               onKeyPress={(e) => !/[0-9]/.test(e.key) && e.preventDefault()}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={2}>
+          <Grid item xs={12} md={2}>
             <TextField
               p={0}
               fullWidth
@@ -496,7 +494,7 @@ function getLastRunDetails () {
               <FormControlLabel control={<Checkbox name="usessl" value={userCred.usessl} onChange={handleInput} />} label="SSL Mode" />
             </FormGroup>
           </Grid>
-          <Grid item xs={12} sm={6} md={2}>
+           <Grid item xs={12} md={3}>
             <TextField
               fullWidth
               size="small"
@@ -509,7 +507,7 @@ function getLastRunDetails () {
               onChange={handleInput}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={2}>
+         <Grid item xs={12} md={3}>
             <TextField
               fullWidth
               size="small"
@@ -521,17 +519,17 @@ function getLastRunDetails () {
               value={userCred.password}
               error={userCred.password === "" && ifFormTouched === FormStatus.MODIFIED}
               onChange={handleInput}
-            />
-          </Grid>
+            /></Grid>
+         {/* </Grid> */}
           <Grid item xs={12} md={4}></Grid>
         </Grid>
-        <Divider pb={2} />
-        <Divider pt={2} />
-        <Grid container mb={2} spacing={2} columnSpacing={{ xs: 2 }} justifyContent="center" alignItems="center">
+{/*         <Divider pb={2} /> */}
+{/*         <Divider pt={2} /> */}
+        <Grid container mb={'20px'} mt={'20px'} spacing={2} columnSpacing={{ xs: 2 }} justifyContent="left" alignItems="center">
           <Grid item xs={12}>
             <Typography> Table Details </Typography>
           </Grid>
-          <Grid item xs={12} md={2}>
+          <Grid item xs={12} md={3}>
             {/*<TextField*/}
             {/*  fullWidth*/}
             {/*  multiline*/}
@@ -557,7 +555,7 @@ function getLastRunDetails () {
                   onChange={handleSchemaChange}
               />
           </Grid>
- <Grid item xs={12} md={2}>
+ <Grid item xs={12} md={3}>
                                        {/*<TextField*/}
                                        {/*  fullWidth*/}
                                        {/*  multiline*/}
@@ -584,7 +582,7 @@ function getLastRunDetails () {
                                          />
                                      </Grid>
 
-          <Grid item xs={12} md={2}>
+          <Grid item xs={12} md={3}>
             {/*<TextField*/}
             {/*  fullWidth*/}
             {/*  multiline*/}
@@ -611,17 +609,13 @@ function getLastRunDetails () {
                   options={userCred.tableNames}
                   onChange={handleTableInput}
               /> </Grid>
-            <Grid item xs={12} md={1}>
+            <Grid item xs={12} md={3}>
               <FormGroup>
                 <FormControlLabel control={<Checkbox name="exTables" value={exTables} onChange={handleTabExcludeInput} />} label="Exclude" />
                  </FormGroup>
 
-          </Grid><Grid item xs={3} md={1}>
-                 <FormGroup>
-                 <FormControlLabel control={<Checkbox name="checkAdditionalRows"  onChange={handleAdditionalRowsInput} value={checkAdditionalRows}  />} label="Two Way" />
-                 </FormGroup>
           </Grid>
-          <Grid item xs={12} md={3}>
+           <Grid item xs={12} md={3}>
             <TextField
               fullWidth
               multiline
@@ -633,15 +627,15 @@ function getLastRunDetails () {
               error={userCred.columnNames === '' && ifFormTouched === FormStatus.MODIFIED}
               onChange={handleInput}
             />
-          </Grid>
+            </Grid>
+            <Grid item xs={12} md={1}>
+             <FormGroup>
+              <FormControlLabel control={<Checkbox name="exColumns" value={exColumns} onChange={handleColExcludeInput} />} label="Exclude" />
+             </FormGroup>
+            </Grid>
 
-          <Grid item xs={12} md={1}>
-                      <FormGroup>
-                        <FormControlLabel control={<Checkbox name="exColumns" value={exColumns} onChange={handleColExcludeInput} />} label="Exclude" />
-                      </FormGroup>
-                    </Grid>
-    <Grid item xs={4} md={3}>
-                    <TextField
+            <Grid item xs={12} md={3}>
+                <TextField
                     fullWidth
                     multiline
                     maxRows={4}
@@ -651,54 +645,63 @@ function getLastRunDetails () {
                     value={userCred.uniqueCols}
                     error={userCred.uniqueCols === '' && ifFormTouched === FormStatus.MODIFIED}
                     onChange={handleInput}
-                    />
-                     </Grid>
+                />
+            </Grid>
 
-                                          <Grid item xs={12} md={4}>
-                                                                                    <TextField
-                                                                                      fullWidth
-                                                                                      multiline
-                                                                                      maxRows={4}
-                                                                                      name="dataFilters"
-                                                                                      label="Data Filters"
-                                                                                      variant="outlined"
-                                                                                      value={userCred.dataFilters}
-                                                                                      error={userCred.dataFilters === '' && ifFormTouched === FormStatus.MODIFIED}
-                                                                                      onChange={handleInput}
-                                                                                    />
-                                        </Grid> <Grid item xs={12} md={3}>
-                                                                                         <TextField
-                                                                                           fullWidth
-                                                                                           multiline
-                                                                                           maxRows={4}
-                                                                                           name="chunkColumns"
-                                                                                           label="Chunk Columns"
-                                                                                           variant="outlined"
-                                                                                           value={userCred.chunkColumns}
-                                                                                           error={userCred.chunkColumns === '' && ifFormTouched === FormStatus.MODIFIED}
-                                                                                           onChange={handleInput}
-                                                                                         /></Grid> <Grid item xs={3} md={1}>
-                                                                   <TextField
-                                                                   fullWidth
-                                                                   multiline
-                                                                   maxRows={4}
-                                                                   name="fetchSize"
-                                                                   label="No. of Chunks"
-                                                                   variant="outlined"
-                                                                   value={userCred.fetchSize}
-                                                                   error={userCred.fetchSize === '' && ifFormTouched === FormStatus.MODIFIED}
-                                                                   onChange={handleInput}
-                                                                   />
-                                                                    </Grid>
-                                                                 <Grid item xs={3} md={1}>
-                                                                     <FormGroup>
-                                                                      <FormControlLabel control={<Checkbox name="incremental"  onChange={handleIncrementalInput} value={incremental}  />} label="Incremental Run" />
-                                                                       </FormGroup>
-                                                                       </Grid>
+              <Grid item xs={12} md={4}>
+                <TextField
+                  fullWidth
+                  multiline
+                  maxRows={4}
+                  name="dataFilters"
+                  label="Data Filters"
+                  variant="outlined"
+                  value={userCred.dataFilters}
+                  error={userCred.dataFilters === '' && ifFormTouched === FormStatus.MODIFIED}
+                  onChange={handleInput}
+                />
+            </Grid>
 
-          <Grid item md={3}></Grid>
-          <Grid item md={6}>
-            <Stack direction="row" spacing={2} style={{ justifyContent: "space-evenly" }}>
+            <Grid item xs={12} md={3}>
+                 <TextField
+                   fullWidth
+                   multiline
+                   maxRows={4}
+                   name="chunkColumns"
+                   label="Chunk Columns"
+                   variant="outlined"
+                   value={userCred.chunkColumns}
+                   error={userCred.chunkColumns === '' && ifFormTouched === FormStatus.MODIFIED}
+                   onChange={handleInput}
+                 />
+             </Grid>
+           <Grid item xs={12} md={3}>
+               <TextField
+               fullWidth
+               multiline
+               maxRows={4}
+               name="fetchSize"
+               label="No. of Chunks"
+               variant="outlined"
+               value={userCred.fetchSize}
+               error={userCred.fetchSize === '' && ifFormTouched === FormStatus.MODIFIED}
+               onChange={handleInput}
+               />
+           </Grid>
+           <Grid item xs={12} md={3} lg={2}>
+             <FormGroup>
+              <FormControlLabel control={<Checkbox name="incremental"  onChange={handleIncrementalInput} value={incremental}  />} label="Incremental Run" />
+               </FormGroup>
+           </Grid>
+           <Grid item xs={12} md={3} lg={2}>
+            <FormGroup>
+                <FormControlLabel control={<Checkbox name="checkAdditionalRows"  onChange={handleAdditionalRowsInput} value={checkAdditionalRows}  />} label="Two Way" />
+                </FormGroup>
+           </Grid>
+
+          <Grid item sm={1} md={3}></Grid>
+          <Grid item sm={10} md={6}>
+            <Stack direction={{ md: 'column', lg: 'row' }} spacing={2} style={{ justifyContent: "space-evenly" }}>
               <Button color="secondary" variant="contained" onClick={handleSubmit} disabled={isLoading}>
                 Compare
               </Button>
@@ -714,7 +717,7 @@ function getLastRunDetails () {
             </Stack>
 
           </Grid>
-          <Grid item md={3}></Grid>
+          <Grid item sm={1} md={3}></Grid>
          <Grid item md={5}></Grid>
         <Grid item md={2}>{isLoading ? <LoadingSpinner /> : ""}</Grid>
         <Grid item md={4}></Grid>
@@ -821,6 +824,7 @@ function getLastRunDetails () {
        )}
       </Grid>
  {" "} &nbsp;&nbsp;{" "}
+      </Box>
       </Box>
     </div>
   );

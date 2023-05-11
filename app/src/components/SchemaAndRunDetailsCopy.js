@@ -20,6 +20,7 @@ import LoadingSpinner from "./LoadingSpinner";
 import "./styles.css";
 import logo from './dart-logo.jpg';
 import Pagination from './pagination/pagination';
+import Header from './Header.jsx';
 const CLEAR = "clear";
 
 const POPULATE_DATABASE = "populateDatabase";
@@ -548,10 +549,10 @@ function handleSubmit(event) {
   return (
      <div>
 
-
+  <Header />
          <Grid container mb={2} spacing={1} columnSpacing={{ xs: 2 }} justifyContent="center" alignItems="center">
-              <Grid item xs={12} sm={6} md={2}><img src={logo}  alt="Logo"  align="right" valign="bottom"/></Grid><Grid item xs={12} sm={6} md={10}>
-                <Typography variant="h4" align="left" valign="bottom" >Recommendation Details </Typography>
+            <Grid item xs={12} sm={6} md={11}>
+                <Typography variant="h5" align="center" valign="bottom" >  Recommendation Details </Typography>
               </Grid></Grid>
 
 

@@ -45,3 +45,9 @@ button:hover {
 .error {
   color: red;
 }
+.react-datepicker__input-container input{
+    font-size: 15px;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid lightgray;
+}
