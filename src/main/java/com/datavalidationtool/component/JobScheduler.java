@@ -33,7 +33,7 @@ public class JobScheduler {
     public boolean validationFlag=false;
     public Logger logger = LoggerFactory.getLogger("JobScheduler");
 
-    @Scheduled(initialDelay = 60000, fixedRate = 280000)
+    @Scheduled(initialDelay = 600000000, fixedRate = 280000000)
     public void performDelayedTask() throws SQLException {
         logger.info("Schedule Started");
         List<ScheduleRequest> schList= getSchedules();
@@ -60,14 +60,13 @@ public class JobScheduler {
         Connection dbConn=null;
         PreparedStatement pst =null;
         Timestamp scheduledDate=getScheduledDate(scheduleRequest);
-        scheduleRequest.setScheduleTime(scheduledDate);
         int count=0;
         try {
             dbConn= dataSource.getDBConnection();
                 pst = dbConn.prepareStatement(query);
                 pst.setString(1, "Complete");
                 pst.setString(2, scheduleRequest.getRunId());
-                pst.setTimestamp(3, scheduledDate);
+                pst.setTimestamp(3, scheduleRequest.getScheduleTime());
                 pst.setLong(4, scheduleRequest.getScheduleId());
                 count = pst.executeUpdate();
         } catch (SQLException ex) {
@@ -78,19 +77,19 @@ public class JobScheduler {
             if(dbConn!=null)
                 dbConn.close();
         }
+        scheduleRequest.setScheduleTime(scheduledDate);
     }
 
-    private Timestamp getScheduledDate(ScheduleRequest scheduleRequest) {
-        Timestamp scheduledDate =scheduleRequest.getScheduleTime();
+    private Timestamp getScheduledDate(ScheduleRequest scheduleRequest) {Timestamp scheduledDate =scheduleRequest.getScheduleTime();
         if(scheduleRequest.getDayFrequency()!=null && scheduleRequest.getDayFrequency().equals("D"))
             scheduledDate=Timestamp.valueOf(scheduleRequest.getScheduleTime().toLocalDateTime().plusDays(1));
         else if(scheduleRequest.getDayFrequency()!=null && scheduleRequest.getDayFrequency().equals("W"))
             scheduledDate=Timestamp.valueOf(scheduleRequest.getScheduleTime().toLocalDateTime().plusWeeks(1));
         else if(scheduleRequest.getDayFrequency()!=null && scheduleRequest.getDayFrequency().equals("M"))
             scheduledDate=Timestamp.valueOf(scheduleRequest.getScheduleTime().toLocalDateTime().plusMonths(1));
-        else if(scheduleRequest.getDayFrequency()!=null && scheduleRequest.getDayFrequency().equals("H"))
+        else if(scheduleRequest.getDayFrequency()!=null && scheduleRequest.getDayFrequency().equals("H") || (scheduleRequest.getTimeFrequency()!=null && scheduleRequest.getTimeFrequency().equals("H")))
             scheduledDate=Timestamp.valueOf(scheduleRequest.getScheduleTime().toLocalDateTime().plusHours(scheduleRequest.getTimeOccurrence()));
-        else if(scheduleRequest.getDayFrequency()!=null && scheduleRequest.getDayFrequency().equals("MI"))
+        else if(scheduleRequest.getDayFrequency()!=null && scheduleRequest.getDayFrequency().equals("MI")|| (scheduleRequest.getTimeFrequency()!=null && scheduleRequest.getTimeFrequency().equals("MI")))
             scheduledDate=Timestamp.valueOf(scheduleRequest.getScheduleTime().toLocalDateTime().plusMinutes(scheduleRequest.getTimeOccurrence()));
     return scheduledDate;
     }

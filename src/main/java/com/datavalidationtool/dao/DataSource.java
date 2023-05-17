@@ -31,7 +31,7 @@ public class DataSource {
     public DataSource() {
     }
     public Connection getDBConnection() throws SQLException {
-        logger.info("Source DB Pool Size=== %s",hkDataSource.getMaximumPoolSize());
+        logger.info("Source DB Pool Size="+hkDataSource.getMaximumPoolSize());
         return hkDataSource.getConnection();
     }
     @PostConstruct
@@ -47,7 +47,7 @@ public class DataSource {
             hkDataSource.setPassword(awsSecret.getPassword());
             hkDataSource.setConnectionTestQuery("select 1");
             hkDataSource.addDataSourceProperty("socketTimeout", 600000);
-            hkDataSource.setMaxLifetime(300000);
+            hkDataSource.setMaxLifetime(30000);
             hkDataSource.setMaximumPoolSize(100);
             hkDataSource.setIdleTimeout(600000);
             logger.info("Pool initialized in DS=== %s" , hkDataSource.getMaximumPoolSize());

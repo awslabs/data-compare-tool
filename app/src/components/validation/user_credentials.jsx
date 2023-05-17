@@ -161,6 +161,7 @@ export default function Validation() {
         requestParams.headers = { "Content-Type": "application/json" };
         requestParams.body = JSON.stringify({
             sourceSchemaName: srcSchemaName,
+            targetSchemaName : schemaName,
             tableName: value[length - 1],
         });
         fetch("http://localhost:8090/dvt/validation/getRunInfo", requestParams)

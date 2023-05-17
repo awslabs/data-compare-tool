@@ -130,7 +130,7 @@ public class ExcelDataService {
         try {
             if (dataSource.isPoolInitialized()) {
                 con = dataSource.getDBConnection();
-                String dbFunction = "{ call fn_remediate_missing_exceptions(?,?,?,?) }";
+                String dbFunction = "{ call fn_remediate_missing_exceptions_dvt2(?,?,?,?) }";
                 CallableStatement cst = null;
                 try {
                     cst = con.prepareCall(dbFunction);
@@ -414,7 +414,7 @@ public class ExcelDataService {
                 list.add(col);
             }
             excelDataRequest.setColList(list);
-            String preparedQuery = "SELECT SRC.*, DENSE_RANK () OVER ( ORDER BY SRC.id  ASC) EXCEPTION_RANK FROM \n" +
+            String preparedQuery = "SELECT SRC.*, DENSE_RANK () OVER ( ORDER BY SRC.val_id  ASC) EXCEPTION_RANK FROM \n" +
                     "(SELECT RUN_ID, VAL_ID, UPPER(VAL_TYPE) AS EXCEPTION_STATUS," + stb.toString() + " FROM " + excelDataRequest.getSchemaName() + "." + excelDataRequest.getTableName() + "_val \n" +
                     "WHERE RUN_ID = ? \n" +
                     "AND UPPER(VAL_TYPE) IN ('MISMATCH_SRC','MISMATCH_TRG','MISSING','EXTRA_RECORD') \n" +

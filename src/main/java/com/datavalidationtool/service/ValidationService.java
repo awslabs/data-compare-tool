@@ -12,6 +12,7 @@ package com.datavalidationtool.service;
 
 
 import com.datavalidationtool.dao.DataSource;
+import com.datavalidationtool.dao.OraDataSource;
 import com.datavalidationtool.model.DatabaseInfo;
 import com.datavalidationtool.model.RunDetails;
 import com.datavalidationtool.model.request.ValidationRequest;
@@ -35,6 +36,8 @@ public class ValidationService {
 	public Logger logger = LoggerFactory.getLogger("CompareService");
 	@Autowired
 	public DataSource dataSource;
+	@Autowired
+	public OraDataSource oraDataSource;
 	@Autowired
 	public RecommendationService recommendationService;
 
@@ -160,20 +163,20 @@ public class ValidationService {
 		String filterCondition= valRequest.getDataFilters()!=null && !valRequest.getDataFilters().isEmpty()?("  where "+valRequest.getDataFilters()):"";
 			sql.append("SELECT min(").append(pKey).append(") AS startRange, max(").append(pKey)
 					.append(") AS endRange,count(*) AS chunkSize, nt FROM (SELECT ").append(pKey).append(" ,ntile(")
-					.append(ntileSize).append(") OVER (ORDER BY ").append(pKey).append(" ) nt FROM ").append(valRequest.getSourceSchemaName())
-					.append(".").append(valRequest.getTableName()).append( filterCondition).append(" ) as a GROUP BY nt ORDER BY nt");
+					.append(ntileSize).append(") OVER (ORDER BY ").append(pKey).append(" ) nt FROM ").append(valRequest.getTargetSchemaName())
+					.append(".").append(valRequest.getTableName()).append( filterCondition).append(" )  GROUP BY nt ORDER BY nt");
 		//}
 
 		logger.info("Fetch Chunks SQL Query: " + sql.toString());
-		dbConn= dataSource.getDBConnection();
-		Statement stmt = dbConn.createStatement();
-		ResultSet rs = stmt.executeQuery(sql.toString());
-		ExecutorService executor = Executors.newFixedThreadPool(ntileSize);
-
 		String runId="";
 		int count=0;
 		long endRange=0;
 		long startRange=0;
+		try{
+		dbConn= oraDataSource.getDBConnection();
+		Statement stmt = dbConn.createStatement();
+		ResultSet rs = stmt.executeQuery(sql.toString());
+		ExecutorService executor = Executors.newFixedThreadPool(ntileSize);
 		while (rs.next()) {
 			CompareData compareData=null;
 			int columnType= rs.getMetaData().getColumnType(1);
@@ -192,6 +195,14 @@ public class ValidationService {
 			while (!executor.isTerminated()) {
 				//appProperties.setTableName(tableName);
 			}
+	} catch (SQLException ex) {
+		logger.error("Exception while fetching table details in getTableCount");
+		logger.error(ex.getMessage());
+	}
+		finally {
+		if(dbConn!=null)
+			dbConn.close();
+	}
 		return endRange;
 	}
 
@@ -572,11 +583,11 @@ public class ValidationService {
 	}
 
 	private long getTableCount(ValidationRequest inputRunDetails) throws SQLException {
-		String query = "SELECT count(*) from "+ inputRunDetails.getSourceSchemaName()+"."+inputRunDetails.getTableName();
+		String query = "SELECT count(*) from "+ inputRunDetails.getTargetSchemaName()+"."+inputRunDetails.getTableName();
 		long count=0;
 		Connection dbConn=null;
 		try {
-			dbConn= dataSource.getDBConnection();
+			dbConn= oraDataSource.getDBConnection();
 			Statement pst = dbConn.createStatement();
 			ResultSet rs = pst.executeQuery(query);
 			while (rs.next()) {

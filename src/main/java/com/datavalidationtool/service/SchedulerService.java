@@ -35,7 +35,7 @@ public class SchedulerService {
                     pst = dbConn.prepareStatement(query);
                     pst.setString(1, scheduleRequest.getChunkColumns());
                     pst.setInt(2, scheduleRequest.getChunkSize());
-                    pst.setString(3, scheduleRequest.getDataFilters());
+                    pst.setString(3, null);
                     pst.setTimestamp(4, scheduleRequest.getScheduleTime());
                     pst.setString(5, scheduleRequest.getSourceSchemaName());
                     pst.setString(6, "Open");
@@ -78,14 +78,14 @@ public class SchedulerService {
 
         }else
         {
-            endDate=Timestamp.valueOf(scheduleRequest.getScheduleEndDate().toLocalDateTime().plusMinutes(2));;
+            endDate=Timestamp.valueOf(scheduleRequest.getScheduleTime().toLocalDateTime().plusMinutes(2));;
         }
         return endDate;
     }
 
     public ArrayList<ScheduleRequest> getScheduleInfo(ScheduleRequest scheduleRequest) throws SQLException {
         RunDetails runDetails = new RunDetails();
-        String query = "select * from public.schedule_runs where schedule_time >= now()- INTERVAL '15 days 5 minutes' and schedule_time <= now()+ INTERVAL '15 days 5 minutes' '";
+        String query = "select * from public.schedule_runs where schedule_time >= now()- INTERVAL '15 days 5 minutes' and schedule_time <= now()+ INTERVAL '15 days 5 minutes' ";
         Connection dbConn=null;
         Statement st =null;
         ArrayList<ScheduleRequest> scheduleList=new ArrayList<ScheduleRequest>();
@@ -110,6 +110,7 @@ public class SchedulerService {
                 sRequest.setTargetSchemaName(rs.getString("target_schema"));
                 sRequest.setUniqueCols(rs.getString("unique_columns"));
                 sRequest.setDuration(rs.getInt("duration"));
+                sRequest.setDayFrequency(rs.getString("frequency"));
                 scheduleList.add(sRequest);
             }
 
