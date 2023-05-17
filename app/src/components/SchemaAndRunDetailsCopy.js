@@ -1,4 +1,4 @@
-import React, { useReducer, useEffect,file, setFile, useState,useMemo } from "react";
+import React, { useReducer, useEffect, file, setFile, useState, useMemo } from "react";
 import Select from "react-select";
 import TableContainer from "@mui/material/TableContainer";
 import Paper from "@mui/material/Paper";
@@ -11,7 +11,7 @@ import { Box, containerClasses } from "@mui/material";
 import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
 import "./recommendation/css/Recommendation.css";
-import {useNavigate} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import axios from 'axios';
 import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
@@ -98,7 +98,7 @@ const initialState = {
 };
 
 function reducer(state, action) {
-console.log("ddddddd",data1);
+  console.log("ddddddd", data1);
   switch (action.type) {
     case POPULATE_DATABASE:
       return {
@@ -108,7 +108,7 @@ console.log("ddddddd",data1);
         disableHostName: true,
 
         dbNamesToBeLoaded: data1.hostDetailsList.find((hostname) => hostname.value === action.hostName).databaseList,
-        schemaNamesToBeLoaded:[],
+        schemaNamesToBeLoaded: [],
         schemaRunsToBeLoaded: [],
         tableNamesToBeLoaded: [],
         tableRunsToBeLoaded: [],
@@ -137,14 +137,14 @@ console.log("ddddddd",data1);
         //this has to be same in handler
       };
     case POPULATE_TABLE:
-     return {
+      return {
         ...state,
         disableTableName: false,
         loadingTableName: false,
 
-        tableNamesToBeLoaded: data1.hostDetailsList.find(((host) => host.value === hostNameSelected) )
-                                                                        .databaseList.find((db) => db.value === dbNameSelected)
-                                                                        .schemaList.find((schema) => schema.value === schemaNameSelected).tableList,
+        tableNamesToBeLoaded: data1.hostDetailsList.find(((host) => host.value === hostNameSelected))
+          .databaseList.find((db) => db.value === dbNameSelected)
+          .schemaList.find((schema) => schema.value === schemaNameSelected).tableList,
         tableRunsToBeLoaded: [],
       };
     case POPULATE_TABLE_RUN:
@@ -154,10 +154,10 @@ console.log("ddddddd",data1);
         loadingTableRun: false,
         showTable: true,
 
-        tableRunsToBeLoaded: data1.hostDetailsList.find(((host) => host.value === hostNameSelected) )
-                                          .databaseList.find((db) => db.value === dbNameSelected)
-                                          .schemaList.find((schema) => schema.value === schemaNameSelected)
-                                          .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun,
+        tableRunsToBeLoaded: data1.hostDetailsList.find(((host) => host.value === hostNameSelected))
+          .databaseList.find((db) => db.value === dbNameSelected)
+          .schemaList.find((schema) => schema.value === schemaNameSelected)
+          .tableList.find(obj => { return obj.tableName === tableNameSelected; }).tableRun,
       };
     case CLEAR:
     default:
@@ -176,102 +176,106 @@ function Nestedselect() {
   const [post, setPost] = useState([]);
   const [tableData, setTableData] = useState(data);
   const [currentPage, setCurrentPage] = useState(1);
-   //const API = 'https://mocki.io/v1/e29d853b-1a21-456d-b8a3-35d5f27da66f';
+  //const API = 'https://mocki.io/v1/e29d853b-1a21-456d-b8a3-35d5f27da66f';
   const API = 'http://localhost:8090/dvt/recommendation/recommendation-selection';
   const [file, setFile] = useState()
-function handleChange(event) {
+
+  function handleChange(event) {
     setFile(event.target.files[0])
-    }
-function redirectToValidation(event) {
-   navigate('/dvt/compare');
-    }
-    function handleDataSync (event) {
-        //event.preventDefault();
-        setIsLoading(true);
-         let requestParams = { method: "POST", headers: "", body: "" };
-            requestParams.headers = { "Content-Type": "application/json" };
-            requestParams.body =   JSON.stringify({
-                                                   tableName : event.target.value,
+  }
 
-                                       });
-            console.log("Data To Submit == ", JSON.stringify(requestParams));
-             fetch('http://localhost:8090/dvt/validation/compareData', requestParams)
+  function redirectToValidation(event) {
+    navigate('/dvt/compare');
+  }
 
-         .then((response) => {
-                 if (response.ok) {
-                   return response.text();
-                 }
-               })
-               .then((resultData) => {
-               setIsLoading(false);
-                 let msg = (resultData !== null || resultData!=='')? resultData : "Something went wrong, please try again";
-                 alert(msg);
-                // navigate("/dvt/selection");
-               })
-               .catch((error) => {
-               //setErrorMessage("Unable to validate the data");
-               setIsLoading(false);
-                alert("Something went wrong, please try again");
-                 console.log("Error ::", error);
-               });
-           }
-function handleSubmit(event) {
-         setIsLoading(true);
-         event.preventDefault()
-         const url = 'http://localhost:8090/dvt/recommendation/upload';
-         const formData = new FormData();
-         formData.append('file', file);
-         formData.append('fileName', file.name);
-         const config = {
-           headers: {
-             'content-type': 'multipart/form-data',
-           },
-         };
-         axios.post(url, formData, config).then((response) => {
-           console.log(response.data);
-             setIsLoading(false);
-           alert("uploaded successfully")
-           window.location.reload();
-           navigate("/dvt/selection");
-         });
+  function handleDataSync(event) {
+    //event.preventDefault();
+    setIsLoading(true);
+    let requestParams = { method: "POST", headers: "", body: "" };
+    requestParams.headers = { "Content-Type": "application/json" };
+    requestParams.body = JSON.stringify({
+      tableName: event.target.value,
 
-       }
+    });
+    console.log("Data To Submit == ", JSON.stringify(requestParams));
+    fetch('http://localhost:8090/dvt/validation/compareData', requestParams)
 
- const downloadReport =  (event) => {
-  setIsLoading(true);
- let requestParams = { method: "GET", headers: "", body: "" };
-         requestParams.headers = { "Content-Type": "application/json" };
-       //  requestParams.body =   JSON.stringify({
-                                              // schemaName:event.target.
-                                              // targetSchemaName:
-                                              // tableName:
-                                              // runId : event.target.
-                                  //  });
-         console.log("Data To Submit == ", JSON.stringify(requestParams));
-         fetch('http://localhost:8090/dvt/validation/exportData?runId='+event.target.value)
       .then((response) => {
-      setIsLoading(false);
-
-              if (response.ok) {
-                return response.text();
-              }
-            })
-            .then((resultData) => {
-              let msg = resultData == "Success" ? " Excel report downloaded Successfully " : "Excel report downloaded Successfully";
-              alert(msg)
-            })
-            .catch((error) => {
-             setIsLoading(false);
-              console.log("Error ::", error);
-            });
+        if (response.ok) {
+          return response.text();
         }
-   //
+      })
+      .then((resultData) => {
+        setIsLoading(false);
+        let msg = (resultData !== null || resultData !== '') ? resultData : "Something went wrong, please try again";
+        alert(msg);
+        // navigate("/dvt/selection");
+      })
+      .catch((error) => {
+        //setErrorMessage("Unable to validate the data");
+        setIsLoading(false);
+        alert("Something went wrong, please try again");
+        console.log("Error ::", error);
+      });
+  }
+
+  function handleSubmit(event) {
+    setIsLoading(true);
+    event.preventDefault()
+    const url = 'http://localhost:8090/dvt/recommendation/upload';
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('fileName', file.name);
+    const config = {
+      headers: {
+        'content-type': 'multipart/form-data',
+      },
+    };
+
+    axios.post(url, formData, config).then((response) => {
+      console.log(response.data);
+      setIsLoading(false);
+      alert("uploaded successfully")
+      window.location.reload();
+      navigate("/dvt/selection");
+    });
+
+  }
+
+  const downloadReport = (event) => {
+    setIsLoading(true);
+    let requestParams = { method: "GET", headers: "", body: "" };
+    requestParams.headers = { "Content-Type": "application/json" };
+    //  requestParams.body =   JSON.stringify({
+    // schemaName:event.target.
+    // targetSchemaName:
+    // tableName:
+    // runId : event.target.
+    //  });
+    console.log("Data To Submit == ", JSON.stringify(requestParams));
+    fetch('http://localhost:8090/dvt/validation/exportData?runId=' + event.target.value)
+      .then((response) => {
+        setIsLoading(false);
+
+        if (response.ok) {
+          return response.text();
+        }
+      })
+      .then((resultData) => {
+        let msg = resultData == "Success" ? " Excel report downloaded Successfully " : "Excel report downloaded Successfully";
+        alert(msg)
+      })
+      .catch((error) => {
+        setIsLoading(false);
+        console.log("Error ::", error);
+      });
+  }
+  //
   const fetchPost = () => {
     fetch(API)
       .then((res) => res.json())
       .then((res) => {
-      console.log("data....",res);
-        setPost(res.hostDetailsList);
+        console.log("data....", res);
         data1.hostDetailsList = res.hostDetailsList;
         for (let i = 0, len = data1.hostDetailsList.length; i < len; i++) {
           data1.hostDetailsList[i].label = data1.hostDetailsList[i].hostName;
@@ -311,13 +315,14 @@ function handleSubmit(event) {
             }
           }
         }
+        setPost(res.hostDetailsList);
         console.log("post", { post });
         console.log("data1", data1.hostDetailsList);
       })
       .catch((error) => {
-                   console.log("Error ::", error);
+        console.log("Error ::", error);
 
-                 });
+      });
   };
   useEffect(() => {
     fetchPost();
@@ -349,19 +354,19 @@ function handleSubmit(event) {
     let slnumber = 1;
     for (
       let i = 0,
-        len = data1.hostDetailsList
-          .find(() => hostNameSelected)
-          .databaseList.find(() => dbNameSelected)
-          .schemaList.find((schema) => schema.value === schemaNameSelected).tableList.length;
+      len = data1.hostDetailsList
+        .find(() => hostNameSelected)
+        .databaseList.find(() => dbNameSelected)
+        .schemaList.find((schema) => schema.value === schemaNameSelected).tableList.length;
       i < len;
       i++
     ) {
       for (
         let j = 0,
-          len1 = data1.hostDetailsList
-            .find(() => hostNameSelected)
-            .databaseList.find(() => dbNameSelected)
-            .schemaList.find((schema) => schema.value === schemaNameSelected).tableList[i].tableRun.length;
+        len1 = data1.hostDetailsList
+          .find(() => hostNameSelected)
+          .databaseList.find(() => dbNameSelected)
+          .schemaList.find((schema) => schema.value === schemaNameSelected).tableList[i].tableRun.length;
         j < len1;
         j++
       ) {
@@ -383,13 +388,13 @@ function handleSubmit(event) {
           .databaseList.find(() => dbNameSelected)
           .schemaList.find((schema) => schema.value === schemaNameSelected).tableList[i].tableRun[j].executionDate;
         obj.runId = data1.hostDetailsList
-                  .find(() => hostNameSelected)
-                  .databaseList.find(() => dbNameSelected)
-                  .schemaList.find((schema) => schema.value === schemaNameSelected).tableList[i].tableRun[j].runId;
+          .find(() => hostNameSelected)
+          .databaseList.find(() => dbNameSelected)
+          .schemaList.find((schema) => schema.value === schemaNameSelected).tableList[i].tableRun[j].runId;
         obj.schemaName = data1.hostDetailsList
-                  .find(() => hostNameSelected)
-                  .databaseList.find(() => dbNameSelected)
-                  .schemaList.find((schema) => schema.value === schemaNameSelected).tableList[i].tableRun[j].schemaName;
+          .find(() => hostNameSelected)
+          .databaseList.find(() => dbNameSelected)
+          .schemaList.find((schema) => schema.value === schemaNameSelected).tableList[i].tableRun[j].schemaName;
         console.log("random", obj);
         tempArr.push(obj);
       }
@@ -407,114 +412,114 @@ function handleSubmit(event) {
     let slnumber = 1;
     for (
       let i = 0,
-        len = data1.hostDetailsList
-              .find(((host) => host.value === hostNameSelected) )
-              .databaseList.find((db) => db.value === dbNameSelected)
-              .schemaList.find((schema) => schema.value === schemaNameSelected)
-              .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun.length;
+      len = data1.hostDetailsList
+        .find(((host) => host.value === hostNameSelected))
+        .databaseList.find((db) => db.value === dbNameSelected)
+        .schemaList.find((schema) => schema.value === schemaNameSelected)
+        .tableList.find(obj => { return obj.tableName === tableNameSelected; }).tableRun.length;
 
       i < len;
       i++
     ) {
       let obj = {};
       obj.slNo = slnumber;
-        setTableData(tempArr);
+      setTableData(tempArr);
       obj.tableName = data1.hostDetailsList
-                      .find(((host) => host.value === hostNameSelected) )
-                      .databaseList.find((db) => db.value === dbNameSelected)
-                      .schemaList.find((schema) => schema.value === schemaNameSelected)
-                      .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableName;
-         obj.tableRun = data1.hostDetailsList
-                        .find(((host) => host.value === hostNameSelected) )
-                        .databaseList.find((db) => db.value === dbNameSelected)
-                        .schemaList.find((schema) => schema.value === schemaNameSelected)
-                        .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].run;
-        obj.runDate = data1.hostDetailsList
-                      .find(((host) => host.value === hostNameSelected) )
-                      .databaseList.find((db) => db.value === dbNameSelected)
-                      .schemaList.find((schema) => schema.value === schemaNameSelected)
-                      .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].executionDate;
-        obj.runId = data1.hostDetailsList
-                   .find(((host) => host.value === hostNameSelected) )
-                    .databaseList.find((db) => db.value === dbNameSelected)
-                    .schemaList.find((schema) => schema.value === schemaNameSelected)
-                    .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].runId;
-        obj.schemaName = data1.hostDetailsList
-                        .find(((host) => host.value === hostNameSelected) )
-                        .databaseList.find((db) => db.value === dbNameSelected)
-                        .schemaList.find((schema) => schema.value === schemaNameSelected)
-                        .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].schemaName;
-              console.log("random", obj.tableRun);
-      if(obj.tableRun==tableRunSelected){
-       tempArr.push(obj);
+        .find(((host) => host.value === hostNameSelected))
+        .databaseList.find((db) => db.value === dbNameSelected)
+        .schemaList.find((schema) => schema.value === schemaNameSelected)
+        .tableList.find(obj => { return obj.tableName === tableNameSelected; }).tableName;
+      obj.tableRun = data1.hostDetailsList
+        .find(((host) => host.value === hostNameSelected))
+        .databaseList.find((db) => db.value === dbNameSelected)
+        .schemaList.find((schema) => schema.value === schemaNameSelected)
+        .tableList.find(obj => { return obj.tableName === tableNameSelected; }).tableRun[i].run;
+      obj.runDate = data1.hostDetailsList
+        .find(((host) => host.value === hostNameSelected))
+        .databaseList.find((db) => db.value === dbNameSelected)
+        .schemaList.find((schema) => schema.value === schemaNameSelected)
+        .tableList.find(obj => { return obj.tableName === tableNameSelected; }).tableRun[i].executionDate;
+      obj.runId = data1.hostDetailsList
+        .find(((host) => host.value === hostNameSelected))
+        .databaseList.find((db) => db.value === dbNameSelected)
+        .schemaList.find((schema) => schema.value === schemaNameSelected)
+        .tableList.find(obj => { return obj.tableName === tableNameSelected; }).tableRun[i].runId;
+      obj.schemaName = data1.hostDetailsList
+        .find(((host) => host.value === hostNameSelected))
+        .databaseList.find((db) => db.value === dbNameSelected)
+        .schemaList.find((schema) => schema.value === schemaNameSelected)
+        .tableList.find(obj => { return obj.tableName === tableNameSelected; }).tableRun[i].schemaName;
+      console.log("random", obj.tableRun);
+      if (obj.tableRun == tableRunSelected) {
+        tempArr.push(obj);
         slnumber++;
-       }
+      }
     }
     setTableData(tempArr);
   };
- const handleOnTableClick = (event) => {
+  const handleOnTableClick = (event) => {
     tableNameSelected = event.value;
     dispatch({ type: POPULATE_TABLE_RUN, tableName: event.value });
     let tempArr = [];
     let slnumber = 1;
-    console.log(" list.....",data1.hostDetailsList
-                                                   .find(((host) => host.value === hostNameSelected) )
-                                                   .databaseList.find((db) => db.value === dbNameSelected)
-                                                   .schemaList.find((schema) => schema.value === schemaNameSelected)
-                                                   .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun.length)
+    console.log(" list.....", data1.hostDetailsList
+      .find(((host) => host.value === hostNameSelected))
+      .databaseList.find((db) => db.value === dbNameSelected)
+      .schemaList.find((schema) => schema.value === schemaNameSelected)
+      .tableList.find(obj => { return obj.tableName === tableNameSelected; }).tableRun.length)
     for (
       let i = 0,
-        len = data1.hostDetailsList.find(((host) => host.value === hostNameSelected) )
-             .databaseList.find((db) => db.value === dbNameSelected)
-             .schemaList.find((schema) => schema.value === schemaNameSelected)
-             .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun.length;
+      len = data1.hostDetailsList.find(((host) => host.value === hostNameSelected))
+        .databaseList.find((db) => db.value === dbNameSelected)
+        .schemaList.find((schema) => schema.value === schemaNameSelected)
+        .tableList.find(obj => { return obj.tableName === tableNameSelected; }).tableRun.length;
       i < len;
       i++
     ) {
 
       let obj = {};
       obj.slNo = slnumber;
-        setTableData(tempArr);
+      setTableData(tempArr);
       slnumber++;
-      obj.tableName = data1.hostDetailsList.find(((host) => host.value === hostNameSelected) )
-                                   .databaseList.find((db) => db.value === dbNameSelected)
-                                   .schemaList.find((schema) => schema.value === schemaNameSelected)
-                                   .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableName;
-      obj.tableRun = data1.hostDetailsList.find(((host) => host.value === hostNameSelected) )
-                                  .databaseList.find((db) => db.value === dbNameSelected)
-                                  .schemaList.find((schema) => schema.value === schemaNameSelected)
-                                  .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].run;
-      obj.runDate = data1.hostDetailsList.find(((host) => host.value === hostNameSelected) )
-                                 .databaseList.find((db) => db.value === dbNameSelected)
-                                 .schemaList.find((schema) => schema.value === schemaNameSelected)
-                                 .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].executionDate;
+      obj.tableName = data1.hostDetailsList.find(((host) => host.value === hostNameSelected))
+        .databaseList.find((db) => db.value === dbNameSelected)
+        .schemaList.find((schema) => schema.value === schemaNameSelected)
+        .tableList.find(obj => { return obj.tableName === tableNameSelected; }).tableName;
+      obj.tableRun = data1.hostDetailsList.find(((host) => host.value === hostNameSelected))
+        .databaseList.find((db) => db.value === dbNameSelected)
+        .schemaList.find((schema) => schema.value === schemaNameSelected)
+        .tableList.find(obj => { return obj.tableName === tableNameSelected; }).tableRun[i].run;
+      obj.runDate = data1.hostDetailsList.find(((host) => host.value === hostNameSelected))
+        .databaseList.find((db) => db.value === dbNameSelected)
+        .schemaList.find((schema) => schema.value === schemaNameSelected)
+        .tableList.find(obj => { return obj.tableName === tableNameSelected; }).tableRun[i].executionDate;
 
-      obj.runId = data1.hostDetailsList.find(((host) => host.value === hostNameSelected) )
-                               .databaseList.find((db) => db.value === dbNameSelected)
-                               .schemaList.find((schema) => schema.value === schemaNameSelected)
-                               .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].runId;
-      obj.schemaName = data1.hostDetailsList.find(((host) => host.value === hostNameSelected) )
-                                    .databaseList.find((db) => db.value === dbNameSelected)
-                                    .schemaList.find((schema) => schema.value === schemaNameSelected)
-                                    .tableList.find(obj => { return obj.tableName === tableNameSelected;}).tableRun[i].schemaName;
-              console.log("random", obj);
+      obj.runId = data1.hostDetailsList.find(((host) => host.value === hostNameSelected))
+        .databaseList.find((db) => db.value === dbNameSelected)
+        .schemaList.find((schema) => schema.value === schemaNameSelected)
+        .tableList.find(obj => { return obj.tableName === tableNameSelected; }).tableRun[i].runId;
+      obj.schemaName = data1.hostDetailsList.find(((host) => host.value === hostNameSelected))
+        .databaseList.find((db) => db.value === dbNameSelected)
+        .schemaList.find((schema) => schema.value === schemaNameSelected)
+        .tableList.find(obj => { return obj.tableName === tableNameSelected; }).tableRun[i].schemaName;
+      console.log("random", obj);
 
-       tempArr.push(obj);
+      tempArr.push(obj);
     }
     setTableData(tempArr);
   };
 
-    const currentTableData = useMemo(() => {
-        const firstPageIndex = (currentPage - 1) * PageSize;
-        const lastPageIndex = firstPageIndex + PageSize;
-        return tableData.slice(firstPageIndex, lastPageIndex);
-        console.log('page table data',tableData)
-    }, [currentPage]);
+  const currentTableData = useMemo(() => {
+    const firstPageIndex = (currentPage - 1) * PageSize;
+    const lastPageIndex = firstPageIndex + PageSize;
+    return tableData.slice(firstPageIndex, lastPageIndex);
+    console.log('page table data', tableData)
+  }, [currentPage]);
   // @ts-ignore
   let navigate = useNavigate();
-  const redirectToRecommendation =  (event) => {
-    console.log('event '+event.target.value);
-    navigate('/dvt/recommend?runId='+event.target.value+'&page=1')
+  const redirectToRecommendation = (event) => {
+    console.log('event ' + event.target.value);
+    navigate('/dvt/recommend?runId=' + event.target.value + '&page=1')
     //event.preventDefault();
     /* let requestParams = { method: "POST", headers: "", body: "" };
         requestParams.headers = { "Content-Type": "application/json" };
@@ -547,183 +552,183 @@ function handleSubmit(event) {
   const [state, dispatch] = useReducer(reducer, initialState);
 
   return (
-     <div>
+    <div>
 
-  <Header />
-         <Grid container mb={2} spacing={1} columnSpacing={{ xs: 2 }} justifyContent="center" alignItems="center">
-            <Grid item xs={12} sm={6} md={11}>
-                <Typography variant="h5" align="center" valign="bottom" >  Recommendation Details </Typography>
-              </Grid></Grid>
+      <Header />
+      <Grid container mb={2} spacing={1} columnSpacing={{ xs: 2 }} justifyContent="center" alignItems="center">
+        <Grid item xs={12} sm={6} md={11}>
+          <Typography variant="h5" align="center" valign="bottom" >  Recommendation Details </Typography>
+        </Grid></Grid>
 
 
-    <Box mx={{ xs: 1, md: 10 }} px={{ xs: 2 }} sx={{ border: 1, borderColor: "primary.main", borderRadius: 2 }}>
-       <Grid container mb={2} spacing={2} columnSpacing={{ xs: 2 }} justifyContent="center" alignItems="center"></Grid>
-               {" "} &nbsp;&nbsp;{" "}{" "} &nbsp;&nbsp;{" "}
+      <Box mx={{ xs: 1, md: 10 }} px={{ xs: 2 }} sx={{ border: 1, borderColor: "primary.main", borderRadius: 2 }}>
+        <Grid container mb={2} spacing={2} columnSpacing={{ xs: 2 }} justifyContent="center" alignItems="center"></Grid>
+        {" "} &nbsp;&nbsp;{" "}{" "} &nbsp;&nbsp;{" "}
 
-      <Grid container spacing={2} columnSpacing={{ xs: 2 }}>
-        <Grid item xs={6}>
-          <Select
-            isDisabled={state.disableHostName}
-            isLoading={state.loadingDBName}
-            isClearable
-            isSearchable
-            placeholder="Select HostName..."
-            name="hostname"
-            options={data1.hostDetailsList}
-            onChange={handleOnHostNameClick}
-          />
-        </Grid>
-        {!state.disableDBName && (
+        <Grid container spacing={2} columnSpacing={{ xs: 2 }}>
           <Grid item xs={6}>
             <Select
-              isDisabled={state.disableDBName}
-              isLoading={state.loadingSchemaName}
+              isDisabled={state.disableHostName}
+              isLoading={state.loadingDBName}
               isClearable
               isSearchable
-              placeholder="Select Database..."
-              name="database"
-              options={state.dbNamesToBeLoaded}
-              onChange={handleOnDBNameClick}
+              placeholder="Select HostName..."
+              name="hostname"
+              options={data1.hostDetailsList}
+              onChange={handleOnHostNameClick}
             />
           </Grid>
-        )}
-        {!state.disableSchemaName && (
-          <Grid item xs={5}>
-            <Select
-              isDisabled={state.disableSchemaName}
-              isLoading={state.loadingSchemaRun}
-              isClearable
-              isSearchable
-              placeholder="Select Schema..."
-              name="schema"
-              options={state.schemaNamesToBeLoaded}
-              onChange={handleOnSchemaNameClick}
-            />
-          </Grid>
-        )}
-        {!state.disableSchemaRun && (
-          <Grid item xs={3}>
-            <Select
-              isDisabled={state.disableSchemaRun}
-              isLoading={state.loadingTableName}
-              isClearable
-              isSearchable
-              placeholder="Select Schema Run..."
-              name="schemaRun"
-              options={state.schemaRunsToBeLoaded}
-              onChange={handleOnSchemaRunClick}
-            />
-          </Grid>
-        )}
-        {!state.disableTableName && (
-          <Grid item xs={5}>
-            <Select
-              isDisabled={state.disableTableName}
-              isLoading={state.loadingTableRun}
-              isClearable
-              isSearchable
-              placeholder="Select Table..."
-              name="table"
-              options={state.tableNamesToBeLoaded}
-              onChange={handleOnTableClick}
-            />
-          </Grid>
-        )}
-        {!state.disableTableRun && (
-          <Grid item xs={2}>
-            <Select
-              isDisabled={state.disableTableRun}
-              isLoading={false}
-              isClearable
-              isSearchable
-              placeholder="Select Table Run..."
-              name="tableRun"
-              options={state.tableRunsToBeLoaded}
-              onChange={handleOnTableRunClick}
-            />
-          </Grid>
-        )}
-      </Grid>
-      <br />
-      {state.showTable && (
-        <div>
-          <TableContainer component={Paper} align="center" className="dvttbl">
-                   {" "} &nbsp;&nbsp;{" "}{" "} &nbsp;&nbsp;{" "}
-            <Table sx={{ minWidth: 1400, border: 1, borderColor: "primary.main", borderRadius: 2, width: 100 }} aria-label="simple table">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Sl No.</TableCell>
-                  <TableCell align="right">Table Name</TableCell>
-                  <TableCell align="right">Table Run</TableCell>
-                  <TableCell align="right">Run Date</TableCell>
-                  <TableCell align="center">Action</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {tableData.map((row) => (
-                  <TableRow key={row.slNo} sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
-                    <TableCell scope="row">{row.slNo}</TableCell>
-                    <TableCell className="tablename" align="left">{row.tableName}</TableCell>
-                    <TableCell align="left">{row.tableRun}</TableCell>
-                    <TableCell align="left">{row.runDate}</TableCell>
-                    <TableCell align="center">
-                      <Box>
-                        <Button variant="outlined" color="secondary"  value={row.tableName} onClick={redirectToValidation}>
-                          Sync
-                        </Button>{" "}
-                        &nbsp;&nbsp;{" "}
-                        <Button variant="outlined" color="success" value={row.runId+'&schemaName='+row.schemaName+'&tableName='+row.tableName}
-                            onClick={redirectToRecommendation}
-                        >
-                          Remediate
-                        </Button>
-                        {" "} &nbsp;&nbsp;{" "}
-                         <Button variant="outlined" color="success" value={row.runId+'&schemaName='+row.schemaName+'&tableName='+row.tableName}
-                         onClick={downloadReport} disabled={isLoading} >
-                          Download
-                          </Button>
-                           <a href={'http://localhost:8090/dvt/validation/exportData?runId='+row.runId+'&schemaName='+row.schemaName+'&tableName='+row.tableName} className="btn btn-primary">link</a>
-                      </Box>
-                    </TableCell>
+          {!state.disableDBName && (
+            <Grid item xs={6}>
+              <Select
+                isDisabled={state.disableDBName}
+                isLoading={state.loadingSchemaName}
+                isClearable
+                isSearchable
+                placeholder="Select Database..."
+                name="database"
+                options={state.dbNamesToBeLoaded}
+                onChange={handleOnDBNameClick}
+              />
+            </Grid>
+          )}
+          {!state.disableSchemaName && (
+            <Grid item xs={5}>
+              <Select
+                isDisabled={state.disableSchemaName}
+                isLoading={state.loadingSchemaRun}
+                isClearable
+                isSearchable
+                placeholder="Select Schema..."
+                name="schema"
+                options={state.schemaNamesToBeLoaded}
+                onChange={handleOnSchemaNameClick}
+              />
+            </Grid>
+          )}
+          {!state.disableSchemaRun && (
+            <Grid item xs={3}>
+              <Select
+                isDisabled={state.disableSchemaRun}
+                isLoading={state.loadingTableName}
+                isClearable
+                isSearchable
+                placeholder="Select Schema Run..."
+                name="schemaRun"
+                options={state.schemaRunsToBeLoaded}
+                onChange={handleOnSchemaRunClick}
+              />
+            </Grid>
+          )}
+          {!state.disableTableName && (
+            <Grid item xs={5}>
+              <Select
+                isDisabled={state.disableTableName}
+                isLoading={state.loadingTableRun}
+                isClearable
+                isSearchable
+                placeholder="Select Table..."
+                name="table"
+                options={state.tableNamesToBeLoaded}
+                onChange={handleOnTableClick}
+              />
+            </Grid>
+          )}
+          {!state.disableTableRun && (
+            <Grid item xs={2}>
+              <Select
+                isDisabled={state.disableTableRun}
+                isLoading={false}
+                isClearable
+                isSearchable
+                placeholder="Select Table Run..."
+                name="tableRun"
+                options={state.tableRunsToBeLoaded}
+                onChange={handleOnTableRunClick}
+              />
+            </Grid>
+          )}
+        </Grid>
+        <br />
+        {state.showTable && (
+          <div>
+            <TableContainer component={Paper} align="center" className="dvttbl">
+              {" "} &nbsp;&nbsp;{" "}{" "} &nbsp;&nbsp;{" "}
+              <Table sx={{ minWidth: 1400, border: 1, borderColor: "primary.main", borderRadius: 2, width: 100 }} aria-label="simple table">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Sl No.</TableCell>
+                    <TableCell align="right">Table Name</TableCell>
+                    <TableCell align="right">Table Run</TableCell>
+                    <TableCell align="right">Run Date</TableCell>
+                    <TableCell align="center">Action</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-                     {" "} &nbsp;&nbsp;{" "}{" "} &nbsp;&nbsp;{" "}
-
-          </TableContainer>
-                   {" "} &nbsp;&nbsp;{" "}{" "} &nbsp;&nbsp;{" "}
-            <Pagination
-                className="pagination-bar"
-                currentPage={currentPage}
-                totalCount={tableData.length}
-                pageSize={PageSize}
-                onPageChange={page => setCurrentPage(page)}
-            />
-        </div>
-      )}
- <Grid item xs={3}>
-                      <Stack direction="row"  justifyContent="center" alignItems="center" spacing={2}>
-                        <Button color="secondary" variant="contained" onClick={redirectToValidation}>
-                          Compare
-                        </Button>
-                        <Button color="success" variant="contained" >
-                          Reset
-                        </Button>
-                       <Box sx={{ border: 1, borderColor: "primary.main", borderRadius: 1 }}>
-                       <input type="file" name="file" variant="outlined" color="success"  onChange={handleChange} />
-                                                     &nbsp;&nbsp;{" "}
-                        <Button vcolor="primary" variant="contained" onClick={handleSubmit} disabled={isLoading}>Upload</Button>
+                </TableHead>
+                <TableBody>
+                  {tableData.map((row) => (
+                    <TableRow key={row.slNo} sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
+                      <TableCell scope="row">{row.slNo}</TableCell>
+                      <TableCell className="tablename" align="left">{row.tableName}</TableCell>
+                      <TableCell align="left">{row.tableRun}</TableCell>
+                      <TableCell align="left">{row.runDate}</TableCell>
+                      <TableCell align="center">
+                        <Box>
+                          <Button variant="outlined" color="secondary" value={row.tableName} onClick={redirectToValidation}>
+                            Sync
+                          </Button>{" "}
+                          &nbsp;&nbsp;{" "}
+                          <Button variant="outlined" color="success" value={row.runId + '&schemaName=' + row.schemaName + '&tableName=' + row.tableName}
+                            onClick={redirectToRecommendation}
+                          >
+                            Remediate
+                          </Button>
+                          {" "} &nbsp;&nbsp;{" "}
+                          <Button variant="outlined" color="success" value={row.runId + '&schemaName=' + row.schemaName + '&tableName=' + row.tableName}
+                            onClick={downloadReport} disabled={isLoading} >
+                            Download
+                          </Button>
+                          <a href={'http://localhost:8090/dvt/validation/exportData?runId=' + row.runId + '&schemaName=' + row.schemaName + '&tableName=' + row.tableName} className="btn btn-primary">link</a>
                         </Box>
-                      </Stack>
-                       {" "} &nbsp;&nbsp;{" "}{" "} &nbsp;&nbsp;{" "}
-           </Grid>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              {" "} &nbsp;&nbsp;{" "}{" "} &nbsp;&nbsp;{" "}
+
+            </TableContainer>
             {" "} &nbsp;&nbsp;{" "}{" "} &nbsp;&nbsp;{" "}
-               <Grid item xs={3} align="center" valign="top">    {isLoading ? <LoadingSpinner /> : ""}</Grid>
-  <Grid container mb={2} spacing={2} columnSpacing={{ xs: 2 }} justifyContent="center" alignItems="center"></Grid>
-    </Box>
-    {" "} &nbsp;&nbsp;{" "}
-      </div>
+            <Pagination
+              className="pagination-bar"
+              currentPage={currentPage}
+              totalCount={tableData.length}
+              pageSize={PageSize}
+              onPageChange={page => setCurrentPage(page)}
+            />
+          </div>
+        )}
+        <Grid item xs={3}>
+          <Stack direction="row" justifyContent="center" alignItems="center" spacing={2}>
+            <Button color="secondary" variant="contained" onClick={redirectToValidation}>
+              Compare
+            </Button>
+            <Button color="success" variant="contained" >
+              Reset
+            </Button>
+            <Box sx={{ border: 1, borderColor: "primary.main", borderRadius: 1 }}>
+              <input type="file" name="file" variant="outlined" color="success" onChange={handleChange} />
+              &nbsp;&nbsp;{" "}
+              <Button vcolor="primary" variant="contained" onClick={handleSubmit} disabled={isLoading}>Upload</Button>
+            </Box>
+          </Stack>
+          {" "} &nbsp;&nbsp;{" "}{" "} &nbsp;&nbsp;{" "}
+        </Grid>
+        {" "} &nbsp;&nbsp;{" "}{" "} &nbsp;&nbsp;{" "}
+        <Grid item xs={3} align="center" valign="top">    {isLoading ? <LoadingSpinner /> : ""}</Grid>
+        <Grid container mb={2} spacing={2} columnSpacing={{ xs: 2 }} justifyContent="center" alignItems="center"></Grid>
+      </Box>
+      {" "} &nbsp;&nbsp;{" "}
+    </div>
   );
 }
 
