@@ -22,6 +22,7 @@ import Validation from "./components/validation/user_credentials";
 import SchemaAndTableSelectCopy from "./components/SchemaAndRunDetailsCopy";
 import Recommendation from "./components/recommendation/Recommendation";
 import Menu from "./components/hmenu";
+import Footer from './components/Footer'
 
 
 let lightTheme = createMuiTheme({
@@ -41,35 +42,35 @@ lightTheme = responsiveFontSizes(lightTheme)
 
 const SignInRoute: React.FunctionComponent = () => (
 
-    <Routes>
-     <Route path="/dvt/signin" element={<SignIn />}></Route>
-                   <Route path="/dvt/signup" element={<SignUp/>}></Route>
-                   <Route path="/dvt/verify" element={<VerifyCode/>}></Route>
-                   <Route path="/dvt/requestcode" element={<RequestCode/>}></Route>
-                   <Route path="/dvt/forgotpassword" element={<ForgotPassword/>}></Route>
-                   <Route path="/" element={<SignIn/>}></Route>
-                   <Route path="*" element={<SignIn/>}></Route>
-    </Routes>
+  <Routes>
+    <Route path="/dvt/signin" element={<SignIn />}></Route>
+    <Route path="/dvt/signup" element={<SignUp />}></Route>
+    <Route path="/dvt/verify" element={<VerifyCode />}></Route>
+    <Route path="/dvt/requestcode" element={<RequestCode />}></Route>
+    <Route path="/dvt/forgotpassword" element={<ForgotPassword />}></Route>
+    <Route path="/" element={<SignIn />}></Route>
+    <Route path="*" element={<SignIn />}></Route>
+  </Routes>
 
 )
 
 const MainRoute: React.FunctionComponent = () => (
 
-    <Routes>
+  <Routes>
 
-     <Route path="/dvt/changepassword" element={<ChangePassword/>} />
-             <Route path="/dvt/selection" element={<SchemaAndTableSelectCopy />}></Route>
-                   <Route path="/dvt/menu" element={<Menu />}></Route>
-                  <Route path="/dvt/recommend" element={<Recommendation />}></Route>
-                  <Route path="http://localhost:8090/compareData" element={<Validation />}></Route>
-                   <Route path="/dvt/compare" element={<Validation />}></Route>
-                    <Route path="/dvt/menu" element={<Menu />}></Route>
-                    <Route path="/dvt/addSchedules" element={<AddSchedules />}></Route>
-                    <Route path="/dvt/viewSchedules" element={<ViewSchedules />}></Route>
-                     <Route path="/dvt/viewScheduleRuns" element={<ViewScheduleRuns />}></Route>
-                    <Route path="/" element={<Menu />}></Route>
-                    <Route path="*" element={<Menu />}></Route>
-        </Routes>
+    <Route path="/dvt/changepassword" element={<ChangePassword />} />
+    <Route path="/dvt/selection" element={<SchemaAndTableSelectCopy />}></Route>
+    <Route path="/dvt/menu" element={<Menu />}></Route>
+    <Route path="/dvt/recommend" element={<Recommendation />}></Route>
+    <Route path="http://localhost:8090/compareData" element={<Validation />}></Route>
+    <Route path="/dvt/compare" element={<Validation />}></Route>
+    <Route path="/dvt/menu" element={<Menu />}></Route>
+    <Route path="/dvt/addSchedules" element={<AddSchedules />}></Route>
+    <Route path="/dvt/viewSchedules" element={<ViewSchedules />}></Route>
+    <Route path="/dvt/viewScheduleRuns" element={<ViewScheduleRuns />}></Route>
+    <Route path="/" element={<Menu />}></Route>
+    <Route path="*" element={<Menu />}></Route>
+  </Routes>
 
 )
 
@@ -84,6 +85,7 @@ const App: React.FunctionComponent = () => (
         <SignInRoute />
       </AuthIsNotSignedIn>
     </AuthProvider>
+    <Footer />
   </ThemeProvider>
 )
 
