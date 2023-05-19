@@ -15,9 +15,6 @@ import { Username } from '../../components/authComponents'
 import { AuthContext } from '../../contexts/authContext'
 
 const useStyles = makeStyles({
-  root: {
-    height: '100vh',
-  },
   hover: {
     '&:hover': { cursor: 'pointer' },
   },
@@ -90,12 +87,12 @@ export default function RequestCode() {
   )
 
   return (
-    <Grid className={classes.root} container direction="row" justify="center" alignItems="center">
+    <Grid container direction="row" justify="center" alignItems="center">
       <Grid xs={11} sm={6} lg={4} container direction="row" justify="center" alignItems="center" item>
         <Paper style={{ width: '100%', padding: 32 }}>
           <Grid container direction="column" justify="center" alignItems="center">
             <Box m={2}>
-              <Typography variant="h3">Send Reset Code</Typography>
+              <Typography variant="h4">Send Reset Code</Typography>
             </Box>
 
             {resetSent ? emailSent : sendCode}

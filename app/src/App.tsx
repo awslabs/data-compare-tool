@@ -1,5 +1,6 @@
 import React from 'react'
 import './App.css'
+import Container from "./components/Container";
 
 import { HashRouter as Router, Route, Routes } from 'react-router-dom'
 
@@ -22,7 +23,7 @@ import Validation from "./components/validation/user_credentials";
 import SchemaAndTableSelectCopy from "./components/SchemaAndRunDetailsCopy";
 import Recommendation from "./components/recommendation/Recommendation";
 import Menu from "./components/hmenu";
-import Footer from './components/Footer'
+
 
 
 let lightTheme = createMuiTheme({
@@ -78,14 +79,15 @@ const App: React.FunctionComponent = () => (
   <ThemeProvider theme={lightTheme}>
     <CssBaseline />
     <AuthProvider>
-      <AuthIsSignedIn>
-        <MainRoute />
-      </AuthIsSignedIn>
-      <AuthIsNotSignedIn>
-        <SignInRoute />
-      </AuthIsNotSignedIn>
+      <Container>
+        <AuthIsSignedIn>
+          <MainRoute />
+        </AuthIsSignedIn>
+        <AuthIsNotSignedIn>
+          <SignInRoute />
+        </AuthIsNotSignedIn>
+      </Container>
     </AuthProvider>
-    <Footer />
   </ThemeProvider>
 )
 

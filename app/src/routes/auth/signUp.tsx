@@ -13,12 +13,8 @@ import { useValidEmail, useValidPassword, useValidUsername } from '../../hooks/u
 import { Email, Password, Username } from '../../components/authComponents'
 
 import { AuthContext } from '../../contexts/authContext'
-import logo from '../../components/dart-logo.jpg'
 import "../../components/styles.css";
 const useStyles = makeStyles({
-  root: {
-    height: '100vh',
-  },
 })
 
 const SignUp: React.FunctionComponent<{}> = () => {
@@ -119,15 +115,14 @@ const SignUp: React.FunctionComponent<{}> = () => {
   )
 
   return (
-    <Grid className={classes.root} container direction="row" justify="center" alignItems="center">
+    <Grid container direction="row" justify="center" alignItems="center">
       <Grid xs={11} sm={6} lg={4} container direction="row" justify="center" alignItems="center" item>
         <Paper style={{ width: '100%', padding: 16 }}>
           <Grid container direction="column" justify="center" alignItems="center">
             {/* Title */}
             <Box m={3}>
               <Grid container direction="row" justify="flex-end" alignItems="flex-end">
-                  <Grid xs={6} sm={6} md={6} container direction="column" justify="center" alignItems="flex-start" item><img src={logo}  alt="Logo" /></Grid>
-               <Grid xs={6} sm={6} md={6} container direction="column" justify="center" alignItems="flex-end" item> <Typography variant="h4"  >   Sign Up </Typography></Grid>
+                <Grid xs={12} sm={12} md={12} container direction="column" justify="center" alignItems="flex-end" item> <Typography variant="h4"  >   Sign Up </Typography></Grid>
               </Grid>
             </Box>
             {!created ? signUp : accountCreated}

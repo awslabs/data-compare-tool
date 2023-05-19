@@ -17,9 +17,6 @@ import logo from '../../components/dart-logo.jpg'
 import "../../components/styles.css";
 
 const useStyles = makeStyles({
-  root: {
-    height: '100vh',
-  },
   hover: {
     '&:hover': { cursor: 'pointer' },
   },
@@ -31,20 +28,20 @@ export enum AuthStatus {
 }
 const SignIn: React.FunctionComponent<{}> = () => {
   const classes = useStyles()
- const [authStatus, setAuthStatus] = useState(AuthStatus.Loading)
+  const [authStatus, setAuthStatus] = useState(AuthStatus.Loading)
   const { username, setUsername, usernameIsValid } = useValidUsername('')
   const { password, setPassword, passwordIsValid } = useValidPassword('')
   const [error, setError] = useState('')
 
   const isValid = !usernameIsValid || username.length === 0 || !passwordIsValid || password.length === 0
   const history = useNavigate()
- let authContext = React.useContext(AuthContext)
+  let authContext = React.useContext(AuthContext)
   const signInClicked = async () => {
     try {
 
-  console.log("authContext 2",authContext)
+      console.log("authContext 2", authContext)
 
-  await signInWithEmail(username, password)
+      await signInWithEmail(username, password)
 
     } catch (err: any) {
       if (err.code === 'UserNotConfirmedException') {
@@ -54,14 +51,14 @@ const SignIn: React.FunctionComponent<{}> = () => {
       }
     }
   }
- async function signInWithEmail(username: string, password: string) {
+  async function signInWithEmail(username: string, password: string) {
     try {
-    const response =  await cognito.signInWithEmail(username, password)
-    console.log("response",response)
-    if (response!=null) {
-      setAuthStatus(AuthStatus.SignedIn)
-       history('/dvt/compare')
-       window.location.reload()
+      const response = await cognito.signInWithEmail(username, password)
+      console.log("response", response)
+      if (response != null) {
+        setAuthStatus(AuthStatus.SignedIn)
+        history('/dvt/compare')
+        window.location.reload()
       }
     } catch (err) {
       setAuthStatus(AuthStatus.SignedOut)
@@ -73,7 +70,7 @@ const SignIn: React.FunctionComponent<{}> = () => {
   }
 
   return (
-    <Grid className={classes.root} container direction="row" justify="center" alignItems="center">
+    <Grid container direction="row" justify="center" alignItems="center">
       <Grid xs={11} sm={6} lg={4} container direction="row" justify="center" alignItems="center" item>
         <Paper style={{ width: '100%', padding: 32 }}>
           <Grid container direction="column" justify="center" alignItems="center">

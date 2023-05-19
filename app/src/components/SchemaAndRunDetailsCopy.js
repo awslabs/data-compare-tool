@@ -20,7 +20,6 @@ import LoadingSpinner from "./LoadingSpinner";
 import "./styles.css";
 import logo from './dart-logo.jpg';
 import Pagination from './pagination/pagination';
-import Header from './Header.jsx';
 const CLEAR = "clear";
 
 const POPULATE_DATABASE = "populateDatabase";
@@ -553,17 +552,14 @@ function Nestedselect() {
 
   return (
     <div>
-
-      <Header />
       <Grid container mb={2} spacing={1} columnSpacing={{ xs: 2 }} justifyContent="center" alignItems="center">
         <Grid item xs={12} sm={6} md={11}>
           <Typography variant="h5" align="center" valign="bottom" >  Recommendation Details </Typography>
-        </Grid></Grid>
+        </Grid>
+      </Grid>
 
-
-      <Box mx={{ xs: 1, md: 10 }} px={{ xs: 2 }} sx={{ border: 1, borderColor: "primary.main", borderRadius: 2 }}>
+      <Box>
         <Grid container mb={2} spacing={2} columnSpacing={{ xs: 2 }} justifyContent="center" alignItems="center"></Grid>
-        {" "} &nbsp;&nbsp;{" "}{" "} &nbsp;&nbsp;{" "}
 
         <Grid container spacing={2} columnSpacing={{ xs: 2 }}>
           <Grid item xs={6}>
@@ -727,7 +723,6 @@ function Nestedselect() {
         <Grid item xs={3} align="center" valign="top">    {isLoading ? <LoadingSpinner /> : ""}</Grid>
         <Grid container mb={2} spacing={2} columnSpacing={{ xs: 2 }} justifyContent="center" alignItems="center"></Grid>
       </Box>
-      {" "} &nbsp;&nbsp;{" "}
     </div>
   );
 }

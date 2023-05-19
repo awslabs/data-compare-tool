@@ -15,9 +15,6 @@ import { Code, Password, Username } from '../../components/authComponents'
 import { AuthContext } from '../../contexts/authContext'
 
 const useStyles = makeStyles({
-  root: {
-    height: '100vh',
-  },
 })
 
 export default function ForgotPassword() {
@@ -113,7 +110,7 @@ export default function ForgotPassword() {
   )
 
   return (
-    <Grid className={classes.root} container direction="row" justify="center" alignItems="center">
+    <Grid container direction="row" justify="center" alignItems="center">
       <Grid xs={11} sm={6} lg={4} container direction="row" justify="center" alignItems="center" item>
         <Paper style={{ width: '100%', padding: 16 }}>
           <Grid container direction="column" justify="center" alignItems="center">
