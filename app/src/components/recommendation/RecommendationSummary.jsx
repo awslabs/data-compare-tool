@@ -34,13 +34,14 @@ function RecommendationSummary(props) {
   return (
     <div align="center" valign="center">
       <br />
-    <Grid container mb={2} spacing={1} columnSpacing={{ xs: 2 }} justifyContent="center" alignItems="center">
-            <Grid item xs={12} sm={6} md={2}><img src={logo}  alt="Logo"  align="right" valign="bottom"/></Grid><Grid item xs={12} sm={6} md={10}>
-              <Typography variant="h4" align="left" valign="bottom" >Summary of Table Changes  </Typography>
-            </Grid></Grid>
+        <Grid container mb={2} spacing={1} columnSpacing={{ xs: 2 }} justifyContent="center" alignItems="center">
+            <Grid item xs={12} sm={6} md={11}>
+              <Typography variant="h5" align="center" valign="bottom" >  Summary of changes </Typography>
+            </Grid>
+          </Grid>
 
-      <div style={{ marginTop: 10, marginBottom: 10 }}>
-        <table border="1" align="center" id="customers" className="dvttbl">
+      <div style={{ marginTop: 10, marginBottom: 10 , width:'100%'}}>
+        <table border="1" align="center" id="customers" className="dvttbl" width="auto" >
           <thead>
             <tr>
               {summaryData[0].columns.map((eachColumn, eachColumnIndex) => {

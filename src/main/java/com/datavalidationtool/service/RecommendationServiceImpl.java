@@ -770,7 +770,7 @@ public class RecommendationServiceImpl implements RecommendationService {
             StringBuilder stb=new StringBuilder();
             boolean firstCol=true;
             DatabaseMetaData meta = con.getMetaData();
-            rs = meta.getPrimaryKeys(null, excelDataRequest.getSchemaName(), excelDataRequest.getTableName().toString());
+            rs = meta.getPrimaryKeys(null, excelDataRequest.getSchemaName(), excelDataRequest.getTableName());
             ResultSet rs1=meta.getColumns(null,excelDataRequest.getSchemaName(),excelDataRequest.getTableName(),null);
             ArrayList list = new ArrayList<String>();
             while (rs.next()) {

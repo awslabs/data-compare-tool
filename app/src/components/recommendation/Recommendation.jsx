@@ -204,10 +204,11 @@ function fetchRecData(tableName,schemaName, runId, pageNumber)
 
       {data !== null && summaryData.length === 0 ? (
         <div>
-          <header>  <Grid container mb={2} spacing={1} columnSpacing={{ xs: 2 }} justifyContent="center" alignItems="center">
-                         <Grid item xs={12} sm={6} md={2}><img src={logo}  alt="Logo"  align="right" valign="bottom"/></Grid><Grid item xs={12} sm={6} md={10}>
-                           <Typography variant="h4" align="left" valign="bottom" >Summary of table changes </Typography>
-                         </Grid></Grid></header>
+          <header>      <Grid container mb={2} spacing={1} columnSpacing={{ xs: 2 }} justifyContent="center" alignItems="center">
+                            <Grid item xs={12} sm={6} md={11}>
+                              <Typography variant="h5" align="center" valign="bottom" >  Summary of changes</Typography>
+                            </Grid>
+                          </Grid></header>
           <DVTTable
             data={data}
             setDataHandler={setDataHandler}
