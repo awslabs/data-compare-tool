@@ -18,7 +18,7 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TableCell from "@mui/material/TableCell";
 import TableBody from "@mui/material/TableBody";
-import { containerClasses } from "@mui/material";
+import { containerClasses, Autocomplete } from "@mui/material";
 import dummyInputData from "./dummy_data.json";
 import { FormStatus } from "./static_data";
 import { Link } from "react-router-dom";
@@ -132,15 +132,19 @@ export default function Validation() {
     const handleAdditionalRowsInput = (event) => {
         setCheckAdditionalRows(event.target.checked);
     };
-    const handleSrcSchemaChange = (event) => {
-        setSrcSchemaName(event.value);
+    const handleSrcSchemaChange = (event, selectedOption) => {
+        if (selectedOption != null) {
+            setSrcSchemaName(selectedOption?.value);
+        } else {
+            setSrcSchemaName("");
+        }
     };
     function redirectToHome(event) {
         navigate("/dvt/menu");
     }
-    function handleTableInput(event) {
-        var value = Array.from(event, (item) => item.value);
-        var length = value.length;
+    function handleTableInput(event, selectedOption) {
+        let value = Array.from(selectedOption, (item) => item.value);
+        let length = value.length;
         if (length == 0) {
             alert("Please select a Table Name");
             return;
@@ -210,18 +214,18 @@ export default function Validation() {
     let databaseList = [];
     let clearable = true;
 
-    const handleSchemaChange = (event) => {
+    const handleSchemaChange = (event, selectedOption) => {
         let list = [];
-        if (event != null) {
+        if (selectedOption != null) {
             initialValue.tableNames = [];
             list = pageDetails[0][0].schemaList.find(
-                (schema) => schema.schemaName == event.value
-            ).tableList;
+                (schema) => schema?.schemaName == selectedOption?.value
+            )?.tableList;
             for (let j = 0; j < list.length; j++) {
                 list[j].label = list[j].tableName;
                 list[j].value = list[j].tableName;
             }
-            setSchemaName(event.value);
+            setSchemaName(selectedOption?.value);
             setTableNames([]);
             setTableName("");
             setTableNames();
@@ -614,7 +618,7 @@ export default function Validation() {
                     {/*  error={userCred.schemaNames === '' && ifFormTouched === FormStatus.MODIFIED}*/}
                     {/*  onChange={handleInput}*/}
                     {/*/>*/}
-                    <Select
+                    {/* <Select
                         isDisabled={false}
                         isLoading={false}
                         isClearable
@@ -626,6 +630,20 @@ export default function Validation() {
                         variant="outlined"
                         options={userCred.schemaNames}
                         onChange={handleSchemaChange}
+                    /> */}
+                    <Autocomplete
+                        options={userCred.schemaNames}
+                        name="schemas"
+                        defaultValue={userCred.schemaNames[0]}
+                        onChange={handleSchemaChange}
+                        filterSelectedOptions
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                label="Target Schema"
+                                placeholder="Target Schema"
+                            />
+                        )}
                     />
                 </Grid>
                 <Grid item xs={12} md={3}>
@@ -640,7 +658,7 @@ export default function Validation() {
                     {/*  error={userCred.schemaNames === '' && ifFormTouched === FormStatus.MODIFIED}*/}
                     {/*  onChange={handleInput}*/}
                     {/*/>*/}
-                    <Select
+                    {/* <Select
                         isDisabled={false}
                         isLoading={false}
                         isClearable
@@ -652,9 +670,25 @@ export default function Validation() {
                         variant="outlined"
                         options={userCred.schemaNames}
                         onChange={handleSrcSchemaChange}
+                    /> */}
+                    <Autocomplete
+                        options={userCred.schemaNames}
+                        defaultValue={userCred.schemaNames[0]}
+                        onChange={handleSrcSchemaChange}
+                        name="srcSchemas"
+                        filterSelectedOptions
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                label="Source Schema"
+                                placeholder="Source Schema"
+                            />
+                        )}
                     />
                 </Grid>
-
+                {/* {
+                    srcSchemaName && 
+                } */}
                 <Grid item xs={12} md={3}>
                     {/*<TextField*/}
                     {/*  fullWidth*/}
@@ -667,7 +701,7 @@ export default function Validation() {
                     {/*  error={userCred.tableNames === '' && ifFormTouched === FormStatus.MODIFIED}*/}
                     {/*  onChange={handleInput}*/}
                     {/*/>*/}
-                    <Select
+                    {/* <Select
                         isDisabled={false}
                         isLoading={false}
                         isMulti={true}
@@ -681,7 +715,24 @@ export default function Validation() {
                         variant="outlined"
                         options={userCred.tableNames}
                         onChange={handleTableInput}
-                    />{" "}
+                    /> */}
+                    <Autocomplete
+                        multiple
+                        limitTags={1}
+                        disabled={!schemaName || !srcSchemaName}
+                        options={userCred.tableNames}
+                        defaultValue={userCred.tableNames[0] || undefined}
+                        onChange={handleTableInput}
+                        name="tables"
+                        filterSelectedOptions
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                label="Table Name"
+                                placeholder="Table Name"
+                            />
+                        )}
+                    />
                 </Grid>
                 <Grid item xs={12} md={3}>
                     <FormGroup>
