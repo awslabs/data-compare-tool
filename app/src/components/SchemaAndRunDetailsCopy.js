@@ -661,7 +661,7 @@ function Nestedselect() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {tableData.map((row) => (
+                  {currentTableData.map((row) => (
                     <TableRow key={row.slNo} sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
                       <TableCell scope="row">{row.slNo}</TableCell>
                       <TableCell className="tablename" align="left">{row.tableName}</TableCell>
