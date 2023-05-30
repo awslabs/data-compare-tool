@@ -9,11 +9,12 @@ const Footer = () => {
             py={"10px"}
             sx={{
                 mt: 0,
-                background: "#fff",
+                background: "#fafafa",
                 position: "fixed",
                 bottom: 0,
                 width: "100%",
                 borderTop: "1px solid lightgrey",
+                zIndex: 1,
             }}
         >
             <Typography variant="p" align="left">

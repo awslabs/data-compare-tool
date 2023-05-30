@@ -18,13 +18,21 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TableCell from "@mui/material/TableCell";
 import TableBody from "@mui/material/TableBody";
-import { containerClasses, Autocomplete } from "@mui/material";
+import {
+    containerClasses,
+    Autocomplete,
+    Accordion as MuiAccordion,
+    AccordionSummary,
+    AccordionDetails,
+} from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import dummyInputData from "./dummy_data.json";
 import { FormStatus } from "./static_data";
 import { Link } from "react-router-dom";
 import LoadingSpinner from "../LoadingSpinner";
+import { styled } from "@mui/material/styles";
 import "../styles.css";
-import logo from "../dart-logo.jpg";
+// import logo from "../dart-logo.jpg";
 
 const initialValue = {
     hostname: "ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com",
@@ -98,6 +106,15 @@ export default function Validation() {
     const [checkAdditionalRows, setCheckAdditionalRows] = useState(false);
     const [incremental, setIncremental] = useState(false);
     const [data, setData] = useState([{}]);
+
+    const Accordion = styled((props) => (
+        <MuiAccordion disableGutters elevation={0} square {...props} />
+    ))(({ theme }) => ({
+        border: `1px solid ${theme.palette.divider}`,
+        borderRadius: "8px",
+        // background: "#fafafa",
+    }));
+
     const handleInput = (event) => {
         dispatch({
             type: "update",
@@ -477,121 +494,130 @@ export default function Validation() {
 
     return (
         <Box>
-            <Grid
-                container
-                mb={"20px"}
-                spacing={2}
-                columnSpacing={{ xs: 2 }}
-                justifyContent="left"
-                alignItems="center"
-            >
-                <Grid item xs={12}>
-                    <Typography> Schema Details </Typography>
-                </Grid>
-                <Grid item xs={12} md={6}>
-                    <TextField
-                        fullWidth
-                        autoFocus
-                        size="small"
-                        required
-                        name="hostname"
-                        label="Hostname"
-                        variant="outlined"
-                        value={userCred.hostname}
-                        error={
-                            userCred.hostname === "" &&
-                            ifFormTouched === FormStatus.MODIFIED
-                        }
-                        onChange={handleInput}
-                    />
-                </Grid>
-                <Grid item xs={12} md={2}>
-                    <TextField
-                        fullWidth
-                        size="small"
-                        required
-                        name="port"
-                        label="Port"
-                        type="number"
-                        variant="outlined"
-                        value={userCred.port}
-                        error={
-                            userCred.port === "" &&
-                            ifFormTouched === FormStatus.MODIFIED
-                        }
-                        onChange={handleInput}
-                        onKeyPress={(e) =>
-                            !/[0-9]/.test(e.key) && e.preventDefault()
-                        }
-                    />
-                </Grid>
-                <Grid item xs={12} md={2}>
-                    <TextField
-                        p={0}
-                        fullWidth
-                        size="small"
-                        required
-                        name="dbname"
-                        label="Database"
-                        variant="outlined"
-                        value={userCred.dbname}
-                        error={
-                            userCred.dbname === "" &&
-                            ifFormTouched === FormStatus.MODIFIED
-                        }
-                        onChange={handleInput}
-                    />
-                </Grid>
-                <Grid item xs={12} md={2}>
-                    <FormGroup>
-                        <FormControlLabel
-                            control={
-                                <Checkbox
-                                    name="usessl"
-                                    value={userCred.usessl}
-                                    onChange={handleInput}
+            <Accordion>
+                <AccordionSummary
+                    expandIcon={<ExpandMoreIcon />}
+                    aria-controls="panel1a-content"
+                    id="panel1a-header"
+                >
+                    <Typography>Schema Details</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                    <Grid
+                        container
+                        mb={"20px"}
+                        spacing={2}
+                        columnSpacing={{ xs: 2 }}
+                        justifyContent="left"
+                        alignItems="center"
+                    >
+                        <Grid item xs={12} md={6}>
+                            <TextField
+                                fullWidth
+                                autoFocus
+                                size="small"
+                                required
+                                name="hostname"
+                                label="Hostname"
+                                variant="outlined"
+                                value={userCred.hostname}
+                                error={
+                                    userCred.hostname === "" &&
+                                    ifFormTouched === FormStatus.MODIFIED
+                                }
+                                onChange={handleInput}
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={2}>
+                            <TextField
+                                fullWidth
+                                size="small"
+                                required
+                                name="port"
+                                label="Port"
+                                type="number"
+                                variant="outlined"
+                                value={userCred.port}
+                                error={
+                                    userCred.port === "" &&
+                                    ifFormTouched === FormStatus.MODIFIED
+                                }
+                                onChange={handleInput}
+                                onKeyPress={(e) =>
+                                    !/[0-9]/.test(e.key) && e.preventDefault()
+                                }
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={2}>
+                            <TextField
+                                p={0}
+                                fullWidth
+                                size="small"
+                                required
+                                name="dbname"
+                                label="Database"
+                                variant="outlined"
+                                value={userCred.dbname}
+                                error={
+                                    userCred.dbname === "" &&
+                                    ifFormTouched === FormStatus.MODIFIED
+                                }
+                                onChange={handleInput}
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={2}>
+                            <FormGroup>
+                                <FormControlLabel
+                                    control={
+                                        <Checkbox
+                                            name="usessl"
+                                            value={userCred.usessl}
+                                            onChange={handleInput}
+                                        />
+                                    }
+                                    label="SSL Mode"
                                 />
-                            }
-                            label="SSL Mode"
-                        />
-                    </FormGroup>
-                </Grid>
-                <Grid item xs={12} md={3}>
-                    <TextField
-                        fullWidth
-                        size="small"
-                        required
-                        name="username"
-                        label="Username"
-                        variant="outlined"
-                        value={userCred.username}
-                        error={
-                            userCred.username === "" &&
-                            ifFormTouched === FormStatus.MODIFIED
-                        }
-                        onChange={handleInput}
-                    />
-                </Grid>
-                <Grid item xs={12} md={3}>
-                    <TextField
-                        fullWidth
-                        size="small"
-                        required
-                        name="password"
-                        label="Password"
-                        type="password"
-                        variant="outlined"
-                        value={userCred.password}
-                        error={
-                            userCred.password === "" &&
-                            ifFormTouched === FormStatus.MODIFIED
-                        }
-                        onChange={handleInput}
-                    />
-                </Grid>
-                {/* </Grid> */}
-                <Grid item xs={12} md={4}></Grid>
-            </Grid>
+                            </FormGroup>
+                        </Grid>
+                        <Grid item xs={12} md={3}>
+                            <TextField
+                                fullWidth
+                                size="small"
+                                required
+                                name="username"
+                                label="Username"
+                                variant="outlined"
+                                value={userCred.username}
+                                error={
+                                    userCred.username === "" &&
+                                    ifFormTouched === FormStatus.MODIFIED
+                                }
+                                onChange={handleInput}
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={3}>
+                            <TextField
+                                fullWidth
+                                size="small"
+                                required
+                                name="password"
+                                label="Password"
+                                type="password"
+                                variant="outlined"
+                                value={userCred.password}
+                                error={
+                                    userCred.password === "" &&
+                                    ifFormTouched === FormStatus.MODIFIED
+                                }
+                                onChange={handleInput}
+                            />
+                        </Grid>
+                        {/* </Grid> */}
+                        <Grid item xs={12} md={4}></Grid>
+                    </Grid>
+                </AccordionDetails>
+            </Accordion>
+
             {/*         <Divider pb={2} /> */}
             {/*         <Divider pt={2} /> */}
             <Grid

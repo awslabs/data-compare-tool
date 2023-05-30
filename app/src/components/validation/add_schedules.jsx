@@ -24,7 +24,7 @@ import { FormStatus } from "./static_data";
 import { Link } from "react-router-dom";
 import LoadingSpinner from "../LoadingSpinner";
 import "../styles.css";
-import logo from "../dart-logo.jpg";
+// import logo from "../dart-logo.jpg";
 import Header from "../Header.jsx";
 import DatePicker from "react-datepicker";
 

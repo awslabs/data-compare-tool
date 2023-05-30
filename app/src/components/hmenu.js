@@ -4,7 +4,7 @@ import Sidebar from './Sidebar';
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
-import logo from './dart-logo.jpg';
+// import logo from './dart-logo.jpg';
 export default function Home() {
   return (
     <Box>

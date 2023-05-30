@@ -1,13 +1,21 @@
 import Grid from "@mui/material/Grid";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import logo from "./dart-logo.jpg";
+import logo from "./logo.png";
 import Sidebar from "./Sidebar";
 import { AuthIsSignedIn } from "./../contexts/authContext";
 
 export default function Header() {
     return (
-        <Box id="outer-container" sx={{ mt: 0, background: "#fff" }}>
+        <Box
+            id="outer-container"
+            className="header-container"
+            sx={{
+                mt: 0,
+                background: "#fafafa",
+                // background: "linear-gradient('90deg', '#fff', 'darkgray')",
+            }}
+        >
             <AuthIsSignedIn>
                 <Sidebar
                     pageWrapId={"page-wrap"}
@@ -19,26 +27,30 @@ export default function Header() {
                 px={{ xs: "50px", md: "100px" }}
                 mb={"20px"}
                 py={"20px"}
-                sx={{ mt: 0, background: "#fff" }}
+                sx={{
+                    mt: 0,
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    borderBottom: "1px solid lightgrey",
+                }}
             >
-                <div
-                    style={{
-                        display: "inline-block",
-                        width: "160px",
-                        "vertical-align": "middle",
-                    }}
-                >
-                    <img src={logo} alt="Logo" align="right" valign="bottom" />
+                <div>
+                    <img
+                        src={logo}
+                        alt="Logo"
+                        align="right"
+                        valign="bottom"
+                        width="90px"
+                    />
                 </div>
                 <div
                     style={{
-                        display: "inline-block",
-                        width: "auto",
                         "margin-left": "30px",
                     }}
                 >
                     <Typography
-                        variant="h4"
+                        variant="h1"
                         align="left"
                         valign="bottom"
                         sx={{
@@ -47,7 +59,7 @@ export default function Header() {
                             fontSize: { md: "26px", lg: "2.25rem" },
                         }}
                     >
-                        Data Validation And Remediation Tool ( DVART )
+                        SCOOT
                     </Typography>
                 </div>
             </Box>
