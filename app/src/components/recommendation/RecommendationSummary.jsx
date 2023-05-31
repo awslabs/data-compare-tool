@@ -47,69 +47,82 @@ function RecommendationSummary(props) {
                         {" "}
                         Summary of changes{" "}
                     </Typography>
-                </Grid>
-            </Grid>
-
-            <div style={{ marginTop: 10, marginBottom: 10, width: "100%" }}>
-                <table
-                    border="1"
-                    align="center"
-                    id="customers"
-                    className="dvttbl"
-                    width="auto"
-                >
-                    <thead>
-                        <tr>
-                            {summaryData[0].columns.map(
-                                (eachColumn, eachColumnIndex) => {
-                                    return (
-                                        <th key={eachColumnIndex}>
-                                            {eachColumn.colName}
-                                        </th>
-                                    );
-                                }
-                            )}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {summaryData.map((eachRow, rowIndex) => {
-                            return (
-                                <tr key={rowIndex}>
-                                    {eachRow.columns.map(
-                                        (eachCol, colIndex) => {
+                    <div
+                        style={{
+                            marginTop: 10,
+                            marginBottom: 10,
+                            // width: "100%",
+                            maxWidth: "1400px",
+                            minWidth: "700px",
+                            width: "auto",
+                            overflow: "scroll",
+                        }}
+                    >
+                        <table
+                            border="1"
+                            align="center"
+                            id="customers"
+                            className="dvttbl"
+                            width="auto"
+                        >
+                            <thead>
+                                <tr>
+                                    {summaryData[0].columns.map(
+                                        (eachColumn, eachColumnIndex) => {
                                             return (
-                                                <td
-                                                    key={colIndex}
-                                                    style={{
-                                                        textAlign: "left",
-                                                    }}
-                                                >
-                                                    {eachCol.targetValue}
-                                                </td>
+                                                <th key={eachColumnIndex}>
+                                                    {eachColumn.colName}
+                                                </th>
                                             );
                                         }
                                     )}
                                 </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
-            </div>
-            <div>
-                <Checkbox onClick={acknowledgeHandler}></Checkbox>
-                <span>
-                    I acknowledge that these values will be saved in DataBase
-                </span>
-            </div>
-            <div align="center" valign="center">
-                <Button variant="outlined" onClick={continueHandler}>
-                    Continue
-                </Button>{" "}
-                &nbsp;
-                <Button variant="outlined" onClick={props.onCancel}>
-                    Cancel
-                </Button>
-            </div>
+                            </thead>
+                            <tbody>
+                                {summaryData.map((eachRow, rowIndex) => {
+                                    return (
+                                        <tr key={rowIndex}>
+                                            {eachRow.columns.map(
+                                                (eachCol, colIndex) => {
+                                                    return (
+                                                        <td
+                                                            key={colIndex}
+                                                            style={{
+                                                                textAlign:
+                                                                    "left",
+                                                            }}
+                                                        >
+                                                            {
+                                                                eachCol.targetValue
+                                                            }
+                                                        </td>
+                                                    );
+                                                }
+                                            )}
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div>
+                        <Checkbox onClick={acknowledgeHandler}></Checkbox>
+                        <span>
+                            I acknowledge that these values will be saved in
+                            DataBase
+                        </span>
+                    </div>
+                    <div align="center" valign="center">
+                        <Button variant="outlined" onClick={continueHandler}>
+                            Continue
+                        </Button>{" "}
+                        &nbsp;
+                        <Button variant="outlined" onClick={props.onCancel}>
+                            Cancel
+                        </Button>
+                    </div>
+                </Grid>
+            </Grid>
         </div>
     );
 }
