@@ -52,8 +52,8 @@ function RecommendationSummary(props) {
                             marginTop: 10,
                             marginBottom: 10,
                             // width: "100%",
-                            maxWidth: "1400px",
-                            minWidth: "700px",
+                            // maxWidth: "1250px",
+                            // minWidth: "450px",
                             width: "auto",
                             overflow: "scroll",
                         }}
