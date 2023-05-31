@@ -38,7 +38,7 @@ const Sidebar = props => {
         Remediation
       </a>
       <a className="menu-item" href="/dvt/addschedules">
-        schedules
+        Schedules
       </a>
       <a className="menu-item" href="/dvt/signin" onClick={handleSignout} >
         Sign out

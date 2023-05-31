@@ -15,8 +15,8 @@ const Container = ({ children }) => {
                     border: 1,
                     borderColor: "primary.main",
                     borderRadius: 2,
-                    "max-width": "1400px",
-                    "min-width": "700px",
+                    maxWidth: "1400px",
+                    minWidth: "700px",
                     width: "auto",
                 }}
             >
