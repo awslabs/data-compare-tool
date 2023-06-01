@@ -41,7 +41,7 @@ export default function Header() {
                         alt="Logo"
                         align="right"
                         valign="bottom"
-                        width="90px"
+                        width="70px"
                     />
                 </div>
                 <div

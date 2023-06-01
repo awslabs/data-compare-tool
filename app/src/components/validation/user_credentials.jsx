@@ -658,6 +658,7 @@ export default function Validation() {
                         onChange={handleSchemaChange}
                     /> */}
                     <Autocomplete
+                        size="small"
                         options={userCred.schemaNames}
                         name="schemas"
                         defaultValue={userCred.schemaNames[0]}
@@ -698,6 +699,7 @@ export default function Validation() {
                         onChange={handleSrcSchemaChange}
                     /> */}
                     <Autocomplete
+                        size="small"
                         options={userCred.schemaNames}
                         defaultValue={userCred.schemaNames[0]}
                         onChange={handleSrcSchemaChange}
@@ -743,6 +745,7 @@ export default function Validation() {
                         onChange={handleTableInput}
                     /> */}
                     <Autocomplete
+                        size="small"
                         multiple
                         limitTags={1}
                         disabled={!schemaName || !srcSchemaName}
@@ -776,6 +779,7 @@ export default function Validation() {
                 </Grid>
                 <Grid item xs={12} md={3}>
                     <TextField
+                        size="small"
                         fullWidth
                         multiline
                         maxRows={4}
@@ -807,6 +811,7 @@ export default function Validation() {
 
                 <Grid item xs={12} md={3}>
                     <TextField
+                        size="small"
                         fullWidth
                         multiline
                         maxRows={4}
@@ -824,6 +829,7 @@ export default function Validation() {
 
                 <Grid item xs={12} md={4}>
                     <TextField
+                        size="small"
                         fullWidth
                         multiline
                         maxRows={4}
@@ -841,6 +847,7 @@ export default function Validation() {
 
                 <Grid item xs={12} md={3}>
                     <TextField
+                        size="small"
                         fullWidth
                         multiline
                         maxRows={4}
@@ -857,6 +864,7 @@ export default function Validation() {
                 </Grid>
                 <Grid item xs={12} md={3}>
                     <TextField
+                        size="small"
                         fullWidth
                         multiline
                         maxRows={4}

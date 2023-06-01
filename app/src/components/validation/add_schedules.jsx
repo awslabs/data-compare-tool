@@ -18,7 +18,7 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TableCell from "@mui/material/TableCell";
 import TableBody from "@mui/material/TableBody";
-import { containerClasses } from "@mui/material";
+import { containerClasses, Autocomplete } from "@mui/material";
 import dummyInputData from "./dummy_data.json";
 import { FormStatus } from "./static_data";
 import { Link } from "react-router-dom";
@@ -150,14 +150,18 @@ export default function Validation() {
     const handleReoccurrenceInput = (event) => {
         setReoccurrence(event.target.checked);
     };
-    const handleSrcSchemaChange = (event) => {
-        setSrcSchemaName(event.value);
+    const handleSrcSchemaChange = (event, selectedOption) => {
+        if (selectedOption != null) {
+            setSrcSchemaName(selectedOption?.value);
+        } else {
+            setSrcSchemaName("");
+        }
     };
     function redirectToHome(event) {
         navigate("/dvt/menu");
     }
-    function handleTableInput(event) {
-        var value = Array.from(event, (item) => item.value);
+    function handleTableInput(event, selectedOption) {
+        var value = Array.from(selectedOption, (item) => item.value);
         var length = value.length;
         if (length == 0) {
             alert("Please select a Table Name");
@@ -238,18 +242,18 @@ export default function Validation() {
             setTimeFrequency(event.value);
         }
     };
-    const handleSchemaChange = (event) => {
+    const handleSchemaChange = (event, selectedOption) => {
         let list = [];
-        if (event != null) {
+        if (selectedOption != null) {
             initialValue.tableNames = [];
             list = pageDetails[0][0].schemaList.find(
-                (schema) => schema.schemaName == event.value
+                (schema) => schema.schemaName == selectedOption.value
             ).tableList;
             for (let j = 0; j < list.length; j++) {
                 list[j].label = list[j].tableName;
                 list[j].value = list[j].tableName;
             }
-            setSchemaName(event.value);
+            setSchemaName(selectedOption.value);
             setTableNames([]);
             setTableName("");
             setTableNames();
@@ -586,13 +590,13 @@ export default function Validation() {
                     mb={2}
                     spacing={2}
                     columnSpacing={{ xs: 2 }}
-                    justifyContent="center"
+                    justifyContent="left"
                     alignItems="center"
                 >
                     <Grid item xs={12}>
                         <Typography> Table Details </Typography>
                     </Grid>
-                    <Grid item xs={12} md={2}>
+                    <Grid item xs={12} md={3}>
                         {/*<TextField*/}
                         {/*  fullWidth*/}
                         {/*  multiline*/}
@@ -604,7 +608,7 @@ export default function Validation() {
                         {/*  error={userCred.schemaNames === '' && ifFormTouched === FormStatus.MODIFIED}*/}
                         {/*  onChange={handleInput}*/}
                         {/*/>*/}
-                        <Select
+                        {/* <Select
                             isDisabled={false}
                             isLoading={false}
                             isClearable
@@ -616,9 +620,24 @@ export default function Validation() {
                             variant="outlined"
                             options={userCred.schemaNames}
                             onChange={handleSchemaChange}
+                        /> */}
+                        <Autocomplete
+                            size="small"
+                            options={userCred.schemaNames}
+                            name="schemas"
+                            defaultValue={userCred.schemaNames[0]}
+                            onChange={handleSchemaChange}
+                            filterSelectedOptions
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label="Target Schema"
+                                    placeholder="Target Schema"
+                                />
+                            )}
                         />
                     </Grid>
-                    <Grid item xs={12} md={2}>
+                    <Grid item xs={12} md={3}>
                         {/*<TextField*/}
                         {/*  fullWidth*/}
                         {/*  multiline*/}
@@ -630,7 +649,7 @@ export default function Validation() {
                         {/*  error={userCred.schemaNames === '' && ifFormTouched === FormStatus.MODIFIED}*/}
                         {/*  onChange={handleInput}*/}
                         {/*/>*/}
-                        <Select
+                        {/* <Select
                             isDisabled={false}
                             isLoading={false}
                             isClearable
@@ -642,6 +661,21 @@ export default function Validation() {
                             variant="outlined"
                             options={userCred.schemaNames}
                             onChange={handleSrcSchemaChange}
+                        /> */}
+                        <Autocomplete
+                            size="small"
+                            options={userCred.schemaNames}
+                            defaultValue={userCred.schemaNames[0]}
+                            onChange={handleSrcSchemaChange}
+                            name="srcSchemas"
+                            filterSelectedOptions
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label="Source Schema"
+                                    placeholder="Source Schema"
+                                />
+                            )}
                         />
                     </Grid>
                     <Grid item xs={12} md={3}>
@@ -656,7 +690,7 @@ export default function Validation() {
                         {/*  error={userCred.tableNames === '' && ifFormTouched === FormStatus.MODIFIED}*/}
                         {/*  onChange={handleInput}*/}
                         {/*/>*/}
-                        <Select
+                        {/* <Select
                             isDisabled={false}
                             isLoading={false}
                             isMulti={true}
@@ -670,9 +704,27 @@ export default function Validation() {
                             variant="outlined"
                             options={userCred.tableNames}
                             onChange={handleTableInput}
+                        /> */}
+                        <Autocomplete
+                            size="small"
+                            multiple
+                            limitTags={1}
+                            disabled={!schemaName || !srcSchemaName}
+                            options={userCred.tableNames}
+                            defaultValue={userCred.tableNames[0] || undefined}
+                            onChange={handleTableInput}
+                            name="tables"
+                            filterSelectedOptions
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label="Table Name"
+                                    placeholder="Table Name"
+                                />
+                            )}
                         />
                     </Grid>
-                    <Grid item xs={12} md={1}>
+                    <Grid item xs={12} md={3}>
                         <FormGroup>
                             <FormControlLabel
                                 control={
@@ -688,6 +740,7 @@ export default function Validation() {
                     </Grid>
                     <Grid item xs={12} md={3}>
                         <TextField
+                            size="small"
                             fullWidth
                             multiline
                             maxRows={4}
@@ -718,6 +771,7 @@ export default function Validation() {
                     </Grid>
                     <Grid item xs={4} md={3}>
                         <TextField
+                            size="small"
                             fullWidth
                             multiline
                             maxRows={4}
@@ -734,6 +788,7 @@ export default function Validation() {
                     </Grid>
                     <Grid item xs={12} md={4}>
                         <TextField
+                            size="small"
                             fullWidth
                             multiline
                             maxRows={4}
@@ -750,6 +805,7 @@ export default function Validation() {
                     </Grid>{" "}
                     <Grid item xs={12} md={3}>
                         <TextField
+                            size="small"
                             fullWidth
                             multiline
                             maxRows={4}
@@ -764,8 +820,9 @@ export default function Validation() {
                             onChange={handleInput}
                         />
                     </Grid>{" "}
-                    <Grid item xs={3} md={1}>
+                    <Grid item xs={12} md={3}>
                         <TextField
+                            size="small"
                             fullWidth
                             multiline
                             maxRows={4}
@@ -780,7 +837,7 @@ export default function Validation() {
                             onChange={handleInput}
                         />
                     </Grid>
-                    <Grid item xs={3} md={1}>
+                    <Grid item xs={3} md={3}>
                         <FormGroup>
                             <FormControlLabel
                                 control={
@@ -794,7 +851,8 @@ export default function Validation() {
                             />
                         </FormGroup>
                     </Grid>
-                    <Grid item xs={1} md={2}>
+                    <Grid item xs={3} md={3}></Grid>
+                    <Grid item xs={12} md={2}>
                         <Typography>Select Start Date and Time</Typography>
                     </Grid>
                     <Grid item xs={1} md={2}>
@@ -840,7 +898,7 @@ export default function Validation() {
                             onChange={handleDayFrequencyChange}
                         />
                     </Grid>
-                    <Grid item xs={1} md={2}>
+                    <Grid item xs={12} md={2}>
                         <Typography> Select End Date and Time</Typography>
                     </Grid>
                     <Grid item xs={1} md={2}>
@@ -862,6 +920,7 @@ export default function Validation() {
                     </Grid>
                     <Grid item xs={3} md={1}>
                         <TextField
+                            size="small"
                             fullWidth
                             multiline
                             maxRows={4}
@@ -893,6 +952,7 @@ export default function Validation() {
                     </Grid>
                     <Grid item xs={3} md={2}>
                         <TextField
+                            size="small"
                             fullWidth
                             multiline
                             maxRows={4}
