@@ -157,9 +157,9 @@ export default function Validation() {
             setSrcSchemaName("");
         }
     };
-    function redirectToHome(event) {
-        navigate("/dvt/menu");
-    }
+    // function redirectToHome(event) {
+    //     navigate("/dvt/menu");
+    // }
     function handleTableInput(event, selectedOption) {
         var value = Array.from(selectedOption, (item) => item.value);
         var length = value.length;
@@ -232,13 +232,13 @@ export default function Validation() {
     let databaseList = [];
     let clearable = true;
 
-    const handleDayFrequencyChange = (event) => {
-        if (event != null) {
+    const handleDayFrequencyChange = (event, selectedOption) => {
+        if (selectedOption != null) {
             setDayFrequency(event.value);
         }
     };
-    const handleTimeFrequencyChange = (event) => {
-        if (event != null) {
+    const handleTimeFrequencyChange = (event, selectedOption) => {
+        if (selectedOption != null) {
             setTimeFrequency(event.value);
         }
     };
@@ -540,9 +540,9 @@ export default function Validation() {
             type: "reset",
         });
     }
-    const handleRecomm = () => {
-        navigate("/dvt/selection");
-    };
+    // const handleRecomm = () => {
+    //     navigate("/dvt/selection");
+    // };
     const [state] = useReducer(reducer);
     const frequency = [
         { value: "D", label: "daily" },
@@ -554,37 +554,11 @@ export default function Validation() {
         { value: "H", label: "hour" },
     ];
     return (
-        <div>
-            <Grid
-                container
-                mb={2}
-                spacing={1}
-                columnSpacing={{ xs: 2 }}
-                justifyContent="center"
-                alignItems="center"
-            >
-                <Grid item xs={12} sm={6} md={11}>
-                    <Typography variant="h4" align="center" valign="bottom">
-                        Validation Schedules
-                    </Typography>
-                </Grid>
-            </Grid>
-
+        <>
+            <Typography variant="h5" className="heading">
+                Validation Schedules
+            </Typography>
             <Box>
-                <Grid
-                    container
-                    mb={2}
-                    spacing={2}
-                    columnSpacing={{ xs: 2 }}
-                    justifyContent="center"
-                    alignItems="center"
-                >
-                    <Grid item xs={12}>
-                        <Typography></Typography>
-                    </Grid>
-
-                    <Grid item xs={12} md={4}></Grid>
-                </Grid>
                 <Grid
                     container
                     mb={2}
@@ -884,7 +858,7 @@ export default function Validation() {
                         </FormGroup>
                     </Grid>
                     <Grid item xs={12} md={2}>
-                        <Select
+                        {/* <Select
                             isDisabled={false}
                             isLoading={false}
                             isClearable
@@ -896,6 +870,21 @@ export default function Validation() {
                             variant="outlined"
                             options={frequency}
                             onChange={handleDayFrequencyChange}
+                        /> */}
+                        <Autocomplete
+                            size="small"
+                            options={frequency}
+                            // defaultValue={""}
+                            onChange={handleDayFrequencyChange}
+                            name="dayFrequency"
+                            filterSelectedOptions
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label="Frequency"
+                                    placeholder="Select Frequency"
+                                />
+                            )}
                         />
                     </Grid>
                     <Grid item xs={12} md={2}>
@@ -935,8 +924,8 @@ export default function Validation() {
                             onChange={handleInput}
                         />
                     </Grid>
-                    <Grid item xs={12} md={1}>
-                        <Select
+                    <Grid item xs={12} md={2}>
+                        {/* <Select
                             isDisabled={false}
                             isLoading={false}
                             isClearable
@@ -948,6 +937,21 @@ export default function Validation() {
                             variant="outlined"
                             options={frequencyDay}
                             onChange={handleTimeFrequencyChange}
+                        /> */}
+                        <Autocomplete
+                            size="small"
+                            options={frequency}
+                            // defaultValue={""}
+                            onChange={handleTimeFrequencyChange}
+                            name="timeFrequency"
+                            filterSelectedOptions
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label="Frequency"
+                                    placeholder="Select Frequency"
+                                />
+                            )}
                         />
                     </Grid>
                     <Grid item xs={3} md={2}>
@@ -968,15 +972,13 @@ export default function Validation() {
                         />
                     </Grid>
                     <Grid item md={6}></Grid>
-                    <Grid item md={1}></Grid>{" "}
-                    <Grid item md={7}>
+                    <Grid item xs={12} md={12}>
                         <Stack
                             direction="row"
                             spacing={2}
-                            style={{ justifyContent: "space-evenly" }}
+                            style={{ justifyContent: "center" }}
                         >
                             <Button
-                                color="secondary"
                                 variant="contained"
                                 onClick={handleSubmit}
                                 disabled={isLoading}
@@ -997,20 +999,20 @@ export default function Validation() {
                             >
                                 Last Run Info
                             </Button>
-                            <Button
+                            {/* <Button
                                 color="primary"
                                 variant="contained"
                                 onClick={handleRecomm}
                             >
                                 Recommendation
-                            </Button>
-                            <Button
+                            </Button> */}
+                            {/* <Button
                                 color="success"
                                 variant="contained"
                                 onClick={redirectToHome}
                             >
                                 Home
-                            </Button>
+                            </Button> */}
                         </Stack>
                     </Grid>
                     <Grid item md={5}></Grid>
@@ -1021,7 +1023,7 @@ export default function Validation() {
                 </Grid>
                 {showTable && (
                     <Grid item xs={12}>
-                        <Typography variant="h5">Last run details</Typography>
+                        <Typography variant="h6">Last run details</Typography>
                     </Grid>
                 )}
                 <Grid item xs={12} md={6}>
@@ -1040,7 +1042,7 @@ export default function Validation() {
                                         borderRadius: 2,
                                         width: 200,
                                     }}
-                                    aria-label="simple table"
+                                    aria-label="Last run information table"
                                 >
                                     <TableHead>
                                         <TableRow>
@@ -1125,7 +1127,7 @@ export default function Validation() {
                 </Grid>
                 {showRunTable && (
                     <Grid item xs={12}>
-                        <Typography variant="h5">Last run details</Typography>
+                        <Typography variant="h6">Last run details</Typography>
                     </Grid>
                 )}
                 <Grid item xs={12} md={6}>
@@ -1144,7 +1146,7 @@ export default function Validation() {
                                         borderRadius: 2,
                                         width: 200,
                                     }}
-                                    aria-label="simple table"
+                                    aria-label="Last run information table"
                                 >
                                     <TableHead>
                                         <TableRow>
@@ -1261,7 +1263,7 @@ export default function Validation() {
                                         borderRadius: 2,
                                         width: 200,
                                     }}
-                                    aria-label="simple table"
+                                    aria-label="table"
                                 >
                                     <TableHead>
                                         <TableRow>
@@ -1364,6 +1366,6 @@ export default function Validation() {
                     )}
                 </Grid>
             </Box>
-        </div>
+        </>
     );
 }
