@@ -13,7 +13,6 @@ export default function Header() {
             sx={{
                 mt: 0,
                 background: "#fafafa",
-                // background: "linear-gradient('90deg', '#fff', 'darkgray')",
             }}
         >
             <AuthIsSignedIn>
@@ -25,7 +24,6 @@ export default function Header() {
             <Box
                 container
                 px={{ xs: "50px", md: "100px" }}
-                mb={"20px"}
                 py={"20px"}
                 sx={{
                     mt: 0,
