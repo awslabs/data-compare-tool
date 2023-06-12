@@ -8,16 +8,17 @@ const Container = ({ children }) => {
             <Header />
             <Box
                 px={{ xs: 2 }}
-                py={2}
-                mb="80px"
-                mx={{ xs: "50px", md: "100px" }}
+                pb={2}
+                pt={4}
+                m={{ xs: "0 0 40px", md: "0 auto 40px" }}
                 sx={{
-                    border: 1,
-                    borderColor: "primary.main",
-                    borderRadius: 2,
                     maxWidth: "1400px",
                     minWidth: "700px",
                     width: "auto",
+                    border: "1px solid transparent",
+                    boxShadow: "0 0 20px",
+                    clipPath: "inset(0 -25px 0 -25px)",
+                    minHeight: "calc(100vh - 152px)",
                 }}
             >
                 {children}
