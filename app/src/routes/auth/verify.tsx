@@ -53,7 +53,7 @@ const VerifyCode: React.FunctionComponent<{}> = () => {
           <Grid container direction="column" justify="center" alignItems="center">
             {/* Title */}
             <Box m={2}>
-              <Typography variant="h4">Send Code</Typography>
+              <Typography variant="h5" className='heading'>Send Code</Typography>
             </Box>
 
             {/* Sign In Form */}

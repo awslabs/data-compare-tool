@@ -115,7 +115,7 @@ export default function ChangePassword() {
             {/* Title */}
             <Box m={3}>
               <Grid container direction="row" justify="center" alignItems="center">
-                <Typography variant="h4">Change Password</Typography>
+                <Typography variant="h5" className='heading'>Change Password</Typography>
               </Grid>
             </Box>
             {!reset ? updatePassword : passwordReset}

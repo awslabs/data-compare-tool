@@ -122,7 +122,9 @@ const SignUp: React.FunctionComponent<{}> = () => {
             {/* Title */}
             <Box m={3}>
               <Grid container direction="row" justify="flex-end" alignItems="flex-end">
-                <Grid xs={12} sm={12} md={12} container direction="column" justify="center" alignItems="flex-end" item> <Typography variant="h4"  >   Sign Up </Typography></Grid>
+                <Grid xs={12} sm={12} md={12} container direction="column" justify="center" alignItems="flex-end" item>
+                  <Typography variant="h5" className='heading'>Sign Up</Typography>
+                </Grid>
               </Grid>
             </Box>
             {!created ? signUp : accountCreated}
