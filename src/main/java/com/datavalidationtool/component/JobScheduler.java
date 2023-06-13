@@ -33,7 +33,7 @@ public class JobScheduler {
     public boolean validationFlag=false;
     public Logger logger = LoggerFactory.getLogger("JobScheduler");
 
-    @Scheduled(initialDelay = 600000000, fixedRate = 280000000)
+    @Scheduled(initialDelay = 60000, fixedRate = 60000)
     public void performDelayedTask() throws SQLException {
         logger.info("Schedule Started");
         List<ScheduleRequest> schList= getSchedules();

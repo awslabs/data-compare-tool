@@ -130,18 +130,19 @@ public class ExcelDataService {
         try {
             if (dataSource.isPoolInitialized()) {
                 con = dataSource.getDBConnection();
-                String dbFunction = "{ call fn_remediate_missing_exceptions_dvt2(?,?,?,?) }";
+                String dbFunction = "{ call fn_remediate_missing_exceptions_dvt2(?,?,?,?,?) }";
                 CallableStatement cst = null;
                 try {
                     cst = con.prepareCall(dbFunction);
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
-                cst.setString(1, dbUpdateData.getSourceSchemaName());
+                cst.setString(1, dbUpdateData.getRunId());
+                cst.setString(2, dbUpdateData.getSourceSchemaName());
               //  cst.setString(2, dbUpdateData.getTargetSchemaName());
-                cst.setString(2, dbUpdateData.getTableName().replace("_val", "").substring(dbUpdateData.getTableName().indexOf(".") + 1));
                 cst.setString(3, dbUpdateData.getTableName().replace("_val", "").substring(dbUpdateData.getTableName().indexOf(".") + 1));
-                cst.setString(4, dbUpdateData.getDataInsertStr());
+                cst.setString(4, dbUpdateData.getTableName().replace("_val", "").substring(dbUpdateData.getTableName().indexOf(".") + 1));
+                cst.setString(5, dbUpdateData.getDataInsertStr());
                 rs = cst.executeQuery();
                 while (rs.next()) {
                     String rowsUpdates1 = rs.getString(1);

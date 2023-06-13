@@ -155,7 +155,8 @@ public class ValidationService {
 				valRequest.setDataFilters(valRequest.getChunkColumns()+ " >= " +filterStrtValue+ " and "+valRequest.getChunkColumns()+" <= " +filterEndValue);
 			}
 		}
-		String pKey=(valRequest.getPrimaryKeys()!=null && !valRequest.getPrimaryKeys().equals("")) ? valRequest.getPrimaryKeys():valRequest.getChunkColumns();
+		String pKey=(valRequest.getChunkColumns()!=null && !valRequest.getChunkColumns().equals("")) ? valRequest.getChunkColumns():valRequest.getPrimaryKeys();
+		//String pKey=(valRequest.getPrimaryKeys()!=null && !valRequest.getPrimaryKeys().equals("")) ? valRequest.getPrimaryKeys():valRequest.getChunkColumns();
 		/*if(isHasNoUniqueKey()) {
 			sql.append("SELECT row_number()  OVER (ORDER BY ").append(cols).append(" ) nt FROM ").append(schemaName)
 					.append(".").append(tableName);

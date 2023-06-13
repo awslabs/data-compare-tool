@@ -73,7 +73,7 @@ let data = [];
 //     }]
 // }
 
-let PageSize = 2;
+let PageSize = 5;
 const data1 = {};
 const initialState = {
   disableHostName: false,
@@ -184,7 +184,8 @@ function Nestedselect() {
   }
 
   function redirectToValidation(event) {
-    navigate('/dvt/compare');
+    //navigate('/dvt/compare');
+    window.location.href="/dvt/compare";
   }
 
   function handleDataSync(event) {
