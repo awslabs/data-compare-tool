@@ -23,7 +23,7 @@ import Validation from "./components/validation/user_credentials";
 import SchemaAndTableSelectCopy from "./components/SchemaAndRunDetailsCopy";
 import Recommendation from "./components/recommendation/Recommendation";
 import Menu from "./components/hmenu";
-
+import './styles/globals.css';
 
 
 let lightTheme = createMuiTheme({

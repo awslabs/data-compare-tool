@@ -117,7 +117,7 @@ export default function ForgotPassword() {
             {/* Title */}
             <Box m={3}>
               <Grid container direction="row" justify="center" alignItems="center">
-                <Typography variant="h4">Forgot Password</Typography>
+                <Typography variant="h5" className='heading'>Forgot Password</Typography>
               </Grid>
             </Box>
 

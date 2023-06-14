@@ -76,7 +76,7 @@ const SignIn: React.FunctionComponent<{}> = () => {
           <Grid container direction="column" justify="center" alignItems="center">
             {/* Title */}
             <Box m={2}>
-              <Typography variant="h4">Sign in</Typography>
+              <Typography variant="h5" className='heading'>Sign in</Typography>
             </Box>
 
             {/* Sign In Form */}

@@ -1,8 +1,9 @@
 import React from 'react';
 import { slide as Menu } from 'react-burger-menu';
+import Box from "@mui/material/Box";
 import './Sidebar.css';
 import * as cognito from '../libs/cognito';
-// ...
+import logo from './logo-white.png';
 
 const Sidebar = props => {
 
@@ -15,18 +16,19 @@ const Sidebar = props => {
     }
   }
   return (
-    <Menu >
+    <Menu>
+      <Box sx={{ display: 'inline-block', position: 'relative', top: '-95px', left: '-210px' }}>
+        <img
+          src={logo}
+          alt="Logo"
+          align="right"
+          valign="bottom"
+          width="70px"
+        />
+      </Box>
+
       <a className="menu-item" href="/">
         Home
-      </a>
-      <a className="menu-item" href="/dvt/signin">
-        Login
-      </a>
-      <a className="menu-item" href="/dvt/signup">
-        Register User
-      </a>
-      <a className="menu-item" href="/dvt/changepassword">
-        Change Password
       </a>
       <a className="menu-item" href="/dvt/compare">
         Validation

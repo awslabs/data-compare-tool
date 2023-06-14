@@ -182,7 +182,7 @@ function DVTTable(props) {
             <TableContainer component={Paper}>
                 <Table
                     sx={{ minWidth: 650 }}
-                    aria-label="simple table"
+                    aria-label="table"
                     className="dvttblh2"
                     style={{ width: "95%", margin: 10 }}
                     align="center"

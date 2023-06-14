@@ -14,3 +14,16 @@ a {
 * {
   box-sizing: border-box;
 }
+body .heading {
+  display: inline-block;
+  padding: 0 5px;
+  margin-bottom: 30px;
+  box-shadow: 0 10px 10px -9px orange;
+  border-bottom: 5px solid orange;
+  border-radius: 15%;
+  letter-spacing: 0.5px;
+}
+
+.react-datepicker-popper {
+  z-index: 2;
+}

@@ -92,7 +92,7 @@ export default function RequestCode() {
         <Paper style={{ width: '100%', padding: 32 }}>
           <Grid container direction="column" justify="center" alignItems="center">
             <Box m={2}>
-              <Typography variant="h4">Send Reset Code</Typography>
+              <Typography variant="h5" className='heading'>Send Reset Code</Typography>
             </Box>
 
             {resetSent ? emailSent : sendCode}
