@@ -18,8 +18,13 @@ import Stack from "@mui/material/Stack";
 import { Link } from "react-router-dom";
 import LoadingSpinner from "./LoadingSpinner";
 import "./styles.css";
-import logo from './dart-logo.jpg';
+// import logo from './dart-logo.jpg';
 import Pagination from './pagination/pagination';
+import IconButton from '@mui/material/IconButton';
+import DownloadIcon from '@mui/icons-material/Download';
+import ConstructionIcon from '@mui/icons-material/Construction';
+//import EditNoteIcon from '@mui/icons-material/EditNote';
+
 const CLEAR = "clear";
 
 const POPULATE_DATABASE = "populateDatabase";
@@ -73,7 +78,7 @@ let data = [];
 //     }]
 // }
 
-let PageSize = 5;
+let PageSize = 2;
 const data1 = {};
 const initialState = {
   disableHostName: false,
@@ -184,8 +189,8 @@ function Nestedselect() {
   }
 
   function redirectToValidation(event) {
-    //navigate('/dvt/compare');
-    window.location.href="/dvt/compare";
+    // navigate('/dvt/compare');
+    window.location.href = '/dvt/compare';
   }
 
   function handleDataSync(event) {
@@ -514,7 +519,7 @@ function Nestedselect() {
     const lastPageIndex = firstPageIndex + PageSize;
     return tableData.slice(firstPageIndex, lastPageIndex);
     console.log('page table data', tableData)
-  }, [currentPage,tableData]);
+  }, [currentPage, tableData]);
   // @ts-ignore
   let navigate = useNavigate();
   const redirectToRecommendation = (event) => {
@@ -552,12 +557,10 @@ function Nestedselect() {
   const [state, dispatch] = useReducer(reducer, initialState);
 
   return (
-    <div>
-      <Grid container mb={2} spacing={1} columnSpacing={{ xs: 2 }} justifyContent="center" alignItems="center">
-        <Grid item xs={12} sm={6} md={11}>
-          <Typography variant="h5" align="center" valign="bottom" >  Recommendation Details </Typography>
-        </Grid>
-      </Grid>
+    <>
+      <Typography variant="h5" className='heading' >
+        Recommendation Details
+      </Typography>
 
       <Box>
         <Grid container mb={2} spacing={2} columnSpacing={{ xs: 2 }} justifyContent="center" alignItems="center"></Grid>
@@ -651,14 +654,14 @@ function Nestedselect() {
           <div>
             <TableContainer component={Paper} align="center" className="dvttbl">
               {" "} &nbsp;&nbsp;{" "}{" "} &nbsp;&nbsp;{" "}
-              <Table sx={{ minWidth: 1400, border: 1, borderColor: "primary.main", borderRadius: 2, width: 100 }} aria-label="simple table">
+              <Table sx={{ minWidth: '1400px', border: 1, borderColor: "primary.main", borderRadius: 2, width: '100%', minWidth: '600px' }} aria-label="Last run information table">
                 <TableHead>
                   <TableRow>
                     <TableCell>Sl No.</TableCell>
-                    <TableCell align="right">Table Name</TableCell>
-                    <TableCell align="right">Table Run</TableCell>
-                    <TableCell align="right">Run Date</TableCell>
-                    <TableCell align="center">Action</TableCell>
+                    <TableCell align="left">Table Name</TableCell>
+                    <TableCell align="left">Table Run</TableCell>
+                    <TableCell align="left">Run Date</TableCell>
+                    <TableCell align="left">Action</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -668,23 +671,34 @@ function Nestedselect() {
                       <TableCell className="tablename" align="left">{row.tableName}</TableCell>
                       <TableCell align="left">{row.tableRun}</TableCell>
                       <TableCell align="left">{row.runDate}</TableCell>
-                      <TableCell align="center">
+                      <TableCell align="left">
                         <Box>
-                          <Button variant="outlined" color="secondary" value={row.tableName} onClick={redirectToValidation}>
-                            Sync
-                          </Button>{" "}
-                          &nbsp;&nbsp;{" "}
-                          <Button variant="outlined" color="success" value={row.runId + '&schemaName=' + row.schemaName + '&tableName=' + row.tableName}
+                          <Button
+                            variant="outlined"
+                            color="success" size='small'
+                            value={row.runId + '&schemaName=' + row.schemaName + '&tableName=' + row.tableName}
                             onClick={redirectToRecommendation}
+                            sx={{ mx: 0.5 }}
                           >
-                            Remediate
+                            Remediate <ConstructionIcon size='small' sx={{ pl: 1 }} />
                           </Button>
-                          {" "} &nbsp;&nbsp;{" "}
-                          <Button variant="outlined" color="success" value={row.runId + '&schemaName=' + row.schemaName + '&tableName=' + row.tableName}
-                            onClick={downloadReport} disabled={isLoading} >
+                          <Button
+                            variant="outlined"
+                            size='small'
+                            value={row.runId + '&schemaName=' + row.schemaName + '&tableName=' + row.tableName}
+                            onClick={downloadReport} disabled={isLoading}
+                            sx={{ mx: 0.5 }}
+                          >
                             Download
                           </Button>
-                          <a href={'http://localhost:8090/dvt/validation/exportData?runId=' + row.runId + '&schemaName=' + row.schemaName + '&tableName=' + row.tableName} className="btn btn-primary">link</a>
+                          <IconButton
+                            color='primary'
+                            aria-label="download"
+                            onClick={() => window.open('http://localhost:8090/dvt/validation/exportData?runId=' + row.runId + '&schemaName=' + row.schemaName + '&tableName=' + row.tableName)}
+                            sx={{ mx: 0.5 }}
+                          >
+                            <DownloadIcon fontSize="inherit" />
+                          </IconButton>
                         </Box>
                       </TableCell>
                     </TableRow>
@@ -706,7 +720,7 @@ function Nestedselect() {
         )}
         <Grid item xs={3}>
           <Stack direction="row" justifyContent="center" alignItems="center" spacing={2}>
-            <Button color="secondary" variant="contained" onClick={redirectToValidation}>
+            <Button variant="contained" onClick={redirectToValidation}>
               Compare
             </Button>
             <Button color="success" variant="contained" >
@@ -724,7 +738,7 @@ function Nestedselect() {
         <Grid item xs={3} align="center" valign="top">    {isLoading ? <LoadingSpinner /> : ""}</Grid>
         <Grid container mb={2} spacing={2} columnSpacing={{ xs: 2 }} justifyContent="center" alignItems="center"></Grid>
       </Box>
-    </div>
+    </>
   );
 }
 

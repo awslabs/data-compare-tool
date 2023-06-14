@@ -493,146 +493,146 @@ export default function Validation() {
     const [state] = useReducer(reducer);
 
     return (
-        <Box>
-            <Accordion>
-                <AccordionSummary
-                    expandIcon={<ExpandMoreIcon />}
-                    aria-controls="panel1a-content"
-                    id="panel1a-header"
-                >
-                    <Typography>Schema Details</Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                    <Grid
-                        container
-                        mb={"20px"}
-                        spacing={2}
-                        columnSpacing={{ xs: 2 }}
-                        justifyContent="left"
-                        alignItems="center"
+            <Box>
+                <Accordion>
+                    <AccordionSummary
+                        expandIcon={<ExpandMoreIcon />}
+                        aria-controls="panel1a-content"
+                        id="panel1a-header"
                     >
-                        <Grid item xs={12} md={6}>
-                            <TextField
-                                fullWidth
-                                autoFocus
-                                size="small"
-                                required
-                                name="hostname"
-                                label="Hostname"
-                                variant="outlined"
-                                value={userCred.hostname}
-                                error={
-                                    userCred.hostname === "" &&
-                                    ifFormTouched === FormStatus.MODIFIED
-                                }
-                                onChange={handleInput}
-                            />
-                        </Grid>
-                        <Grid item xs={12} md={2}>
-                            <TextField
-                                fullWidth
-                                size="small"
-                                required
-                                name="port"
-                                label="Port"
-                                type="number"
-                                variant="outlined"
-                                value={userCred.port}
-                                error={
-                                    userCred.port === "" &&
-                                    ifFormTouched === FormStatus.MODIFIED
-                                }
-                                onChange={handleInput}
-                                onKeyPress={(e) =>
-                                    !/[0-9]/.test(e.key) && e.preventDefault()
-                                }
-                            />
-                        </Grid>
-                        <Grid item xs={12} md={2}>
-                            <TextField
-                                p={0}
-                                fullWidth
-                                size="small"
-                                required
-                                name="dbname"
-                                label="Database"
-                                variant="outlined"
-                                value={userCred.dbname}
-                                error={
-                                    userCred.dbname === "" &&
-                                    ifFormTouched === FormStatus.MODIFIED
-                                }
-                                onChange={handleInput}
-                            />
-                        </Grid>
-                        <Grid item xs={12} md={2}>
-                            <FormGroup>
-                                <FormControlLabel
-                                    control={
-                                        <Checkbox
-                                            name="usessl"
-                                            value={userCred.usessl}
-                                            onChange={handleInput}
-                                        />
+                        <Typography>Schema Details</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                        <Grid
+                            container
+                            mb={"20px"}
+                            spacing={2}
+                            columnSpacing={{ xs: 2 }}
+                            justifyContent="left"
+                            alignItems="center"
+                        >
+                            <Grid item xs={12} md={6}>
+                                <TextField
+                                    fullWidth
+                                    autoFocus
+                                    size="small"
+                                    required
+                                    name="hostname"
+                                    label="Hostname"
+                                    variant="outlined"
+                                    value={userCred.hostname}
+                                    error={
+                                        userCred.hostname === "" &&
+                                        ifFormTouched === FormStatus.MODIFIED
                                     }
-                                    label="SSL Mode"
+                                    onChange={handleInput}
                                 />
-                            </FormGroup>
+                            </Grid>
+                            <Grid item xs={12} md={2}>
+                                <TextField
+                                    fullWidth
+                                    size="small"
+                                    required
+                                    name="port"
+                                    label="Port"
+                                    type="number"
+                                    variant="outlined"
+                                    value={userCred.port}
+                                    error={
+                                        userCred.port === "" &&
+                                        ifFormTouched === FormStatus.MODIFIED
+                                    }
+                                    onChange={handleInput}
+                                    onKeyPress={(e) =>
+                                    !/[0-9]/.test(e.key) && e.preventDefault()
+                                    }
+                                />
+                            </Grid>
+                            <Grid item xs={12} md={2}>
+                                <TextField
+                                    p={0}
+                                    fullWidth
+                                    size="small"
+                                    required
+                                    name="dbname"
+                                    label="Database"
+                                    variant="outlined"
+                                    value={userCred.dbname}
+                                    error={
+                                        userCred.dbname === "" &&
+                                        ifFormTouched === FormStatus.MODIFIED
+                                    }
+                                    onChange={handleInput}
+                                />
+                            </Grid>
+                            <Grid item xs={12} md={2}>
+                                <FormGroup>
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                name="usessl"
+                                                value={userCred.usessl}
+                                                onChange={handleInput}
+                                            />
+                                        }
+                                        label="SSL Mode"
+                                    />
+                                </FormGroup>
+                            </Grid>
+                            <Grid item xs={12} md={3}>
+                                <TextField
+                                    fullWidth
+                                    size="small"
+                                    required
+                                    name="username"
+                                    label="Username"
+                                    variant="outlined"
+                                    value={userCred.username}
+                                    error={
+                                        userCred.username === "" &&
+                                        ifFormTouched === FormStatus.MODIFIED
+                                    }
+                                    onChange={handleInput}
+                                />
+                            </Grid>
+                            <Grid item xs={12} md={3}>
+                                <TextField
+                                    fullWidth
+                                    size="small"
+                                    required
+                                    name="password"
+                                    label="Password"
+                                    type="password"
+                                    variant="outlined"
+                                    value={userCred.password}
+                                    error={
+                                        userCred.password === "" &&
+                                        ifFormTouched === FormStatus.MODIFIED
+                                    }
+                                    onChange={handleInput}
+                                />
+                            </Grid>
+                            {/* </Grid> */}
+                            <Grid item xs={12} md={4}></Grid>
                         </Grid>
-                        <Grid item xs={12} md={3}>
-                            <TextField
-                                fullWidth
-                                size="small"
-                                required
-                                name="username"
-                                label="Username"
-                                variant="outlined"
-                                value={userCred.username}
-                                error={
-                                    userCred.username === "" &&
-                                    ifFormTouched === FormStatus.MODIFIED
-                                }
-                                onChange={handleInput}
-                            />
-                        </Grid>
-                        <Grid item xs={12} md={3}>
-                            <TextField
-                                fullWidth
-                                size="small"
-                                required
-                                name="password"
-                                label="Password"
-                                type="password"
-                                variant="outlined"
-                                value={userCred.password}
-                                error={
-                                    userCred.password === "" &&
-                                    ifFormTouched === FormStatus.MODIFIED
-                                }
-                                onChange={handleInput}
-                            />
-                        </Grid>
-                        {/* </Grid> */}
-                        <Grid item xs={12} md={4}></Grid>
-                    </Grid>
-                </AccordionDetails>
-            </Accordion>
+                    </AccordionDetails>
+                </Accordion>
 
             {/*         <Divider pb={2} /> */}
             {/*         <Divider pt={2} /> */}
-            <Grid
-                container
-                mb={"20px"}
-                mt={"20px"}
-                spacing={2}
-                columnSpacing={{ xs: 2 }}
-                justifyContent="left"
-                alignItems="center"
-            >
-                <Grid item xs={12}>
-                    <Typography> Table Details </Typography>
-                </Grid>
-                <Grid item xs={12} md={3}>
+                <Grid
+                    container
+                    mb={"20px"}
+                    mt={"20px"}
+                    spacing={2}
+                    columnSpacing={{ xs: 2 }}
+                    justifyContent="left"
+                    alignItems="center"
+                >
+                    <Grid item xs={12}>
+                        <Typography> Table Details </Typography>
+                    </Grid>
+                    <Grid item xs={12} md={3}>
                     {/*<TextField*/}
                     {/*  fullWidth*/}
                     {/*  multiline*/}
@@ -657,23 +657,23 @@ export default function Validation() {
                         options={userCred.schemaNames}
                         onChange={handleSchemaChange}
                     /> */}
-                    <Autocomplete
-                        size="small"
-                        options={userCred.schemaNames}
-                        name="schemas"
-                        defaultValue={userCred.schemaNames[0]}
-                        onChange={handleSchemaChange}
-                        filterSelectedOptions
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                label="Target Schema"
-                                placeholder="Target Schema"
-                            />
-                        )}
-                    />
-                </Grid>
-                <Grid item xs={12} md={3}>
+                        <Autocomplete
+                            size="small"
+                            options={userCred.schemaNames}
+                            name="schemas"
+                            defaultValue={userCred.schemaNames[0]}
+                            onChange={handleSchemaChange}
+                            filterSelectedOptions
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label="Target Schema"
+                                    placeholder="Target Schema"
+                                />
+                            )}
+                        />
+                    </Grid>
+                    <Grid item xs={12} md={3}>
                     {/*<TextField*/}
                     {/*  fullWidth*/}
                     {/*  multiline*/}
@@ -698,26 +698,26 @@ export default function Validation() {
                         options={userCred.schemaNames}
                         onChange={handleSrcSchemaChange}
                     /> */}
-                    <Autocomplete
-                        size="small"
-                        options={userCred.schemaNames}
-                        defaultValue={userCred.schemaNames[0]}
-                        onChange={handleSrcSchemaChange}
-                        name="srcSchemas"
-                        filterSelectedOptions
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                label="Source Schema"
-                                placeholder="Source Schema"
-                            />
-                        )}
-                    />
-                </Grid>
+                        <Autocomplete
+                            size="small"
+                            options={userCred.schemaNames}
+                            defaultValue={userCred.schemaNames[0]}
+                            onChange={handleSrcSchemaChange}
+                            name="srcSchemas"
+                            filterSelectedOptions
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label="Source Schema"
+                                    placeholder="Source Schema"
+                                />
+                            )}
+                        />
+                    </Grid>
                 {/* {
-                    srcSchemaName && 
+                    srcSchemaName &&
                 } */}
-                <Grid item xs={12} md={3}>
+                    <Grid item xs={12} md={3}>
                     {/*<TextField*/}
                     {/*  fullWidth*/}
                     {/*  multiline*/}
@@ -744,192 +744,192 @@ export default function Validation() {
                         options={userCred.tableNames}
                         onChange={handleTableInput}
                     /> */}
-                    <Autocomplete
-                        size="small"
-                        multiple
-                        limitTags={1}
-                        disabled={!schemaName || !srcSchemaName}
-                        options={userCred.tableNames}
-                        defaultValue={userCred.tableNames[0] || undefined}
-                        onChange={handleTableInput}
-                        name="tables"
-                        filterSelectedOptions
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                label="Table Name"
-                                placeholder="Table Name"
+                        <Autocomplete
+                            size="small"
+                            multiple
+                            limitTags={1}
+                            disabled={!schemaName || !srcSchemaName}
+                            options={userCred.tableNames}
+                            defaultValue={userCred.tableNames[0] || undefined}
+                            onChange={handleTableInput}
+                            name="tables"
+                            filterSelectedOptions
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label="Table Name"
+                                    placeholder="Table Name"
+                                />
+                            )}
+                        />
+                    </Grid>
+                    <Grid item xs={12} md={3}>
+                        <FormGroup>
+                            <FormControlLabel
+                                control={
+                                    <Checkbox
+                                        name="exTables"
+                                        value={exTables}
+                                        onChange={handleTabExcludeInput}
+                                    />
+                                }
+                                label="Exclude"
                             />
-                        )}
-                    />
-                </Grid>
-                <Grid item xs={12} md={3}>
-                    <FormGroup>
-                        <FormControlLabel
-                            control={
-                                <Checkbox
-                                    name="exTables"
-                                    value={exTables}
-                                    onChange={handleTabExcludeInput}
-                                />
+                        </FormGroup>
+                    </Grid>
+                    <Grid item xs={12} md={3}>
+                        <TextField
+                            size="small"
+                            fullWidth
+                            multiline
+                            maxRows={4}
+                            name="columnNames"
+                            label="Column Names"
+                            variant="outlined"
+                            value={userCred.columnNames}
+                            error={
+                                userCred.columnNames === "" &&
+                                ifFormTouched === FormStatus.MODIFIED
                             }
-                            label="Exclude"
+                            onChange={handleInput}
                         />
-                    </FormGroup>
-                </Grid>
-                <Grid item xs={12} md={3}>
-                    <TextField
-                        size="small"
-                        fullWidth
-                        multiline
-                        maxRows={4}
-                        name="columnNames"
-                        label="Column Names"
-                        variant="outlined"
-                        value={userCred.columnNames}
-                        error={
-                            userCred.columnNames === "" &&
-                            ifFormTouched === FormStatus.MODIFIED
-                        }
-                        onChange={handleInput}
-                    />
-                </Grid>
-                <Grid item xs={12} md={1}>
-                    <FormGroup>
-                        <FormControlLabel
-                            control={
-                                <Checkbox
-                                    name="exColumns"
-                                    value={exColumns}
-                                    onChange={handleColExcludeInput}
-                                />
-                            }
-                            label="Exclude"
-                        />
-                    </FormGroup>
-                </Grid>
+                    </Grid>
+                    <Grid item xs={12} md={1}>
+                        <FormGroup>
+                            <FormControlLabel
+                                control={
+                                    <Checkbox
+                                        name="exColumns"
+                                        value={exColumns}
+                                        onChange={handleColExcludeInput}
+                                    />
+                                }
+                                label="Exclude"
+                            />
+                        </FormGroup>
+                    </Grid>
 
-                <Grid item xs={12} md={3}>
-                    <TextField
-                        size="small"
-                        fullWidth
-                        multiline
-                        maxRows={4}
-                        name="uniqueCols"
-                        label="Unique Columns"
-                        variant="outlined"
-                        value={userCred.uniqueCols}
-                        error={
-                            userCred.uniqueCols === "" &&
-                            ifFormTouched === FormStatus.MODIFIED
-                        }
-                        onChange={handleInput}
-                    />
-                </Grid>
-
-                <Grid item xs={12} md={4}>
-                    <TextField
-                        size="small"
-                        fullWidth
-                        multiline
-                        maxRows={4}
-                        name="dataFilters"
-                        label="Data Filters"
-                        variant="outlined"
-                        value={userCred.dataFilters}
-                        error={
-                            userCred.dataFilters === "" &&
-                            ifFormTouched === FormStatus.MODIFIED
-                        }
-                        onChange={handleInput}
-                    />
-                </Grid>
-
-                <Grid item xs={12} md={3}>
-                    <TextField
-                        size="small"
-                        fullWidth
-                        multiline
-                        maxRows={4}
-                        name="chunkColumns"
-                        label="Chunk Columns"
-                        variant="outlined"
-                        value={userCred.chunkColumns}
-                        error={
-                            userCred.chunkColumns === "" &&
-                            ifFormTouched === FormStatus.MODIFIED
-                        }
-                        onChange={handleInput}
-                    />
-                </Grid>
-                <Grid item xs={12} md={3}>
-                    <TextField
-                        size="small"
-                        fullWidth
-                        multiline
-                        maxRows={4}
-                        name="fetchSize"
-                        label="No. of Chunks"
-                        variant="outlined"
-                        value={userCred.fetchSize}
-                        error={
-                            userCred.fetchSize === "" &&
-                            ifFormTouched === FormStatus.MODIFIED
-                        }
-                        onChange={handleInput}
-                    />
-                </Grid>
-                <Grid item xs={12} md={3} lg={2}>
-                    <FormGroup>
-                        <FormControlLabel
-                            control={
-                                <Checkbox
-                                    name="incremental"
-                                    onChange={handleIncrementalInput}
-                                    value={incremental}
-                                />
+                    <Grid item xs={12} md={3}>
+                        <TextField
+                            size="small"
+                            fullWidth
+                            multiline
+                            maxRows={4}
+                            name="uniqueCols"
+                            label="Unique Columns"
+                            variant="outlined"
+                            value={userCred.uniqueCols}
+                            error={
+                                userCred.uniqueCols === "" &&
+                                ifFormTouched === FormStatus.MODIFIED
                             }
-                            label="Incremental Run"
+                            onChange={handleInput}
                         />
-                    </FormGroup>
-                </Grid>
-                <Grid item xs={12} md={3} lg={2}>
-                    <FormGroup>
-                        <FormControlLabel
-                            control={
-                                <Checkbox
-                                    name="checkAdditionalRows"
-                                    onChange={handleAdditionalRowsInput}
-                                    value={checkAdditionalRows}
-                                />
+                    </Grid>
+
+                    <Grid item xs={12} md={4}>
+                        <TextField
+                            size="small"
+                            fullWidth
+                            multiline
+                            maxRows={4}
+                            name="dataFilters"
+                            label="Data Filters"
+                            variant="outlined"
+                            value={userCred.dataFilters}
+                            error={
+                                userCred.dataFilters === "" &&
+                                ifFormTouched === FormStatus.MODIFIED
                             }
-                            label="Two Way"
+                            onChange={handleInput}
                         />
-                    </FormGroup>
-                </Grid>
+                    </Grid>
+
+                    <Grid item xs={12} md={3}>
+                        <TextField
+                            size="small"
+                            fullWidth
+                            multiline
+                            maxRows={4}
+                            name="chunkColumns"
+                            label="Chunk Columns"
+                            variant="outlined"
+                            value={userCred.chunkColumns}
+                            error={
+                                userCred.chunkColumns === "" &&
+                                ifFormTouched === FormStatus.MODIFIED
+                            }
+                            onChange={handleInput}
+                        />
+                    </Grid>
+                    <Grid item xs={12} md={3}>
+                        <TextField
+                            size="small"
+                            fullWidth
+                            multiline
+                            maxRows={4}
+                            name="fetchSize"
+                            label="No. of Chunks"
+                            variant="outlined"
+                            value={userCred.fetchSize}
+                            error={
+                                userCred.fetchSize === "" &&
+                                ifFormTouched === FormStatus.MODIFIED
+                            }
+                            onChange={handleInput}
+                        />
+                    </Grid>
+                    <Grid item xs={12} md={3} lg={2}>
+                        <FormGroup>
+                            <FormControlLabel
+                                control={
+                                    <Checkbox
+                                        name="incremental"
+                                        onChange={handleIncrementalInput}
+                                        value={incremental}
+                                    />
+                                }
+                                label="Incremental Run"
+                            />
+                        </FormGroup>
+                    </Grid>
+                    <Grid item xs={12} md={3} lg={2}>
+                        <FormGroup>
+                            <FormControlLabel
+                                control={
+                                    <Checkbox
+                                        name="checkAdditionalRows"
+                                        onChange={handleAdditionalRowsInput}
+                                        value={checkAdditionalRows}
+                                    />
+                                }
+                                label="Two Way"
+                            />
+                        </FormGroup>
+                    </Grid>
 
                 <Grid item sm={1} md={3}></Grid>
                 <Grid item sm={10} md={6}>
-                    <Stack
-                        direction={{ md: "column", lg: "row" }}
-                        spacing={2}
+                        <Stack
+                            direction={{ md: "column", lg: "row" }}
+                            spacing={2}
                         style={{ justifyContent: "space-evenly" }}
-                    >
-                        <Button
+                        >
+                            <Button
                             color="secondary"
-                            variant="contained"
-                            onClick={handleSubmit}
-                            disabled={isLoading}
-                        >
-                            Compare
-                        </Button>
-                        <Button
-                            color="success"
-                            variant="contained"
-                            onClick={getLastRunDetails}
-                        >
-                            Last Run Info
-                        </Button>
+                                variant="contained"
+                                onClick={handleSubmit}
+                                disabled={isLoading}
+                            >
+                                Compare
+                            </Button>
+                            <Button
+                                color="success"
+                                variant="contained"
+                                onClick={getLastRunDetails}
+                            >
+                                Last Run Info
+                            </Button>
                         <Button
                             color="primary"
                             variant="contained"
@@ -944,237 +944,237 @@ export default function Validation() {
                         >
                             Home
                         </Button>
-                    </Stack>
-                </Grid>
+                        </Stack>
+                    </Grid>
                 <Grid item sm={1} md={3}></Grid>
                 <Grid item md={5}></Grid>
                 <Grid item md={2}>
-                    {isLoading ? <LoadingSpinner /> : ""}
-                </Grid>
+                        {isLoading ? <LoadingSpinner /> : ""}
+                    </Grid>
                 <Grid item md={4}></Grid>
-            </Grid>
-            {showTable && (
-                <Grid item xs={12}>
-                    <Typography variant="h5">Last run details</Typography>
                 </Grid>
-            )}
-            <Grid item xs={12} md={6}>
                 {showTable && (
-                    <div>
-                        <TableContainer
-                            component={Paper}
-                            align="center"
-                            className="dvttbl"
-                        >
-                            <Table
-                                mb={2}
-                                sx={{
-                                    minWidth: 1600,
-                                    border: 1,
-                                    borderColor: "primary.main",
-                                    borderRadius: 2,
-                                    width: 200,
-                                }}
-                                aria-label="simple table"
-                            >
-                                <TableHead>
-                                    <TableRow>
-                                        <TableCell>Sl No.</TableCell>
-                                        <TableCell align="center">
-                                            Table Name
-                                        </TableCell>
-                                        <TableCell align="center">
-                                            Table Total Rows
-                                        </TableCell>
-                                        <TableCell align="center">
-                                            Missing Rows
-                                        </TableCell>
-                                        <TableCell align="center">
-                                            Mismatch Rows
-                                        </TableCell>
-                                        <TableCell align="center">
-                                            Unique Columns
-                                        </TableCell>
-                                        <TableCell align="center">
-                                            Data Filter
-                                        </TableCell>
-                                        <TableCell align="center">
-                                            Chunk Column
-                                        </TableCell>
-                                        <TableCell align="center">
-                                            No. of Chunks
-                                        </TableCell>
-                                        <TableCell align="center">
-                                            Incremental
-                                        </TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    <TableRow
-                                        key={tableData.slNo}
-                                        sx={{
-                                            "&:last-child td, &:last-child th":
-                                                { border: 0 },
-                                        }}
-                                    >
-                                        <TableCell scope="row">
-                                            {tableData.slNo}
-                                        </TableCell>
-                                        <TableCell
-                                            className="tablename"
-                                            align="center"
-                                        >
-                                            {tableData.tableName}
-                                        </TableCell>
-                                        <TableCell align="center">
-                                            {tableData.totalRows}
-                                        </TableCell>
-                                        <TableCell align="center">
-                                            {tableData.missingRows}
-                                        </TableCell>
-                                        <TableCell align="center">
-                                            {tableData.mismatchRows}
-                                        </TableCell>
-                                        <TableCell align="center">
-                                            {tableData.uniqueCols}
-                                        </TableCell>
-                                        <TableCell align="center">
-                                            {tableData.dataFilters}
-                                        </TableCell>
-                                        <TableCell align="center">
-                                            {tableData.chunkColumns}
-                                        </TableCell>
-                                        <TableCell align="center">
-                                            {tableData.chunkSize}
-                                        </TableCell>
-                                        <TableCell align="center">
-                                            {tableData.incremental}
-                                        </TableCell>
-                                    </TableRow>
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
-                    </div>
-                )}
-            </Grid>
-            {showRunTable && (
-                <Grid item xs={12}>
+                    <Grid item xs={12}>
                     <Typography variant="h5">Last run details</Typography>
-                </Grid>
-            )}
-            <Grid item xs={12} md={6}>
-                {showRunTable && (
-                    <div style={{ marginTop: 10, marginBottom: 10 }}>
-                        <TableContainer
-                            component={Paper}
-                            align="center"
-                            className="dvttbl"
-                        >
-                            <Table
-                                sx={{
-                                    minWidth: 1600,
-                                    border: 1,
-                                    borderColor: "primary.main",
-                                    borderRadius: 2,
-                                    width: 200,
-                                }}
-                                aria-label="simple table"
-                            >
-                                <TableHead>
-                                    <TableRow>
-                                        <TableCell>Sl No.</TableCell>
-                                        <TableCell align="center">
-                                            Table Name
-                                        </TableCell>
-                                        <TableCell align="center">
-                                            Table Total Rows
-                                        </TableCell>
-                                        <TableCell align="center">
-                                            Missing Rows
-                                        </TableCell>
-                                        <TableCell align="center">
-                                            Mismatch Rows
-                                        </TableCell>
-                                        <TableCell align="center">
-                                            Run Date
-                                        </TableCell>
-                                        <TableCell align="center">
-                                            Unique Columns
-                                        </TableCell>
-                                        <TableCell align="center">
-                                            Data Filter
-                                        </TableCell>
-                                        <TableCell align="center">
-                                            Chunk Column
-                                        </TableCell>
-                                        <TableCell align="center">
-                                            No. of Chunks
-                                        </TableCell>
-                                        <TableCell align="center">
-                                            Incremental
-                                        </TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {runTableData.map((element, index) => {
-                                        var incrtext = "";
-                                        if (element.incremental) {
-                                            incrtext = "Yes";
-                                        } else {
-                                            incrtext = "No";
-                                        }
-                                        return (
-                                            <TableRow
-                                                key={index + 1}
-                                                sx={{
-                                                    "&:last-child td, &:last-child th":
-                                                        {
-                                                            border: 0,
-                                                        },
-                                                }}
-                                            >
-                                                <TableCell scope="row">
-                                                    {index + 1}
-                                                </TableCell>
-                                                <TableCell scope="row">
-                                                    {element.table}
-                                                </TableCell>
-                                                <TableCell align="center">
-                                                    {element.totalRecords}
-                                                </TableCell>
-                                                <TableCell align="center">
-                                                    {element.missingRows}
-                                                </TableCell>
-                                                <TableCell align="center">
-                                                    {element.mismatchRows}
-                                                </TableCell>
-                                                <TableCell align="center">
-                                                    {element.lastRunDate}
-                                                </TableCell>
-                                                <TableCell align="center">
-                                                    {element.uniqueCols}
-                                                </TableCell>
-                                                <TableCell align="center">
-                                                    {element.dataFilters}
-                                                </TableCell>
-                                                <TableCell align="center">
-                                                    {element.chunkColumns}
-                                                </TableCell>
-                                                <TableCell align="center">
-                                                    {element.chunkSize}
-                                                </TableCell>
-                                                <TableCell align="center">
-                                                    {incrtext}
-                                                </TableCell>
-                                            </TableRow>
-                                        );
-                                    })}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
-                    </div>
+                    </Grid>
                 )}
-            </Grid>
-        </Box>
+                <Grid item xs={12} md={6}>
+                    {showTable && (
+                        <div>
+                            <TableContainer
+                                component={Paper}
+                                align="center"
+                                className="dvttbl"
+                            >
+                                <Table
+                                    mb={2}
+                                    sx={{
+                                        minWidth: 1600,
+                                        border: 1,
+                                        borderColor: "primary.main",
+                                        borderRadius: 2,
+                                        width: 200,
+                                    }}
+                                aria-label="simple table"
+                                >
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell>Sl No.</TableCell>
+                                            <TableCell align="center">
+                                                Table Name
+                                            </TableCell>
+                                            <TableCell align="center">
+                                                Table Total Rows
+                                            </TableCell>
+                                            <TableCell align="center">
+                                                Missing Rows
+                                            </TableCell>
+                                            <TableCell align="center">
+                                                Mismatch Rows
+                                            </TableCell>
+                                            <TableCell align="center">
+                                                Unique Columns
+                                            </TableCell>
+                                            <TableCell align="center">
+                                                Data Filter
+                                            </TableCell>
+                                            <TableCell align="center">
+                                                Chunk Column
+                                            </TableCell>
+                                            <TableCell align="center">
+                                                No. of Chunks
+                                            </TableCell>
+                                            <TableCell align="center">
+                                                Incremental
+                                            </TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        <TableRow
+                                            key={tableData.slNo}
+                                            sx={{
+                                                "&:last-child td, &:last-child th":
+                                                    { border: 0 },
+                                            }}
+                                        >
+                                            <TableCell scope="row">
+                                                {tableData.slNo}
+                                            </TableCell>
+                                            <TableCell
+                                                className="tablename"
+                                                align="center"
+                                            >
+                                                {tableData.tableName}
+                                            </TableCell>
+                                            <TableCell align="center">
+                                                {tableData.totalRows}
+                                            </TableCell>
+                                            <TableCell align="center">
+                                                {tableData.missingRows}
+                                            </TableCell>
+                                            <TableCell align="center">
+                                                {tableData.mismatchRows}
+                                            </TableCell>
+                                            <TableCell align="center">
+                                                {tableData.uniqueCols}
+                                            </TableCell>
+                                            <TableCell align="center">
+                                                {tableData.dataFilters}
+                                            </TableCell>
+                                            <TableCell align="center">
+                                                {tableData.chunkColumns}
+                                            </TableCell>
+                                            <TableCell align="center">
+                                                {tableData.chunkSize}
+                                            </TableCell>
+                                            <TableCell align="center">
+                                                {tableData.incremental}
+                                            </TableCell>
+                                        </TableRow>
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                        </div>
+                    )}
+                </Grid>
+                {showRunTable && (
+                    <Grid item xs={12}>
+                    <Typography variant="h5">Last run details</Typography>
+                    </Grid>
+                )}
+                <Grid item xs={12} md={6}>
+                    {showRunTable && (
+                        <div style={{ marginTop: 10, marginBottom: 10 }}>
+                            <TableContainer
+                                component={Paper}
+                                align="center"
+                                className="dvttbl"
+                            >
+                                <Table
+                                    sx={{
+                                        minWidth: 1600,
+                                        border: 1,
+                                        borderColor: "primary.main",
+                                        borderRadius: 2,
+                                        width: 200,
+                                    }}
+                                aria-label="simple table"
+                                >
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell>Sl No.</TableCell>
+                                            <TableCell align="center">
+                                                Table Name
+                                            </TableCell>
+                                            <TableCell align="center">
+                                                Table Total Rows
+                                            </TableCell>
+                                            <TableCell align="center">
+                                                Missing Rows
+                                            </TableCell>
+                                            <TableCell align="center">
+                                                Mismatch Rows
+                                            </TableCell>
+                                            <TableCell align="center">
+                                                Run Date
+                                            </TableCell>
+                                            <TableCell align="center">
+                                                Unique Columns
+                                            </TableCell>
+                                            <TableCell align="center">
+                                                Data Filter
+                                            </TableCell>
+                                            <TableCell align="center">
+                                                Chunk Column
+                                            </TableCell>
+                                            <TableCell align="center">
+                                                No. of Chunks
+                                            </TableCell>
+                                            <TableCell align="center">
+                                                Incremental
+                                            </TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {runTableData.map((element, index) => {
+                                            var incrtext = "";
+                                            if (element.incremental) {
+                                                incrtext = "Yes";
+                                            } else {
+                                                incrtext = "No";
+                                            }
+                                            return (
+                                                <TableRow
+                                                    key={index + 1}
+                                                    sx={{
+                                                        "&:last-child td, &:last-child th":
+                                                            {
+                                                                border: 0,
+                                                            },
+                                                    }}
+                                                >
+                                                    <TableCell scope="row">
+                                                        {index + 1}
+                                                    </TableCell>
+                                                    <TableCell scope="row">
+                                                        {element.table}
+                                                    </TableCell>
+                                                    <TableCell align="center">
+                                                        {element.totalRecords}
+                                                    </TableCell>
+                                                    <TableCell align="center">
+                                                        {element.missingRows}
+                                                    </TableCell>
+                                                    <TableCell align="center">
+                                                        {element.mismatchRows}
+                                                    </TableCell>
+                                                    <TableCell align="center">
+                                                        {element.lastRunDate}
+                                                    </TableCell>
+                                                    <TableCell align="center">
+                                                        {element.uniqueCols}
+                                                    </TableCell>
+                                                    <TableCell align="center">
+                                                        {element.dataFilters}
+                                                    </TableCell>
+                                                    <TableCell align="center">
+                                                        {element.chunkColumns}
+                                                    </TableCell>
+                                                    <TableCell align="center">
+                                                        {element.chunkSize}
+                                                    </TableCell>
+                                                    <TableCell align="center">
+                                                        {incrtext}
+                                                    </TableCell>
+                                                </TableRow>
+                                            );
+                                        })}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                        </div>
+                    )}
+                </Grid>
+            </Box>
     );
 }

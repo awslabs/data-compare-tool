@@ -566,8 +566,8 @@ export default function Validation() {
             >
                 <Grid item xs={12} sm={6} md={11}>
                     <Typography variant="h4" align="center" valign="bottom">
-                        Validation Schedules
-                    </Typography>
+                Validation Schedules
+            </Typography>
                 </Grid>
             </Grid>
 
