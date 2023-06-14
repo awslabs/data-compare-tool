@@ -860,7 +860,9 @@ export default function Validation() {
                 </Grid>
                 {showTable && (
                     <Grid item xs={12}>
-                        <Typography variant="h6">Last run details</Typography>
+                        <Typography variant="h6" className="heading">
+                            Last run details
+                        </Typography>
                     </Grid>
                 )}
                 <Grid item xs={12} md={6}>
@@ -964,7 +966,9 @@ export default function Validation() {
                 </Grid>
                 {showRunTable && (
                     <Grid item xs={12}>
-                        <Typography variant="h6">Last run details</Typography>
+                        <Typography variant="h6" className="heading">
+                            Last run details
+                        </Typography>
                     </Grid>
                 )}
                 <Grid item xs={12} md={6}>

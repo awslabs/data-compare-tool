@@ -22,6 +22,10 @@ body .heading {
   border-bottom: 5px solid orange;
   border-radius: 15%;
   letter-spacing: 0.5px;
+  text-transform: capitalize;
+}
+body h6.heading {
+  margin-bottom: 15px;
 }
 
 .react-datepicker-popper {
