@@ -14,7 +14,7 @@ package com.datavalidationtool.model;
 public class DatabaseInfo {
 	
 	public enum dbType {
-		POSTGRESQL, POSTGRESQL_SSL, ORACLE, SQLSERVER, ORACLE_SID, ORACLE_Service
+		POSTGRESQL, POSTGRESQL_SSL, ORACLE, SQLSERVER, ORACLE_SID, ORACLE_SERVICE
 	}
 	
 	private final String	hostName;
@@ -150,7 +150,7 @@ public class DatabaseInfo {
 				return "oracle.jdbc.driver.OracleDriver";
 			case ORACLE_SID:
 				return "oracle.jdbc.driver.OracleDriver";
-			case ORACLE_Service:
+			case ORACLE_SERVICE:
 				return "oracle.jdbc.driver.OracleDriver";
 			case SQLSERVER:
 				return "com.microsoft.sqlserver.jdbc.SQLServerDriver";
@@ -187,7 +187,7 @@ public class DatabaseInfo {
 				else
 					url = "jdbc:oracle:thin:@" + hostName + ":" + port + ":" + database;
 				break;
-			case ORACLE_Service:
+			case ORACLE_SERVICE:
 				if (sslRequire)
 					url = "jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=tcps)(HOST=" + hostName + ")(PORT=" + port + "))(CONNECT_DATA=(SERVICE_NAME=" + database + ")))";
 				else

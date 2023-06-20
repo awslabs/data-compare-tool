@@ -20,7 +20,7 @@ public class SchedulerService {
     private ValidationService validationService;
     @Autowired
     public DataSource dataSource;
-    public Logger logger = LoggerFactory.getLogger("JobScheduler");
+    public static final Logger logger = LoggerFactory.getLogger("JobScheduler");
     public ScheduleResponse addRunSchedules(ScheduleRequest scheduleRequest)  throws SQLException {
             ScheduleResponse sResponse= new ScheduleResponse();
             Timestamp endDate=scheduleRequest.getEndDate()==null ?getEndDate(scheduleRequest):scheduleRequest.getEndDate();
@@ -53,10 +53,14 @@ public class SchedulerService {
                 logger.error(ex.getMessage());
             }
             finally {
-                if(dbConn!=null)
+                if(pst!=null){
+                    pst.close();
+                }
+                if(dbConn!=null){
                     dbConn.close();
+                }
             }
-        sResponse.setCount(count);
+            sResponse.setCount(count);
             return sResponse;
     }
 
@@ -78,17 +82,16 @@ public class SchedulerService {
 
         }else
         {
-            endDate=Timestamp.valueOf(scheduleRequest.getScheduleTime().toLocalDateTime().plusMinutes(2));;
+            endDate=Timestamp.valueOf(scheduleRequest.getScheduleTime().toLocalDateTime().plusMinutes(2));
         }
         return endDate;
     }
 
-    public ArrayList<ScheduleRequest> getScheduleInfo(ScheduleRequest scheduleRequest) throws SQLException {
-        RunDetails runDetails = new RunDetails();
+    public List<ScheduleRequest> getScheduleInfo() throws SQLException {
         String query = "select * from public.schedule_runs where schedule_time >= now()- INTERVAL '15 days 5 minutes' and schedule_time <= now()+ INTERVAL '15 days 5 minutes' ";
         Connection dbConn=null;
         Statement st =null;
-        ArrayList<ScheduleRequest> scheduleList=new ArrayList<ScheduleRequest>();
+        ArrayList<ScheduleRequest> scheduleList=new ArrayList<>();
         try {
             dbConn= dataSource.getDBConnection();
             st=dbConn.createStatement();
@@ -119,13 +122,17 @@ public class SchedulerService {
             logger.error(ex.getMessage());
         }
         finally {
-            if(dbConn!=null)
+            if(st!=null){
+                st.close();
+            }
+            if(dbConn!=null){
                 dbConn.close();
+            }
         }
         return scheduleList;
     }
 
-    public LastRunDetails getScheduleJobRuns(ScheduleRequest scheduleRequest) {
+    public LastRunDetails getScheduleJobRuns() {
         return null;
     }
 }

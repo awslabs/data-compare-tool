@@ -33,25 +33,21 @@ public class ScheduleController {
     @PostMapping(value = "schedule/addSchedule")
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     public Object addRunSchedules(@RequestBody ScheduleRequest scheduleRequest) throws Exception {
-        ScheduleResponse scheduleResponse  = schedulerService.addRunSchedules(scheduleRequest);
-        return scheduleResponse;
+        return schedulerService.addRunSchedules(scheduleRequest);
     }
     @PostMapping(value = "schedule/getSchedule")
     public Object getRunInfoDetails(@RequestBody ScheduleRequest scheduleRequest) throws Exception {
-        ArrayList<ScheduleRequest> scheduleResponse = schedulerService.getScheduleInfo(scheduleRequest);
-        return scheduleResponse;
+        return schedulerService.getScheduleInfo();
     }
 
     @PostMapping(value = "schedule/runScheduleJob")
     public Object runScheduleJob(@RequestBody ScheduleRequest scheduleRequest) throws Exception {
-        ArrayList<ScheduleRequest> runDetailBeans = schedulerService.getScheduleInfo(scheduleRequest);
-        return runDetailBeans;
+        return schedulerService.getScheduleInfo();
     }
 
     @GetMapping(value = "validation/getScheduleJobRuns")
     public LastRunDetails getScheduleJobRuns(@RequestBody ScheduleRequest scheduleRequest) throws Exception {
-        LastRunDetails runDetailBeans = schedulerService.getScheduleJobRuns(scheduleRequest);
-        return runDetailBeans;
+        return schedulerService.getScheduleJobRuns();
     }
 
 }

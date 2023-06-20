@@ -4,7 +4,6 @@ package com.datavalidationtool.model;
 import lombok.*;
 
 import java.sql.Timestamp;
-import java.util.Date;
 @Builder
 @AllArgsConstructor
 @Getter

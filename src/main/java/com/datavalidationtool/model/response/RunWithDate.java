@@ -3,7 +3,7 @@ package com.datavalidationtool.model.response;
 import java.util.Date;
 import java.util.Objects;
 
-public class RunWithDate implements Comparable{
+public class RunWithDate implements Comparable<Object>{
     int run;
     Date executionDate;
 

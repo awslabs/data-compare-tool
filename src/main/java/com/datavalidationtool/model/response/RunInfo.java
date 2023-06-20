@@ -2,7 +2,6 @@ package com.datavalidationtool.model.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
-import java.util.Date;
 
 @Builder
 @NoArgsConstructor

@@ -18,6 +18,6 @@ public class ExcelDataRequest {
     String tableName;
     String schemaName;
     String runId;
-    ArrayList colList;
+    ArrayList<String> colList;
     boolean validationRequest;
 }
