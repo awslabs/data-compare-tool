@@ -129,10 +129,9 @@ public class RecommendationServiceImpl implements RecommendationService {
         }
 
         query = queryWithOptionalParam + whereQueryCondition;
-        Connection dbConn =null;
-        PreparedStatement pst =null;
-        try { dbConn =dataSource.getDBConnection();
-             pst = dbConn.prepareStatement(query);
+        try ( Connection dbConn =dataSource.getDBConnection();
+            PreparedStatement pst = dbConn.prepareStatement(query);)
+            {
              ResultSet rs = pst.executeQuery();
 
             while (rs.next()) {
@@ -163,9 +162,10 @@ public class RecommendationServiceImpl implements RecommendationService {
         List<RunDetails> outputRunDetailsList = new ArrayList<>();
         String query = "SELECT * FROM public.run_details WHERE "
                 + "source_host_name='" + hostName + "' ";
-        Connection dbConn =null;
-        try { dbConn = dataSource.getDBConnection();
-             PreparedStatement pst = dbConn.prepareStatement(query);
+
+        try ( Connection dbConn =dataSource.getDBConnection();
+              PreparedStatement pst = dbConn.prepareStatement(query);)
+        {
              ResultSet rs = pst.executeQuery();
 
             while (rs.next()) {
@@ -187,10 +187,7 @@ public class RecommendationServiceImpl implements RecommendationService {
         } catch (SQLException ex) {
             logger.error("Exception while fetching table details in getHostRunDetails");
             logger.error(ex.getMessage());
-        }finally {
-            if(dbConn!=null)
-            dbConn.close();
-    }
+        }
         return outputRunDetailsList;
     }
 

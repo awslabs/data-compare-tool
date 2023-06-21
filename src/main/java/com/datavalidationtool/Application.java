@@ -34,9 +34,15 @@ public class Application implements ApplicationRunner {
  
     @Override
     public void run(ApplicationArguments args) throws Exception {
-    	logger.debug("Command-line arguments: {}", Arrays.toString(args.getSourceArgs()));
-        logger.debug("Non Option Args: {}", args.getNonOptionArgs());
-        logger.debug("Option Names: {}", args.getOptionNames());
+		if(args!=null && args.getSourceArgs()!=null){
+			logger.debug("Command-line arguments: {}", Arrays.toString(args.getSourceArgs()));
+		}
+		if(args!=null && args.getNonOptionArgs()!=null){
+			logger.debug("Non Option Args: {}", args.getNonOptionArgs());
+		}
+		if(args!=null && args.getOptionNames()!=null){
+			logger.debug("Option Names: {}", args.getOptionNames());
+		}
 
 
     }

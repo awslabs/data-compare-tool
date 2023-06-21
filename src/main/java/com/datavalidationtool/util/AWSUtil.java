@@ -4,6 +4,8 @@ import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.secretsmanager.AWSSecretsManager;
 import com.amazonaws.services.secretsmanager.AWSSecretsManagerClientBuilder;
 import com.amazonaws.services.secretsmanager.model.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
@@ -16,9 +18,10 @@ public class AWSUtil {
     @Autowired
     private Environment env;
 
+    private Logger logger = LoggerFactory.getLogger(AWSUtil.class);
+
     public  String fetchValidationDetailsFromSSM(){
-//        String secretName = env.getProperty("secretname");
-//        Region region = Region.of(env.getProperty("region"));
+
         String secretName = env.getProperty("secretname");
         String region = env.getProperty("region");
 
@@ -35,11 +38,11 @@ public class AWSUtil {
             getSecretValueResponse = client.getSecretValue(getSecretValueRequest);
 
         } catch(ResourceNotFoundException e) {
-            System.out.println("The requested secret " + secretName + " was not found");
+            logger.error("Could not found the secret {}",secretName);
         } catch (InvalidRequestException e) {
-            System.out.println("The request was invalid due to: " + e.getMessage());
+            logger.error("Request was invalid : ",e.getMessage());
         } catch (InvalidParameterException e) {
-            System.out.println("The request had invalid params: " + e.getMessage());
+            logger.error("The request had invalid params: ",e.getMessage());
         }
 
         if(getSecretValueResponse != null) {
@@ -51,14 +54,11 @@ public class AWSUtil {
             }
         }
 
-        System.out.println("Secret Name : " + secretName + "\t Secret Value : " + secret + "\n");
+        logger.debug("Secret Name : {} \t Secret Value : {} \n",secretName,secret);
         return secret;
-        //Secret Value : {"username":"postgres","password":"postgres","engine":"postgres","host":"ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com","port":"5432","dbname":"ttp,ttp_1"}
     }
 
     public  String fetchSourceDBDetailsFromSSM(){
-//        String secretName = env.getProperty("secretname");
-//        Region region = Region.of(env.getProperty("region"));
         String secretName = env.getProperty("srcsecretname");
         String region = env.getProperty("region");
 
@@ -75,24 +75,23 @@ public class AWSUtil {
             getSecretValueResponse = client.getSecretValue(getSecretValueRequest);
 
         } catch(ResourceNotFoundException e) {
-            System.out.println("The requested secret " + secretName + " was not found");
+            logger.error("Could not found the secret {}",secretName);
         } catch (InvalidRequestException e) {
-            System.out.println("The request was invalid due to: " + e.getMessage());
+            logger.error("Request was invalid : ",e.getMessage());
         } catch (InvalidParameterException e) {
-            System.out.println("The request had invalid params: " + e.getMessage());
+            logger.error("The request had invalid params: ",e.getMessage());
         }
 
         if(getSecretValueResponse != null) {
             if(getSecretValueResponse.getSecretString() != null) {
                 secret = getSecretValueResponse.getSecretString();
             }
-            else {
-                binarySecretData = getSecretValueResponse.getSecretBinary();
-            }
+//            else {
+//                binarySecretData = getSecretValueResponse.getSecretBinary();
+//            }
         }
 
-        System.out.println("Secret Name : " + secretName + "\t Secret Value : " + secret + "\n");
+        logger.debug("Secret Name : {} \t Secret Value : {} \n",secretName,secret);
         return secret;
-        //Secret Value : {"username":"postgres","password":"postgres","engine":"postgres","host":"ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com","port":"5432","dbname":"ttp,ttp_1"}
     }
 }

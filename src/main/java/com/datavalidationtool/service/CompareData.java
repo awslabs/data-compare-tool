@@ -55,7 +55,6 @@ public class CompareData implements Runnable {
 
     public CompareData(ValidationRequest validationRequest, DataSource dataSource,String tableName,String chunkFilter) {
         this.validationRequest = validationRequest;
-        this.runId=new String();
         this.dataSource=dataSource;
         this.tableName=tableName;
         this.chunkFilter=chunkFilter;
@@ -75,7 +74,6 @@ public class CompareData implements Runnable {
 
         try {
                 con =  dataSource.getDBConnection() ;
-               // System.out.println("con metadata"+ con.getMetaData());
                 stmt = con.createStatement();
                 long keySize = 0;
                 long valSize = 0;
@@ -100,7 +98,6 @@ public class CompareData implements Runnable {
                 rs= cst.executeQuery();
                 while(rs.next()) {
                     String result = rs.getString(1);
-                    //logger.info("Table "+validationRequest.getTableName(), result);
                 }
             } catch (SQLException ex) {
                 ex.printStackTrace();
@@ -152,11 +149,12 @@ public class CompareData implements Runnable {
             ResultSet rs = pst.executeQuery();
             while (rs.next()) {
                 // If it is a schema run
-                if(appProperties.getTableName()==null || appProperties.getTableName().isBlank()) {
-                    runDetails.setTableRun(rs.getInt(1) + 1);
-                }else{
-                    runDetails.setTableRun(rs.getInt(1) + 1);
-                }
+//                if(appProperties.getTableName()==null || appProperties.getTableName().isBlank()) {
+//                    runDetails.setTableRun(rs.getInt(1) + 1);
+//                }else{
+//                    runDetails.setTableRun(rs.getInt(1) + 1);
+//                }
+                runDetails.setTableRun(rs.getInt(1) + 1);
             }
 
         } catch (SQLException ex) {
@@ -189,7 +187,7 @@ public class CompareData implements Runnable {
             pst.setString(8,runDetails.getRunId());
             pst.setTimestamp(9,runDetails.getExecutionTime());
             int count= pst.executeUpdate();
-            logger.info("added run details for table",runDetails.getTableName());
+            logger.info("added run details for table {}",runDetails.getTableName());
         } catch (SQLException ex) {
             logger.error("Exception while adding table details");
             logger.error(ex.getMessage());
