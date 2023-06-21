@@ -246,6 +246,7 @@ function Recommendation() {
                         >
                             <Grid item xs={12} sm={6} md={11}>
                                 <Typography
+                                    className="heading"
                                     variant="h5"
                                     align="center"
                                     valign="bottom"

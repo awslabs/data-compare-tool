@@ -43,9 +43,13 @@ function RecommendationSummary(props) {
                 alignItems="center"
             >
                 <Grid item xs={12} sm={6} md={11}>
-                    <Typography variant="h5" align="center" valign="bottom">
-                        {" "}
-                        Summary of changes{" "}
+                    <Typography
+                        variant="h5"
+                        align="center"
+                        valign="bottom"
+                        className="heading"
+                    >
+                        Summary of changes
                     </Typography>
                     <div
                         style={{

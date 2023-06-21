@@ -2,6 +2,8 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 
 const Footer = () => {
+    const today = new Date();
+
     return (
         <Box
             container
@@ -18,8 +20,8 @@ const Footer = () => {
             }}
         >
             <Typography variant="p" align="left">
-                © 2023, Amazon Web Services, Inc. or its affiliates. All rights
-                reserved.
+                &copy; {today.getFullYear()}, Amazon Web Services, Inc. or its
+                affiliates. All rights reserved.
             </Typography>
         </Box>
     );

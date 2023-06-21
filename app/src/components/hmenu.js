@@ -10,7 +10,7 @@ export default function Home() {
     <Box>
       <Grid container mb={2} spacing={1} columnSpacing={{ xs: 2 }} justifyContent="center" alignItems="center">
         <Grid item xs={12} sm={6} md={11}>
-          <Typography variant="h5" align="center" valign="bottom" >Home Page</Typography>
+          <Typography variant="h5" align="center" valign="bottom" className='heading' >Home Page</Typography>
         </Grid>
       </Grid>
     </Box>

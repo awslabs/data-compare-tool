@@ -19,59 +19,17 @@
 }
 
 /*
-Table css - table with 2 headers
+Table
 */
-
-.dvttblh2 {
-  /*font-family: Arial, Helvetica, sans-serif;*/
+.dvttbl, .dvttblh2 {
   border-collapse: collapse;
   width: 100%;
 }
-
-.dvttblh2 td {
-  padding: 4px;
-}
-.dvttblh2 th {
-  border: 1px solid #ddd;
-  padding: 4px;
+table.dvttblh2 {
+  border-collapse: separate;
 }
 
-.dvttblh2 tbody tr:nth-child(even) {
-  background-color: #f2f2f2;
-}
-
-.dvttblh2 tr:hover {
-  background-color: #ddd;
-}
-
-.dvttblh2 thead tr:nth-child(odd) th {
-  padding-top: 4px;
-  padding-bottom: 4px;
-  text-align: center;
-  /*background-color: #2d2d86;*/
-  color: #000;
-  border: 1.5px solid #000;
-}
-
-.dvttblh2 thead tr:nth-child(even) th {
-  padding-top: 4px;
-  padding-bottom: 4px;
-  text-align: left;
-  background-color: #666699;
-  color: white;
-  border: 0px;
-}
-
-/*
-Table with 1 header
-*/
-.dvttbl {
-  /*font-family: Arial, Helvetica, sans-serif;*/
-  border-collapse: collapse;
-  width: 100%;
-}
-
-.dvttbl th {
+.dvttbl th, .dvttblh2 th {
   padding-top: 10px;
   padding-bottom: 10px;
   text-align: left;
@@ -82,23 +40,40 @@ Table with 1 header
   font-weight: bold;
   font-size: 0.938rem;
 }
-.dvttbl th:first-child{
+.dvttbl th:first-child, .dvttblh2 th:first-child {
   border-left: 0;
 }
-.dvttbl th:last-child {
+.dvttbl th:last-child, .dvttblh2 th:last-child {
   border-right: 0;
 }
 
-.dvttbl td,
+.dvttbl td, .dvttblh2 td,
 #customers th {
   border: 1px solid #ddd;
   padding: 4px;
 }
 
-.dvttbl tr:nth-child(even) {
+.dvttbl tbody tr:nth-child(even), .dvttblh2 tbody tr:nth-child(even) {
   background-color: #d9ecff;
 }
 
-.dvttbl tr:hover {
+.dvttbl tbody tr:hover, .dvttblh2 tbody tr:hover {
   background-color: #abd0f5;
+}
+
+.dvttblh2 thead tr:nth-child(1) th {
+  text-align: center;
+}
+.dvttblh2 thead tr th:nth-child(1) {
+  background: transparent;
+  border: none;
+}
+.dvttblh2 thead tr:nth-child(1) th:nth-child(2) {
+  background: #ffa500;
+}
+.dvttblh2 thead tr:nth-child(1) th:nth-child(3) {
+  background: #FD6552;
+}
+.dvttblh2 thead tr:nth-child(2) th {
+  text-align: left;
 }

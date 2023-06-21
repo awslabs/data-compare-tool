@@ -179,7 +179,10 @@ function DVTTable(props) {
 
     return (
         <div>
-            <TableContainer component={Paper}>
+            <TableContainer
+                component={Paper}
+                sx={{ maxHeight: "600px", overflow: "scroll" }}
+            >
                 <Table
                     sx={{ minWidth: 650 }}
                     aria-label="table"
