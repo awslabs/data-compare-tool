@@ -1,81 +1,21 @@
-import React, { useReducer, useEffect, file, setFile, useState, useMemo } from "react";
-import Select from "react-select";
-import TableContainer from "@mui/material/TableContainer";
-import Paper from "@mui/material/Paper";
-import Table from "@mui/material/Table";
-import TableHead from "@mui/material/TableHead";
-import TableRow from "@mui/material/TableRow";
-import TableCell from "@mui/material/TableCell";
-import TableBody from "@mui/material/TableBody";
-import { Box, containerClasses } from "@mui/material";
-import Button from "@mui/material/Button";
-import Grid from "@mui/material/Grid";
-import "./recommendation/css/Recommendation.css";
-import { useNavigate } from "react-router-dom";
+import React, { useReducer, useEffect, useState, useMemo } from "react";
 import axios from 'axios';
-import Typography from "@mui/material/Typography";
-import Stack from "@mui/material/Stack";
-import { Link } from "react-router-dom";
+import { Box, InputLabel, FormControl, Select, MenuItem, TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, Button, Grid, Typography, Stack } from "@mui/material";
+import { Download as DownloadIcon, Construction as ConstructionIcon } from '@mui/icons-material';
+import { useNavigate, Link } from "react-router-dom";
 import LoadingSpinner from "./LoadingSpinner";
-import "./styles.css";
-// import logo from './dart-logo.jpg';
 import Pagination from './pagination/pagination';
-import IconButton from '@mui/material/IconButton';
-import DownloadIcon from '@mui/icons-material/Download';
-import ConstructionIcon from '@mui/icons-material/Construction';
+import "./recommendation/css/Recommendation.css";
+import "./styles.css";
+
 
 const CLEAR = "clear";
-
 const POPULATE_DATABASE = "populateDatabase";
 const POPULATE_SCHEMA = "populateSchema";
 const POPULATE_SCHEMA_RUN = "populateSchemaRun";
 const POPULATE_TABLE = "populateTable";
 const POPULATE_TABLE_RUN = "populateTableRun";
 let data = [];
-
-// export const data1 = {
-//     'hostDetailsList': [{
-//         hostName: 'ukpg-instance-1.cl7uqmhlcmfi.eu-west-2.rds.amazonaws.com', databaseList: [{
-//             databaseName: 'ttp', schemaList: [{
-//                 schemaName: 'ops$ora_2', schemaRun: [1], tableList: [{
-//                     tableName: 'ppt_12', tableRun: [0]
-//                 }, {
-//                     tableName: 'ppt_11', tableRun: [0]
-//                 }, {
-//                     tableName: 'ppt_10', tableRun: [0]
-//                 }]
-//             }, {
-//                 schemaName: 'ops$ora', schemaRun: [0, 1], tableList: [{
-//                     tableName: 'ppt_12', tableRun: [1]
-//                 }, {
-//                     tableName: 'ppt_11', tableRun: [1]
-//                 }, {
-//                     tableName: 'ppt_10', tableRun: [1, 2]
-//                 }]
-//             }]
-//         }, {
-//             databaseName: 'ttp_2', schemaList: [{
-//                 schemaName: 'ops$ora', schemaRun: [0, 1], tableList: [{
-//                     tableName: 'ppt_11', tableRun: [0]
-//                 }, {
-//                     tableName: 'ppt_10', tableRun: [0, 2]
-//                 }]
-//             }]
-//         }]
-//     }, {
-//         hostName: 'localhost', databaseList: [{
-//             databaseName: 'ttp', schemaList: [{
-//                 schemaName: 'ops$ora_2', schemaRun: [1], tableList: [{
-//                     tableName: 'ppt_12', tableRun: [0]
-//                 }, {
-//                     tableName: 'ppt_11', tableRun: [0]
-//                 }, {
-//                     tableName: 'ppt_10', tableRun: [0]
-//                 }]
-//             }]
-//         }]
-//     }]
-// }
 
 let PageSize = 2;
 const data1 = {};
@@ -97,7 +37,6 @@ const initialState = {
   tableNamesToBeLoaded: [],
   tableRunsToBeLoaded: [],
   showTable: false,
-
 };
 
 function reducer(state, action) {
@@ -110,7 +49,7 @@ function reducer(state, action) {
         loadingDBName: false,
         disableHostName: true,
 
-        dbNamesToBeLoaded: data1.hostDetailsList.find((hostname) => hostname.value === action.hostName).databaseList,
+        dbNamesToBeLoaded: action.hostName,
         schemaNamesToBeLoaded: [],
         schemaRunsToBeLoaded: [],
         tableNamesToBeLoaded: [],
@@ -122,7 +61,7 @@ function reducer(state, action) {
         disableSchemaName: false,
         loadingSchemaName: false,
 
-        schemaNamesToBeLoaded: data1.hostDetailsList.find((hostname) => hostname.value === hostNameSelected).databaseList.find((dbname) => dbname.value === action.dbName).schemaList, //this has to be same in handler
+        schemaNamesToBeLoaded: state.dbNamesToBeLoaded.find((dbname) => dbname.value === action.dbName).schemaList, //this has to be same in handler
         schemaRunsToBeLoaded: [],
         tableNamesToBeLoaded: [],
         tableRunsToBeLoaded: [],
@@ -134,7 +73,7 @@ function reducer(state, action) {
         disableSchemaRun: true,
         loadingSchemaRun: false,
 
-        schemaRunsToBeLoaded: data1.hostDetailsList.find((hostname) => hostname.value === hostNameSelected).databaseList.find((dbname) => dbname.value === dbNameSelected).schemaList.find((schema) => schema.value === schemaNameSelected).schemaRun,
+        schemaRunsToBeLoaded: state.schemaNamesToBeLoaded.find((schema) => schema.value === action.schemaName).schemaRun,
         tableNamesToBeLoaded: [],
         tableRunsToBeLoaded: [],
         //this has to be same in handler
@@ -145,9 +84,7 @@ function reducer(state, action) {
         disableTableName: false,
         loadingTableName: false,
 
-        tableNamesToBeLoaded: data1.hostDetailsList.find(((host) => host.value === hostNameSelected))
-          .databaseList.find((db) => db.value === dbNameSelected)
-          .schemaList.find((schema) => schema.value === schemaNameSelected).tableList,
+        tableNamesToBeLoaded: state.schemaNamesToBeLoaded.find((schema) => schema.value === action.schemaName).tableList,
         tableRunsToBeLoaded: [],
       };
     case POPULATE_TABLE_RUN:
@@ -157,10 +94,7 @@ function reducer(state, action) {
         loadingTableRun: false,
         showTable: true,
 
-        tableRunsToBeLoaded: data1.hostDetailsList.find(((host) => host.value === hostNameSelected))
-          .databaseList.find((db) => db.value === dbNameSelected)
-          .schemaList.find((schema) => schema.value === schemaNameSelected)
-          .tableList.find(obj => { return obj.tableName === tableNameSelected; }).tableRun,
+        tableRunsToBeLoaded: state.tableNamesToBeLoaded.find(obj => obj.tableName === action.tableName).tableRun,
       };
     case CLEAR:
     default:
@@ -168,12 +102,6 @@ function reducer(state, action) {
   }
 }
 
-export let hostNameSelected = "";
-export let dbNameSelected = "";
-export let schemaNameSelected = "";
-export let schemaRunSelected = "";
-export let tableNameSelected = "";
-export let tableRunSelected = "";
 function Nestedselect() {
   const [isLoading, setIsLoading] = useState(false);
   const [post, setPost] = useState([]);
@@ -182,6 +110,17 @@ function Nestedselect() {
   //const API = 'https://mocki.io/v1/e29d853b-1a21-456d-b8a3-35d5f27da66f';
   const API = 'http://localhost:8090/dvt/recommendation/recommendation-selection';
   const [file, setFile] = useState()
+
+  const [hostNameSelected, setHostNameSelected] = useState("");
+  const [dbNameSelected, setDbNameSelected] = useState("");
+  const [schemaNameSelected, setSchemaNameSelected] = useState("");
+  const [schemaRunSelected, setSchemaRunSelected] = useState("");
+  const [tableNameSelected, setTableNameSelected] = useState("");
+  const [tableRunSelected, setTableRunSelected] = useState("");
+
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const navigate = useNavigate();
+
 
   function handleChange(event) {
     setFile(event.target.files[0])
@@ -330,131 +269,79 @@ function Nestedselect() {
   };
   useEffect(() => {
     fetchPost();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
   const handleOnHostNameClick = (event) => {
-    hostNameSelected = event.value;
-    dispatch({ type: POPULATE_DATABASE, hostName: event.value });
+    if (event) {
+      setHostNameSelected(event.target.value);
+      const dataBaseName = data1.hostDetailsList.find((hostname) => hostname.value === event.target.value).databaseList;
+      dispatch({ type: POPULATE_DATABASE, hostName: dataBaseName });
+    }
   };
 
   const handleOnDBNameClick = (event) => {
-    dbNameSelected = event.value;
-    console.log("showtabledb", state.showTable);
-    dispatch({ type: POPULATE_SCHEMA, dbName: event.value });
+    if (event) {
+      setDbNameSelected(event.target.value);
+      dispatch({ type: POPULATE_SCHEMA, dbName: event.target.value });
+    }
   };
 
   const handleOnSchemaNameClick = (event) => {
-    schemaNameSelected = event.value;
-    console.log("showtablesc", state.showTable);
-    //dispatch({ type: POPULATE_SCHEMA_RUN, schemaName: event.value });
-    dispatch({ type: POPULATE_TABLE, schemaName: event.value });
+    if (event) {
+      setSchemaNameSelected(event.target.value);
+      dispatch({ type: POPULATE_TABLE, schemaName: event.target.value });
+    }
   };
 
   const handleOnSchemaRunClick = (event) => {
-    schemaRunSelected = event.value;
-    console.log("showtable", state.showTable);
+    // schemaRunSelected = event.value;
+    setSchemaRunSelected(event.target.value)
     state.showTable = true;
-    //console.log()
     let tempArr = [];
     let slnumber = 1;
-    for (
-      let i = 0,
-      len = data1.hostDetailsList
-        .find(() => hostNameSelected)
-        .databaseList.find(() => dbNameSelected)
-        .schemaList.find((schema) => schema.value === schemaNameSelected).tableList.length;
-      i < len;
-      i++
-    ) {
-      for (
-        let j = 0,
-        len1 = data1.hostDetailsList
-          .find(() => hostNameSelected)
-          .databaseList.find(() => dbNameSelected)
-          .schemaList.find((schema) => schema.value === schemaNameSelected).tableList[i].tableRun.length;
-        j < len1;
-        j++
-      ) {
-        let obj = {};
-        obj.slNo = slnumber;
-        slnumber++;
-        console.log("slno", slnumber);
-        obj.tableName = data1.hostDetailsList
-          .find(() => hostNameSelected)
-          .databaseList.find(() => dbNameSelected)
-          .schemaList.find((schema) => schema.value === schemaNameSelected).tableList[i].tableName;
-        obj.tableRun = data1.hostDetailsList
-          .find(() => hostNameSelected)
-          .databaseList.find(() => dbNameSelected)
-          .schemaList.find((schema) => schema.value === schemaNameSelected).tableList[i].tableRun[j].run;
+    const currentTableList = state.schemaNamesToBeLoaded.find((schema) => schema.value === schemaNameSelected).tableList;
 
-        obj.runDate = data1.hostDetailsList
-          .find(() => hostNameSelected)
-          .databaseList.find(() => dbNameSelected)
-          .schemaList.find((schema) => schema.value === schemaNameSelected).tableList[i].tableRun[j].executionDate;
-        obj.runId = data1.hostDetailsList
-          .find(() => hostNameSelected)
-          .databaseList.find(() => dbNameSelected)
-          .schemaList.find((schema) => schema.value === schemaNameSelected).tableList[i].tableRun[j].runId;
-        obj.schemaName = data1.hostDetailsList
-          .find(() => hostNameSelected)
-          .databaseList.find(() => dbNameSelected)
-          .schemaList.find((schema) => schema.value === schemaNameSelected).tableList[i].tableRun[j].schemaName;
-        console.log("random", obj);
+    for (let i = 0; i < currentTableList.length; i++) {
+      const currentTableRun = currentTableList[i].tableRun;
+      for (let j = 0; j < currentTableRun.length; j++) {
+        const tempTableRunData = currentTableRun[j];
+        const obj = {
+          slNo: slnumber,
+          tableName: currentTableList[i].tableName,
+          tableRun: tempTableRunData.run,
+          runDate: tempTableRunData.executionDate,
+          runId: tempTableRunData.runId,
+          schemaName: tempTableRunData.schemaName,
+        }
+        slnumber++;
         tempArr.push(obj);
       }
     }
     setTableData(tempArr);
   };
 
-  const handleOnTableClickOld = (event) => {
-    tableNameSelected = event.value;
-    dispatch({ type: POPULATE_TABLE_RUN, tableName: event.value });
-  };
+  // const handleOnTableClickOld = (event) => {
+  //   tableNameSelected = event.value;
+  //   dispatch({ type: POPULATE_TABLE_RUN, tableName: event.value });
+  // };
   const handleOnTableRunClick = (event) => {
-    tableRunSelected = event.value;
+    const tempTableRunSelected = event.target.value;
+    setTableRunSelected(tempTableRunSelected);
     let tempArr = [];
     let slnumber = 1;
-    for (
-      let i = 0,
-      len = data1.hostDetailsList
-        .find(((host) => host.value === hostNameSelected))
-        .databaseList.find((db) => db.value === dbNameSelected)
-        .schemaList.find((schema) => schema.value === schemaNameSelected)
-        .tableList.find(obj => { return obj.tableName === tableNameSelected; }).tableRun.length;
-
-      i < len;
-      i++
-    ) {
-      let obj = {};
-      obj.slNo = slnumber;
+    for (let i = 0; i < state.tableRunsToBeLoaded.length; i++) {
       setTableData(tempArr);
-      obj.tableName = data1.hostDetailsList
-        .find(((host) => host.value === hostNameSelected))
-        .databaseList.find((db) => db.value === dbNameSelected)
-        .schemaList.find((schema) => schema.value === schemaNameSelected)
-        .tableList.find(obj => { return obj.tableName === tableNameSelected; }).tableName;
-      obj.tableRun = data1.hostDetailsList
-        .find(((host) => host.value === hostNameSelected))
-        .databaseList.find((db) => db.value === dbNameSelected)
-        .schemaList.find((schema) => schema.value === schemaNameSelected)
-        .tableList.find(obj => { return obj.tableName === tableNameSelected; }).tableRun[i].run;
-      obj.runDate = data1.hostDetailsList
-        .find(((host) => host.value === hostNameSelected))
-        .databaseList.find((db) => db.value === dbNameSelected)
-        .schemaList.find((schema) => schema.value === schemaNameSelected)
-        .tableList.find(obj => { return obj.tableName === tableNameSelected; }).tableRun[i].executionDate;
-      obj.runId = data1.hostDetailsList
-        .find(((host) => host.value === hostNameSelected))
-        .databaseList.find((db) => db.value === dbNameSelected)
-        .schemaList.find((schema) => schema.value === schemaNameSelected)
-        .tableList.find(obj => { return obj.tableName === tableNameSelected; }).tableRun[i].runId;
-      obj.schemaName = data1.hostDetailsList
-        .find(((host) => host.value === hostNameSelected))
-        .databaseList.find((db) => db.value === dbNameSelected)
-        .schemaList.find((schema) => schema.value === schemaNameSelected)
-        .tableList.find(obj => { return obj.tableName === tableNameSelected; }).tableRun[i].schemaName;
+      const obj = {
+        slNo: slnumber,
+        tableName: state.tableNamesToBeLoaded.find(items => { return items.tableName === tableNameSelected; }).tableName,
+        tableRun: state.tableRunsToBeLoaded[i].run,
+        runDate: state.tableRunsToBeLoaded[i].executionDate,
+        runId: state.tableRunsToBeLoaded[i].runId,
+        schemaName: state.tableRunsToBeLoaded[i].schemaName,
+      };
       console.log("random", obj.tableRun);
-      if (obj.tableRun == tableRunSelected) {
+      if (obj.tableRun == tempTableRunSelected) {
         tempArr.push(obj);
         slnumber++;
       }
@@ -462,52 +349,24 @@ function Nestedselect() {
     setTableData(tempArr);
   };
   const handleOnTableClick = (event) => {
-    tableNameSelected = event.value;
-    dispatch({ type: POPULATE_TABLE_RUN, tableName: event.value });
+    const tempTableNameSelected = event.target.value;
+    setTableNameSelected(tempTableNameSelected);
+    dispatch({ type: POPULATE_TABLE_RUN, tableName: tempTableNameSelected });
     let tempArr = [];
     let slnumber = 1;
-    console.log(" list.....", data1.hostDetailsList
-      .find(((host) => host.value === hostNameSelected))
-      .databaseList.find((db) => db.value === dbNameSelected)
-      .schemaList.find((schema) => schema.value === schemaNameSelected)
-      .tableList.find(obj => { return obj.tableName === tableNameSelected; }).tableRun.length)
-    for (
-      let i = 0,
-      len = data1.hostDetailsList.find(((host) => host.value === hostNameSelected))
-        .databaseList.find((db) => db.value === dbNameSelected)
-        .schemaList.find((schema) => schema.value === schemaNameSelected)
-        .tableList.find(obj => { return obj.tableName === tableNameSelected; }).tableRun.length;
-      i < len;
-      i++
-    ) {
+    const currentTableRun = state.tableNamesToBeLoaded.find(obj => obj.tableName === tempTableNameSelected).tableRun;
 
-      let obj = {};
-      obj.slNo = slnumber;
+    for (let i = 0; i < currentTableRun.length; i++) {
       setTableData(tempArr);
+      const obj = {
+        slNo: slnumber,
+        tableName: state.tableNamesToBeLoaded.find(items => items.tableName === tempTableNameSelected).tableName,
+        tableRun: currentTableRun[i].run,
+        runDate: currentTableRun[i].executionDate,
+        runId: currentTableRun[i].runId,
+        schemaName: currentTableRun[i].schemaName,
+      }
       slnumber++;
-      obj.tableName = data1.hostDetailsList.find(((host) => host.value === hostNameSelected))
-        .databaseList.find((db) => db.value === dbNameSelected)
-        .schemaList.find((schema) => schema.value === schemaNameSelected)
-        .tableList.find(obj => { return obj.tableName === tableNameSelected; }).tableName;
-      obj.tableRun = data1.hostDetailsList.find(((host) => host.value === hostNameSelected))
-        .databaseList.find((db) => db.value === dbNameSelected)
-        .schemaList.find((schema) => schema.value === schemaNameSelected)
-        .tableList.find(obj => { return obj.tableName === tableNameSelected; }).tableRun[i].run;
-      obj.runDate = data1.hostDetailsList.find(((host) => host.value === hostNameSelected))
-        .databaseList.find((db) => db.value === dbNameSelected)
-        .schemaList.find((schema) => schema.value === schemaNameSelected)
-        .tableList.find(obj => { return obj.tableName === tableNameSelected; }).tableRun[i].executionDate;
-
-      obj.runId = data1.hostDetailsList.find(((host) => host.value === hostNameSelected))
-        .databaseList.find((db) => db.value === dbNameSelected)
-        .schemaList.find((schema) => schema.value === schemaNameSelected)
-        .tableList.find(obj => { return obj.tableName === tableNameSelected; }).tableRun[i].runId;
-      obj.schemaName = data1.hostDetailsList.find(((host) => host.value === hostNameSelected))
-        .databaseList.find((db) => db.value === dbNameSelected)
-        .schemaList.find((schema) => schema.value === schemaNameSelected)
-        .tableList.find(obj => { return obj.tableName === tableNameSelected; }).tableRun[i].schemaName;
-      console.log("random", obj);
-
       tempArr.push(obj);
     }
     setTableData(tempArr);
@@ -520,7 +379,7 @@ function Nestedselect() {
     console.log('page table data', tableData)
   }, [currentPage, tableData]);
   // @ts-ignore
-  let navigate = useNavigate();
+
   const redirectToRecommendation = (event) => {
     console.log('event ' + event.target.value);
     navigate('/dvt/recommend?runId=' + event.target.value + '&page=1')
@@ -553,7 +412,16 @@ function Nestedselect() {
 */
 
   }
-  const [state, dispatch] = useReducer(reducer, initialState);
+
+
+  const resetAllFields = () => {
+    setHostNameSelected("");
+    setDbNameSelected("");
+    setSchemaNameSelected("");
+    setSchemaRunSelected("");
+    setTableNameSelected("");
+    dispatch({ type: 'CLEAR' });
+  };
 
   return (
     <>
@@ -566,85 +434,123 @@ function Nestedselect() {
 
         <Grid container spacing={2} columnSpacing={{ xs: 2 }}>
           <Grid item xs={6}>
-            <Select
-              isDisabled={state.disableHostName}
-              isLoading={state.loadingDBName}
-              isClearable
-              isSearchable
-              placeholder="Select HostName..."
-              name="hostname"
-              options={data1.hostDetailsList}
-              onChange={handleOnHostNameClick}
-            />
+            <FormControl size="small" fullWidth>
+              <InputLabel id="select-hostName">Select HostName</InputLabel>
+              <Select
+                labelId="select-hostName"
+                id="select-hostName-field"
+                value={hostNameSelected}
+                label="Select HostName"
+                name="hostname"
+                onChange={handleOnHostNameClick}
+              >
+                {data1?.hostDetailsList && data1?.hostDetailsList?.map((element, index) => {
+                  return <MenuItem key={index} value={element.value}>{element.label}</MenuItem>
+                })}
+
+              </Select>
+            </FormControl>
+
+
           </Grid>
           {!state.disableDBName && (
             <Grid item xs={6}>
-              <Select
-                isDisabled={state.disableDBName}
-                isLoading={state.loadingSchemaName}
-                isClearable
-                isSearchable
-                placeholder="Select Database..."
-                name="database"
-                options={state.dbNamesToBeLoaded}
-                onChange={handleOnDBNameClick}
-              />
+              <FormControl size="small" fullWidth>
+                <InputLabel id="select-database">Select Database</InputLabel>
+                <Select
+                  labelId="select-database"
+                  id="select-database-field"
+                  value={dbNameSelected}
+                  label="Select Database"
+                  name="database"
+                  onChange={handleOnDBNameClick}
+                >
+                  {state?.dbNamesToBeLoaded && state?.dbNamesToBeLoaded?.map((element, index) => {
+                    return <MenuItem key={index} value={element.value}>{element.label}</MenuItem>
+                  })}
+
+                </Select>
+              </FormControl>
             </Grid>
           )}
           {!state.disableSchemaName && (
             <Grid item xs={5}>
-              <Select
-                isDisabled={state.disableSchemaName}
-                isLoading={state.loadingSchemaRun}
-                isClearable
-                isSearchable
-                placeholder="Select Schema..."
-                name="schema"
-                options={state.schemaNamesToBeLoaded}
-                onChange={handleOnSchemaNameClick}
-              />
+              <FormControl size="small" fullWidth>
+                <InputLabel id="select-schema">Select Schema</InputLabel>
+                <Select
+                  labelId="select-schema"
+                  id="select-schema-field"
+                  value={schemaNameSelected}
+                  label="Select Schema"
+                  name="schema"
+                  onChange={handleOnSchemaNameClick}
+                >
+                  {state?.schemaNamesToBeLoaded && state?.schemaNamesToBeLoaded?.map((element, index) => {
+                    return <MenuItem key={index} value={element.value}>{element.label}</MenuItem>
+                  })}
+
+                </Select>
+              </FormControl>
             </Grid>
           )}
           {!state.disableSchemaRun && (
             <Grid item xs={3}>
-              <Select
-                isDisabled={state.disableSchemaRun}
-                isLoading={state.loadingTableName}
-                isClearable
-                isSearchable
-                placeholder="Select Schema Run..."
-                name="schemaRun"
-                options={state.schemaRunsToBeLoaded}
-                onChange={handleOnSchemaRunClick}
-              />
+              <FormControl size="small" fullWidth>
+                <InputLabel id="select-schema-run">Select Schema Run</InputLabel>
+                <Select
+                  labelId="select-schema-run"
+                  id="select-schema-run-field"
+                  value={schemaRunSelected}
+                  label="Select Schema Run"
+                  name="schemaRun"
+                  onChange={handleOnSchemaRunClick}
+                >
+                  {state?.schemaRunsToBeLoaded && state?.schemaRunsToBeLoaded?.map((element, index) => {
+                    return <MenuItem key={index} value={element.value}>{element.label}</MenuItem>
+                  })}
+
+                </Select>
+              </FormControl>
             </Grid>
           )}
           {!state.disableTableName && (
             <Grid item xs={5}>
-              <Select
-                isDisabled={state.disableTableName}
-                isLoading={state.loadingTableRun}
-                isClearable
-                isSearchable
-                placeholder="Select Table..."
-                name="table"
-                options={state.tableNamesToBeLoaded}
-                onChange={handleOnTableClick}
-              />
+              <FormControl size="small" fullWidth>
+                <InputLabel id="select-table">Select Table</InputLabel>
+                <Select
+                  labelId="select-table"
+                  id="select-table-field"
+                  value={tableNameSelected}
+                  label="Select Table"
+                  name="table"
+                  onChange={handleOnTableClick}
+                >
+                  {state?.tableNamesToBeLoaded && state?.tableNamesToBeLoaded?.map((element, index) => {
+                    return <MenuItem key={index} value={element.value}>{element.label}</MenuItem>
+                  })}
+
+                </Select>
+              </FormControl>
             </Grid>
           )}
           {!state.disableTableRun && (
             <Grid item xs={2}>
-              <Select
-                isDisabled={state.disableTableRun}
-                isLoading={false}
-                isClearable
-                isSearchable
-                placeholder="Select Table Run..."
-                name="tableRun"
-                options={state.tableRunsToBeLoaded}
-                onChange={handleOnTableRunClick}
-              />
+              <FormControl size="small" fullWidth>
+                <InputLabel id="select-table-run">Select Table Run</InputLabel>
+                <Select
+                  labelId="select-table-run"
+                  id="select-table-run-field"
+                  value={tableRunSelected}
+                  label="Select Table Run"
+                  name="tableRun"
+                  onChange={handleOnTableRunClick}
+                >
+                  {state?.tableRunsToBeLoaded && state?.tableRunsToBeLoaded?.map((element, index) => {
+                    return <MenuItem key={index} value={element.value}>{element.label}</MenuItem>
+                  })}
+
+                </Select>
+              </FormControl>
             </Grid>
           )}
         </Grid>
@@ -724,7 +630,7 @@ function Nestedselect() {
             <Button variant="contained" onClick={redirectToValidation}>
               Compare
             </Button>
-            <Button color="success" variant="contained" >
+            <Button color="success" variant="contained" onClick={resetAllFields} >
               Reset
             </Button>
             <Box sx={{ border: 1, borderColor: "primary.main", borderRadius: 1 }}>
