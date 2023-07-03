@@ -64,8 +64,11 @@ table.dvttblh2 {
 .dvttblh2 thead tr:nth-child(1) th {
   text-align: center;
 }
-.dvttblh2 thead tr th:nth-child(1) {
+.dvttblh2 thead tr:nth-child(1) th:nth-child(1) {
   background: transparent;
+  border: none;
+}
+.dvttblh2 thead tr:nth-child(2) th:nth-child(1) {
   border: none;
 }
 .dvttblh2 thead tr:nth-child(1) th:nth-child(2) {
