@@ -6,18 +6,18 @@
     transform: rotate(360deg);
   }
 }
-.loading-spinner {
+/* .loading-spinner {
   width: 50px;
   height: 50px;
-  border: 10px solid #6792A0; /*#f3f3f3; /* Light grey */
-  border-top: 10px solid #AA4A44;/*#383636; /* Black */
+  border: 10px solid #6792A0;
+  border-top: 10px solid #AA4A44;
   border-radius: 50%;
   animation: spinner 1.5s linear infinite;
-}
+} */
 
 .loading-container {
   position: relative;
-  height: 60px;
+  height: 100px;
   width: 100%;
   display: block;
 }

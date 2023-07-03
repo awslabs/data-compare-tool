@@ -1,11 +1,9 @@
-import * as React from "react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import DVTTable from "./table/DVTTable";
 import { useSearchParams } from "react-router-dom";
 import RecommendationSummary from "./RecommendationSummary";
-import loadingimage from "./images/loadingimage.gif";
 import Typography from "@mui/material/Typography";
-// import logo from '../dart-logo.jpg'
+import LoadingSpinner from "../LoadingSpinner";
 import "./css/Recommendation.css";
 import Grid from "@mui/material/Grid";
 function Recommendation() {
@@ -33,6 +31,7 @@ function Recommendation() {
         //fetchData(table, pageNumber);
         fetchRecData(table, schemaName, runId, pageNumber);
     }, [searchParams]);
+
     function fetchRecData(tableName, schemaName, runId, pageNumber) {
         let requestParams = { method: "POST", headers: "", body: "" };
         requestParams.headers = { "Content-Type": "application/json" };
@@ -109,6 +108,7 @@ function Recommendation() {
         setSuccessMessage(null);
         setSummaryData([]);
     }
+
     const showMismatchType = (val) => {
         console.log(val);
         switch (val) {
@@ -122,6 +122,7 @@ function Recommendation() {
                 return "Additional_tgt";
         }
     };
+
     function summaryContinueHandler() {
         setSummaryData([]);
 
@@ -213,13 +214,12 @@ function Recommendation() {
                 {errorMessage !== null ? (
                     <div className="error-msg">{errorMessage}</div>
                 ) : null}
-
-                {data === null ? (
-                    <img
-                        style={{ height: 40, width: 40 }}
-                        src={loadingimage}
-                    ></img>
-                ) : null}
+                {summaryData.length === 0 && (
+                    <Typography variant="h5" className="heading">
+                        Summary of changes
+                    </Typography>
+                )}
+                {data === null ? <LoadingSpinner /> : null}
             </div>
 
             {summaryData.length > 0 ? (
@@ -233,30 +233,11 @@ function Recommendation() {
             ) : null}
 
             {data !== null && summaryData.length === 0 ? (
-                <div>
-                    <header>
-                        {" "}
-                        <Grid
-                            container
-                            mb={2}
-                            spacing={1}
-                            columnSpacing={{ xs: 2 }}
-                            justifyContent="center"
-                            alignItems="center"
-                        >
-                            <Grid item xs={12} sm={6} md={11}>
-                                <Typography
-                                    className="heading"
-                                    variant="h5"
-                                    align="center"
-                                    valign="bottom"
-                                >
-                                    {" "}
-                                    Summary of changes
-                                </Typography>
-                            </Grid>
-                        </Grid>
-                    </header>
+                data.rows.length === 0 ? (
+                    <Typography variant="p" sx={{ my: 2, color: "green" }}>
+                        No Mismatch Found!!!
+                    </Typography>
+                ) : (
                     <DVTTable
                         data={data}
                         setDataHandler={setDataHandler}
@@ -265,7 +246,7 @@ function Recommendation() {
                         handleSummary={handleSummary}
                         errorMessageHandler={setErrorMessage}
                     ></DVTTable>
-                </div>
+                )
             ) : null}
         </div>
     );
