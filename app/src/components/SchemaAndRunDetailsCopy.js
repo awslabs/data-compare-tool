@@ -2,7 +2,7 @@ import React, { useReducer, useEffect, useState, useMemo } from "react";
 import axios from 'axios';
 import { Box, InputLabel, FormControl, Select, MenuItem, TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, Button, Grid, Typography, Stack } from "@mui/material";
 import { Download as DownloadIcon, Construction as ConstructionIcon } from '@mui/icons-material';
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import LoadingSpinner from "./LoadingSpinner";
 import Pagination from './pagination/pagination';
 import "./recommendation/css/Recommendation.css";
@@ -47,6 +47,16 @@ function reducer(state, action) {
         ...state,
         disableDBName: false,
         loadingDBName: false,
+        disableSchemaName: true,
+        loadingSchemaName: false,
+        disableSchemaRun: true,
+        loadingSchemaRun: false,
+        disableTableName: true,
+        loadingTableName: false,
+        disableTableRun: true,
+        loadingTableRun: false,
+        showTable: false,
+
         disableHostName: true,
 
         dbNamesToBeLoaded: action.hostName,
@@ -58,20 +68,42 @@ function reducer(state, action) {
     case POPULATE_SCHEMA:
       return {
         ...state,
-        disableSchemaName: false,
+
+        disableDBName: false,
+        loadingDBName: false,
         loadingSchemaName: false,
+        disableSchemaRun: true,
+        loadingSchemaRun: false,
+        disableTableName: true,
+        loadingTableName: false,
+        disableTableRun: true,
+        loadingTableRun: false,
+        showTable: false,
+
+        disableHostName: true,
+        disableSchemaName: false,
 
         schemaNamesToBeLoaded: state.dbNamesToBeLoaded.find((dbname) => dbname.value === action.dbName).schemaList, //this has to be same in handler
         schemaRunsToBeLoaded: [],
         tableNamesToBeLoaded: [],
         tableRunsToBeLoaded: [],
-
       };
     case POPULATE_SCHEMA_RUN:
       return {
         ...state,
+        disableDBName: false,
+        loadingDBName: false,
+        loadingSchemaName: false,
         disableSchemaRun: true,
         loadingSchemaRun: false,
+        disableTableName: true,
+        loadingTableName: false,
+        disableTableRun: true,
+        loadingTableRun: false,
+        showTable: false,
+
+        disableHostName: true,
+        disableSchemaName: false,
 
         schemaRunsToBeLoaded: state.schemaNamesToBeLoaded.find((schema) => schema.value === action.schemaName).schemaRun,
         tableNamesToBeLoaded: [],
@@ -81,8 +113,19 @@ function reducer(state, action) {
     case POPULATE_TABLE:
       return {
         ...state,
-        disableTableName: false,
+        disableDBName: false,
+        loadingDBName: false,
+        loadingSchemaName: false,
+        disableSchemaRun: true,
+        loadingSchemaRun: false,
         loadingTableName: false,
+        disableTableRun: true,
+        loadingTableRun: false,
+        showTable: false,
+
+        disableHostName: true,
+        disableSchemaName: false,
+        disableTableName: false,
 
         tableNamesToBeLoaded: state.schemaNamesToBeLoaded.find((schema) => schema.value === action.schemaName).tableList,
         tableRunsToBeLoaded: [],
@@ -90,8 +133,19 @@ function reducer(state, action) {
     case POPULATE_TABLE_RUN:
       return {
         ...state,
-        disableTableRun: false,
+
+        disableDBName: false,
+        loadingDBName: false,
+        loadingSchemaName: false,
+        disableSchemaRun: true,
+        loadingSchemaRun: false,
+        loadingTableName: false,
         loadingTableRun: false,
+
+        disableHostName: true,
+        disableSchemaName: false,
+        disableTableName: false,
+        disableTableRun: false,
         showTable: true,
 
         tableRunsToBeLoaded: state.tableNamesToBeLoaded.find(obj => obj.tableName === action.tableName).tableRun,
@@ -131,36 +185,36 @@ function Nestedselect() {
     window.location.href = '/dvt/compare';
   }
 
-  function handleDataSync(event) {
-    //event.preventDefault();
-    setIsLoading(true);
-    let requestParams = { method: "POST", headers: "", body: "" };
-    requestParams.headers = { "Content-Type": "application/json" };
-    requestParams.body = JSON.stringify({
-      tableName: event.target.value,
+  // function handleDataSync(event) {
+  //   //event.preventDefault();
+  //   setIsLoading(true);
+  //   let requestParams = { method: "POST", headers: "", body: "" };
+  //   requestParams.headers = { "Content-Type": "application/json" };
+  //   requestParams.body = JSON.stringify({
+  //     tableName: event.target.value,
+  //   });
 
-    });
-    console.log("Data To Submit == ", JSON.stringify(requestParams));
-    fetch('http://localhost:8090/dvt/validation/compareData', requestParams)
+  //   console.log("Data To Submit == ", JSON.stringify(requestParams));
+  //   fetch('http://localhost:8090/dvt/validation/compareData', requestParams)
 
-      .then((response) => {
-        if (response.ok) {
-          return response.text();
-        }
-      })
-      .then((resultData) => {
-        setIsLoading(false);
-        let msg = (resultData !== null || resultData !== '') ? resultData : "Something went wrong, please try again";
-        alert(msg);
-        // navigate("/dvt/selection");
-      })
-      .catch((error) => {
-        //setErrorMessage("Unable to validate the data");
-        setIsLoading(false);
-        alert("Something went wrong, please try again");
-        console.log("Error ::", error);
-      });
-  }
+  //     .then((response) => {
+  //       if (response.ok) {
+  //         return response.text();
+  //       }
+  //     })
+  //     .then((resultData) => {
+  //       setIsLoading(false);
+  //       let msg = (resultData !== null || resultData !== '') ? resultData : "Something went wrong, please try again";
+  //       alert(msg);
+  //       // navigate("/dvt/selection");
+  //     })
+  //     .catch((error) => {
+  //       //setErrorMessage("Unable to validate the data");
+  //       setIsLoading(false);
+  //       alert("Something went wrong, please try again");
+  //       console.log("Error ::", error);
+  //     });
+  // }
 
   function handleSubmit(event) {
     setIsLoading(true);
@@ -185,34 +239,34 @@ function Nestedselect() {
 
   }
 
-  const downloadReport = (event) => {
-    setIsLoading(true);
-    let requestParams = { method: "GET", headers: "", body: "" };
-    requestParams.headers = { "Content-Type": "application/json" };
-    //  requestParams.body =   JSON.stringify({
-    // schemaName:event.target.
-    // targetSchemaName:
-    // tableName:
-    // runId : event.target.
-    //  });
-    console.log("Data To Submit == ", JSON.stringify(requestParams));
-    fetch('http://localhost:8090/dvt/validation/exportData?runId=' + event.target.value)
-      .then((response) => {
-        setIsLoading(false);
+  // const downloadReport = (event) => {
+  //   setIsLoading(true);
+  //   let requestParams = { method: "GET", headers: "", body: "" };
+  //   requestParams.headers = { "Content-Type": "application/json" };
+  //   //  requestParams.body =   JSON.stringify({
+  //   // schemaName:event.target.
+  //   // targetSchemaName:
+  //   // tableName:
+  //   // runId : event.target.
+  //   //  });
+  //   console.log("Data To Submit == ", JSON.stringify(requestParams));
+  //   fetch('http://localhost:8090/dvt/validation/exportData?runId=' + event.target.value)
+  //     .then((response) => {
+  //       setIsLoading(false);
 
-        if (response.ok) {
-          return response.text();
-        }
-      })
-      .then((resultData) => {
-        let msg = resultData == "Success" ? " Excel report downloaded Successfully " : "Excel report downloaded Successfully";
-        alert(msg)
-      })
-      .catch((error) => {
-        setIsLoading(false);
-        console.log("Error ::", error);
-      });
-  }
+  //       if (response.ok) {
+  //         return response.text();
+  //       }
+  //     })
+  //     .then((resultData) => {
+  //       let msg = resultData == "Success" ? " Excel report downloaded Successfully " : "Excel report downloaded Successfully";
+  //       alert(msg)
+  //     })
+  //     .catch((error) => {
+  //       setIsLoading(false);
+  //       console.log("Error ::", error);
+  //     });
+  // }
   //
   const fetchPost = () => {
     fetch(API)
@@ -274,6 +328,13 @@ function Nestedselect() {
 
   const handleOnHostNameClick = (event) => {
     if (event) {
+      if (hostNameSelected !== event.target.value) {
+        setDbNameSelected("");
+        setSchemaNameSelected("");
+        setSchemaRunSelected("");
+        setTableNameSelected("");
+        setTableRunSelected("");
+      }
       setHostNameSelected(event.target.value);
       const dataBaseName = data1.hostDetailsList.find((hostname) => hostname.value === event.target.value).databaseList;
       dispatch({ type: POPULATE_DATABASE, hostName: dataBaseName });
@@ -282,6 +343,12 @@ function Nestedselect() {
 
   const handleOnDBNameClick = (event) => {
     if (event) {
+      if (dbNameSelected !== event.target.value) {
+        setSchemaNameSelected("");
+        setSchemaRunSelected("");
+        setTableNameSelected("");
+        setTableRunSelected("");
+      }
       setDbNameSelected(event.target.value);
       dispatch({ type: POPULATE_SCHEMA, dbName: event.target.value });
     }
@@ -289,6 +356,11 @@ function Nestedselect() {
 
   const handleOnSchemaNameClick = (event) => {
     if (event) {
+      if (schemaNameSelected !== event.target.value) {
+        setSchemaRunSelected("");
+        setTableNameSelected("");
+        setTableRunSelected("");
+      }
       setSchemaNameSelected(event.target.value);
       dispatch({ type: POPULATE_TABLE, schemaName: event.target.value });
     }
@@ -326,50 +398,57 @@ function Nestedselect() {
   //   dispatch({ type: POPULATE_TABLE_RUN, tableName: event.value });
   // };
   const handleOnTableRunClick = (event) => {
-    const tempTableRunSelected = event.target.value;
-    setTableRunSelected(tempTableRunSelected);
-    let tempArr = [];
-    let slnumber = 1;
-    for (let i = 0; i < state.tableRunsToBeLoaded.length; i++) {
-      setTableData(tempArr);
-      const obj = {
-        slNo: slnumber,
-        tableName: state.tableNamesToBeLoaded.find(items => { return items.tableName === tableNameSelected; }).tableName,
-        tableRun: state.tableRunsToBeLoaded[i].run,
-        runDate: state.tableRunsToBeLoaded[i].executionDate,
-        runId: state.tableRunsToBeLoaded[i].runId,
-        schemaName: state.tableRunsToBeLoaded[i].schemaName,
-      };
-      console.log("random", obj.tableRun);
-      if (obj.tableRun == tempTableRunSelected) {
-        tempArr.push(obj);
-        slnumber++;
+    if (event) {
+      const tempTableRunSelected = event.target.value;
+      setTableRunSelected(tempTableRunSelected);
+      let tempArr = [];
+      let slnumber = 1;
+      for (let i = 0; i < state.tableRunsToBeLoaded.length; i++) {
+        setTableData(tempArr);
+        const obj = {
+          slNo: slnumber,
+          tableName: state.tableNamesToBeLoaded.find(items => { return items.tableName === tableNameSelected; }).tableName,
+          tableRun: state.tableRunsToBeLoaded[i].run,
+          runDate: state.tableRunsToBeLoaded[i].executionDate,
+          runId: state.tableRunsToBeLoaded[i].runId,
+          schemaName: state.tableRunsToBeLoaded[i].schemaName,
+        };
+        console.log("random", obj.tableRun);
+        if (obj.tableRun == tempTableRunSelected) {
+          tempArr.push(obj);
+          slnumber++;
+        }
       }
+      setTableData(tempArr);
     }
-    setTableData(tempArr);
   };
   const handleOnTableClick = (event) => {
-    const tempTableNameSelected = event.target.value;
-    setTableNameSelected(tempTableNameSelected);
-    dispatch({ type: POPULATE_TABLE_RUN, tableName: tempTableNameSelected });
-    let tempArr = [];
-    let slnumber = 1;
-    const currentTableRun = state.tableNamesToBeLoaded.find(obj => obj.tableName === tempTableNameSelected).tableRun;
-
-    for (let i = 0; i < currentTableRun.length; i++) {
-      setTableData(tempArr);
-      const obj = {
-        slNo: slnumber,
-        tableName: state.tableNamesToBeLoaded.find(items => items.tableName === tempTableNameSelected).tableName,
-        tableRun: currentTableRun[i].run,
-        runDate: currentTableRun[i].executionDate,
-        runId: currentTableRun[i].runId,
-        schemaName: currentTableRun[i].schemaName,
+    if (event) {
+      const tempTableNameSelected = event.target.value;
+      if (tableNameSelected !== event.target.value) {
+        setTableRunSelected("");
       }
-      slnumber++;
-      tempArr.push(obj);
+      setTableNameSelected(tempTableNameSelected);
+      dispatch({ type: POPULATE_TABLE_RUN, tableName: tempTableNameSelected });
+      let tempArr = [];
+      let slnumber = 1;
+      const currentTableRun = state.tableNamesToBeLoaded.find(obj => obj.tableName === tempTableNameSelected).tableRun;
+
+      for (let i = 0; i < currentTableRun.length; i++) {
+        setTableData(tempArr);
+        const obj = {
+          slNo: slnumber,
+          tableName: state.tableNamesToBeLoaded.find(items => items.tableName === tempTableNameSelected).tableName,
+          tableRun: currentTableRun[i].run,
+          runDate: currentTableRun[i].executionDate,
+          runId: currentTableRun[i].runId,
+          schemaName: currentTableRun[i].schemaName,
+        }
+        slnumber++;
+        tempArr.push(obj);
+      }
+      setTableData(tempArr);
     }
-    setTableData(tempArr);
   };
 
   const currentTableData = useMemo(() => {
@@ -380,9 +459,8 @@ function Nestedselect() {
   }, [currentPage, tableData]);
   // @ts-ignore
 
-  const redirectToRecommendation = (event) => {
-    console.log('event ' + event.target.value);
-    navigate('/dvt/recommend?runId=' + event.target.value + '&page=1')
+  const redirectToRecommendation = (event, runDetails) => {
+    navigate('/dvt/recommend?runId=' + runDetails + '&page=1')
     //event.preventDefault();
     /* let requestParams = { method: "POST", headers: "", body: "" };
         requestParams.headers = { "Content-Type": "application/json" };
@@ -413,14 +491,14 @@ function Nestedselect() {
 
   }
 
-
   const resetAllFields = () => {
     setHostNameSelected("");
     setDbNameSelected("");
     setSchemaNameSelected("");
     setSchemaRunSelected("");
     setTableNameSelected("");
-    dispatch({ type: 'CLEAR' });
+    setTableRunSelected("");
+    dispatch({ type: CLEAR });
   };
 
   return (
@@ -582,7 +660,7 @@ function Nestedselect() {
                             variant="outlined"
                             color="success" size='small'
                             value={row.runId + '&schemaName=' + row.schemaName + '&tableName=' + row.tableName}
-                            onClick={redirectToRecommendation}
+                            onClick={(event) => redirectToRecommendation(event, row.runId + '&schemaName=' + row.schemaName + '&tableName=' + row.tableName)}
                             sx={{ mx: 0.5 }}
                           >
                             Remediate <ConstructionIcon size='small' sx={{ pl: 1 }} />
