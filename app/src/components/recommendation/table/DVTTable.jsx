@@ -184,10 +184,9 @@ function DVTTable(props) {
                 sx={{ maxHeight: "600px", overflow: "scroll" }}
             >
                 <Table
-                    sx={{ minWidth: 650 }}
+                    sx={{ minWidth: 650, width: "auto", my: "10px" }}
                     aria-label="table"
                     className="dvttblh2"
-                    style={{ width: "95%", margin: 10 }}
                     align="center"
                 >
                     <DVTTableHeader

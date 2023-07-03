@@ -4,7 +4,6 @@ import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
-
 import Checkbox from "@mui/material/Checkbox";
 
 function DVTTableHeader(props) {
@@ -25,13 +24,12 @@ function DVTTableHeader(props) {
         columnArr.push(
             <TableCell padding="checkbox" key="-1">
                 <Checkbox
-                    color="primary"
                     onClick={props.selectAllCheckboxHandler}
                     checked={props.isSelectAllChecked()}
                     inputProps={{
                         "aria-label": "select all",
                     }}
-                    style={{ height: 8 }}
+                    style={{ height: 8, color: "#fff" }}
                 />
             </TableCell>
         );
