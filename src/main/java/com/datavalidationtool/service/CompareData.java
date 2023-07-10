@@ -152,11 +152,12 @@ public class CompareData implements Runnable {
             ResultSet rs = pst.executeQuery();
             while (rs.next()) {
                 // If it is a schema run
-                if(appProperties.getTableName()==null || appProperties.getTableName().isBlank()) {
-                    runDetails.setTableRun(rs.getInt(1) + 1);
-                }else{
-                    runDetails.setTableRun(rs.getInt(1) + 1);
-                }
+//                if(appProperties.getTableName()==null || appProperties.getTableName().isBlank()) {
+//                    runDetails.setTableRun(rs.getInt(1) + 1);
+//                }else{
+//                    runDetails.setTableRun(rs.getInt(1) + 1);
+//                }
+                runDetails.setTableRun(rs.getInt(1) + 1);
             }
 
         } catch (SQLException ex) {

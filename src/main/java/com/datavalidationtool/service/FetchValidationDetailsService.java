@@ -1,13 +1,8 @@
 package com.datavalidationtool.service;
 
 
-import com.amazonaws.client.builder.AwsClientBuilder;
-import com.amazonaws.services.secretsmanager.AWSSecretsManager;
-import com.amazonaws.services.secretsmanager.AWSSecretsManagerClientBuilder;
-import com.amazonaws.services.secretsmanager.model.*;
 import com.datavalidationtool.dao.DataSource;
 import com.datavalidationtool.model.AwsSecret;
-import com.datavalidationtool.model.DatabaseInfo;
 import com.datavalidationtool.model.response.DatabaseDetails;
 import com.datavalidationtool.model.response.HostDetails;
 import com.datavalidationtool.model.response.SchemaDetails;
@@ -15,17 +10,12 @@ import com.datavalidationtool.model.response.TableDetails;
 import com.datavalidationtool.util.AWSUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
-import java.nio.ByteBuffer;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class FetchValidationDetailsService {
@@ -59,9 +49,10 @@ public class FetchValidationDetailsService {
                 if (map.containsKey(tableSchema)) {
                     map.get(tableSchema).add(tableName);
                 } else {
-                    map.put(tableSchema, new ArrayList<>() {{
-                        add(tableName);
-                    }});
+//                    map.put(tableSchema, new ArrayList<>() {{
+//                        add(tableName);
+//                    }});
+                    map.put(tableSchema, Arrays.asList(tableName));
                 }
             }
             hostDetails = new HostDetails();
@@ -85,9 +76,10 @@ public class FetchValidationDetailsService {
                 schemaList.add(schemaDetails);
             });
             databaseDetails.setSchemaList(schemaList);
-            hostDetails.setDatabaseList(new ArrayList<>() {{
-                add(databaseDetails);
-            }});
+//            hostDetails.setDatabaseList(new ArrayList<>() {{
+//                add(databaseDetails);
+//            }});
+            hostDetails.setDatabaseList(Arrays.asList(databaseDetails));
         }catch (Exception ex){
         }finally{
             conn.close();

@@ -87,10 +87,12 @@ public class ExcelDataService {
         } finally {
             JdbcUtil jdbcUtil = new JdbcUtil();
             JdbcUtil.closeResultSet(rs);
-            if(cst!=null)
-            cst.close();
-            if(con!=null)
-            con.close();
+            if(cst!=null){
+                cst.close();
+            }
+            if(con!=null){
+                con.close();
+            }
         }
         return rowsUpdates;
     }
@@ -116,8 +118,9 @@ public class ExcelDataService {
         } finally {
             JdbcUtil jdbcUtil = new JdbcUtil();
             JdbcUtil.closeResultSet(rs);
-            if(con!=null)
-            con.close();
+            if(con!=null){
+                con.close();
+            }
         }
         return rowsUpdates;
     }
@@ -163,83 +166,20 @@ public class ExcelDataService {
 
     public SchemaData readExcel(String filePath) throws IOException, SQLException {
         File file = new File(filePath);
-        FileInputStream inputStream = null;
         SchemaData details = SchemaData.builder().build();
         HashMap<String, HashMap<String, String>> excelData = new HashMap<String, HashMap<String, String>>();
-        try {
-            inputStream = new FileInputStream(file);
-            Workbook recDataExcel = new XSSFWorkbook(inputStream);
-            StringBuilder updatedData = new StringBuilder();
+        try (FileInputStream inputStream = new FileInputStream(file);
+             Workbook recDataExcel = new XSSFWorkbook(inputStream);){
 
+            StringBuilder updatedData = new StringBuilder();
             int i = 0;
             for (Sheet sheet : recDataExcel) {
                 int firstRow = sheet.getFirstRowNum();
                 int lastRow = sheet.getLastRowNum();
                 if (i == 0) {
-                    for (int index = firstRow; index <= lastRow; index++) {
-                        Row row = sheet.getRow(index);
-                        int cellIndex = 0;
-                        for (Cell cell : row) {
-                            if (cellIndex == 1) {
-                                String strValue = cell.getStringCellValue();
-                                if (index == 0)
-                                    details.setSourceSchemaName(strValue);
-                                else if (index == 1)
-                                    details.setTargetSchemaName(strValue);
-                                else if (index == 2)
-                                    details.setTableName(strValue);
-                                else if (index == 3)
-                                    details.setRunId(strValue);
-                                else if (index == 4)
-                                    details.setColumnNames(strValue);
-                            }
-                            cellIndex++;
-                        }
-                    }
+                    readTitleRow(details, sheet, firstRow, lastRow);
                 } else if (i == 2) {
-                    int dataRowNumber = 0;
-                    String strUpdateValue = "";
-                    String strInsertValue = "";
-                    //324,COL1,COL2;325,COL1,COL2,COL3;326,COL1,COL2,COL3,COL4
-                    HashMap<String, HashMap<String, String>> tablesValues = new HashMap<String, HashMap<String, String>>();
-                    for (int index = firstRow + 2; index <= lastRow; index++) {
-                        Row row = sheet.getRow(index);
-                        int cellIndex = 0;
-                        String cellValue0 = "";
-                        HashMap<String, String> rowValues = new HashMap<String, String>();
-                        for (Cell cell : row) {
-                            String cellValue = cell.getStringCellValue();
-                            if (cellIndex == 0) {
-                                cellValue0 = cell.getStringCellValue();
-                            }
-                           else if (cellIndex == 1) {
-                                //_remediate_missing_exceptions(‘ops$ora’,‘crtdms’,‘ppt_100’,‘ppt_100’,‘433;434;435’)
-                                if (cellValue.startsWith("MISSING")) {
-                                    strInsertValue = strInsertValue + cellValue0;
-                                    if (index < lastRow && (index>(firstRow + 2))) {
-                                        strInsertValue = strInsertValue + ";";
-                                    }
-                                    details.setMissingPresent(true);
-                                }
-                                //fn_remediate_mismatch_exceptions_dvt2(‘a888c0794d9aba2991ecf5d0830a26af’,’440,id,transaction,country;439,id,transaction,country;438,id,transaction,country;437,id,transaction,country;’,’ops$ora’,‘crtdms’,‘ppt_100’,‘ppt_100’)
-                                else if (cellValue.startsWith("MISMATCH")) {
-                                    strUpdateValue = strUpdateValue + cellValue0 + "," + details.getColumnNames();
-                                    if (index < lastRow) {
-                                        strUpdateValue = strUpdateValue + ";";
-                                    }
-                                    details.setMismatchPresent(true);
-                                }
-                                break;
-                            } else {
-                                rowValues.put(details.getColumnNames().split(",")[cellIndex - 2], cellValue);
-                            }
-                            cellIndex++;
-                        }
-                        tablesValues.put(cellValue0, rowValues);
-                    }
-                    details.setTableValues(tablesValues);
-                    details.setDataUpdateStr(strUpdateValue);
-                    details.setDataInsertStr(strInsertValue);
+                    readDataRows(details, sheet, firstRow, lastRow);
                 }
                 i++;
             }
@@ -248,10 +188,91 @@ public class ExcelDataService {
             recDataExcel.close();
         } catch (IOException e) {
             throw e;
-        }finally{
-            inputStream.close();
         }
         return details;
+    }
+
+    private static void readDataRows(SchemaData details, Sheet sheet, int firstRow, int lastRow) {
+        int dataRowNumber = 0;
+        String strUpdateValue = "";
+        String strInsertValue = "";
+        //324,COL1,COL2;325,COL1,COL2,COL3;326,COL1,COL2,COL3,COL4
+        HashMap<String, HashMap<String, String>> tablesValues = new HashMap<String, HashMap<String, String>>();
+        for (int index = firstRow + 2; index <= lastRow; index++) {
+            Row row = sheet.getRow(index);
+            int cellIndex = 0;
+            String cellValue0 = "";
+            HashMap<String, String> rowValues = new HashMap<String, String>();
+            for (Cell cell : row) {
+                String cellValue = cell.getStringCellValue();
+                if (cellIndex == 0) {
+                    cellValue0 = cell.getStringCellValue();
+                }
+               else if (cellIndex == 1) {
+                    //_remediate_missing_exceptions(‘ops$ora’,‘crtdms’,‘ppt_100’,‘ppt_100’,‘433;434;435’)
+                    if (cellValue.startsWith("MISSING")) {
+                        strInsertValue = readMissingRow(details, firstRow, lastRow, strInsertValue, index, cellValue0);
+                    }
+                    //fn_remediate_mismatch_exceptions_dvt2(‘a888c0794d9aba2991ecf5d0830a26af’,’440,id,transaction,country;439,id,transaction,country;438,id,transaction,country;437,id,transaction,country;’,’ops$ora’,‘crtdms’,‘ppt_100’,‘ppt_100’)
+                    else if (cellValue.startsWith("MISMATCH")) {
+                        strUpdateValue = strUpdateValue + cellValue0 + "," + details.getColumnNames();
+                        if (index < lastRow) {
+                            strUpdateValue = strUpdateValue + ";";
+                        }
+                        details.setMismatchPresent(true);
+                    }
+                    break;
+                } else {
+                    rowValues.put(details.getColumnNames().split(",")[cellIndex - 2], cellValue);
+                }
+                cellIndex++;
+            }
+            tablesValues.put(cellValue0, rowValues);
+        }
+        details.setTableValues(tablesValues);
+        details.setDataUpdateStr(strUpdateValue);
+        details.setDataInsertStr(strInsertValue);
+    }
+
+    private static String readMissingRow(SchemaData details, int firstRow, int lastRow, String strInsertValue, int index, String cellValue0) {
+        strInsertValue = strInsertValue + cellValue0;
+        if (index < lastRow && (index >(firstRow + 2))) {
+            strInsertValue = strInsertValue + ";";
+        }
+        details.setMissingPresent(true);
+        return strInsertValue;
+    }
+
+    private static void readTitleRow(SchemaData details, Sheet sheet, int firstRow, int lastRow) {
+        for (int index = firstRow; index <= lastRow; index++) {
+            Row row = sheet.getRow(index);
+            int cellIndex = 0;
+            for (Cell cell : row) {
+                if (cellIndex == 1) {
+                    String strValue = cell.getStringCellValue();
+                    setColumns(details, index, strValue);
+                }
+                cellIndex++;
+            }
+        }
+    }
+
+    private static void setColumns(SchemaData details, int index, String strValue) {
+        if (index == 0){
+            details.setSourceSchemaName(strValue);
+        }
+        else if (index == 1){
+            details.setTargetSchemaName(strValue);
+        }
+        else if (index == 2){
+            details.setTableName(strValue);
+        }
+        else if (index == 3){
+            details.setRunId(strValue);
+        }
+        else if (index == 4){
+            details.setColumnNames(strValue);
+        }
     }
 
     private boolean isTargetDataLatest(Workbook excelWorkbook, SchemaData details) throws SQLException {
@@ -475,6 +496,44 @@ public class ExcelDataService {
         // sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 4));
         // sheet.addMergedRegion(new CellRangeAddress(1, 1, 5, 9));
         // exclude first col run id and last col timestamp
+        setHeaderStyles(noOfColumns, resultSetMetaData, header, headerStyle);
+        while (excelDataRequest.getResultSet().next() && rowCount < MAX_ROWS_IN_SHEET) {
+            Row row = sheet.createRow(++rowCount);
+            String valType = null;
+            int rank = 1;
+            //Source data
+            valType = setValType(noOfColumns, excelDataRequest, row, valType);
+            //Target data
+            if (valType != null && valType.startsWith("MISMATCH_")) {
+
+                handleTragetValues(noOfColumns, excelDataRequest, sheetNum, mismatchStyle, row);
+
+            } else {
+                if (sheetNum == 2) {
+                    for (int i = 4; i < noOfColumns; i++) {
+                        Object field = excelDataRequest.getResultSet().getString(i);
+                        Cell cell = row.createCell(noOfColumns - 6 + i);
+                        cell.setCellStyle(mismatchStyle);
+                        setMismatchCells(field, cell);
+                    }
+                }
+            }
+        }
+    }
+
+    private static String setValType(int noOfColumns, ExcelDataRequest excelDataRequest, Row row, String valType) throws SQLException {
+        for (int i = 2; i < noOfColumns; i++) {
+            Object field = excelDataRequest.getResultSet().getString(i);
+            Cell cell = row.createCell(i - 2);
+            setSourceDataCells(field, cell);
+            if (i == 3)
+                valType = (String) field;
+        }
+        return valType;
+    }
+
+    private static void setHeaderStyles(int noOfColumns, ResultSetMetaData resultSetMetaData, Row header, CellStyle headerStyle) throws SQLException {
+        String colName;
         for (int i = 2; i < noOfColumns; i++) {
             Cell headerCell = header.createCell(i - 2);
             colName = resultSetMetaData.getColumnName(i);
@@ -488,84 +547,73 @@ public class ExcelDataService {
             headerCell.setCellValue(colName);
             headerCell.setCellStyle(headerStyle);
         }
-        while (excelDataRequest.getResultSet().next() && rowCount < MAX_ROWS_IN_SHEET) {
-            Row row = sheet.createRow(++rowCount);
-            String valType = null;
-            int rank = 1;
-            //Source data
-            for (int i = 2; i < noOfColumns; i++) {
-                Object field = excelDataRequest.getResultSet().getString(i);
-                Cell cell = row.createCell(i - 2);
-                if (field instanceof String) {
-                    cell.setCellValue((String) field);
-                } else if (field instanceof Integer) {
-                    cell.setCellValue((Integer) field);
-                } else if (field instanceof Long) {
-                    cell.setCellValue((Long) field);
-                } else if (field instanceof Boolean) {
-                    cell.setCellValue((Boolean) field);
-                } else if (field instanceof Character) {
-                    cell.setCellValue((Character) field);
-                } else if (field instanceof BigInteger) {
-                    cell.setCellValue(String.valueOf((BigInteger) field));
-                } else
-                    cell.setCellValue((String) field);
-                if (i == 3)
-                    valType = (String) field;
-            }
-            //Target data
-            if (valType != null && valType.startsWith("MISMATCH_")) {
+    }
 
-                if (sheetNum == 1) {
-                    excelDataRequest.getResultSet().next();
-                }
-                for (int i = 4; i < noOfColumns; i++) {
-                    Object field = excelDataRequest.getResultSet().getString(i);
-                    Cell cell = row.createCell(noOfColumns - 6 + i);
-                    cell.setCellStyle(mismatchStyle);
-                    if (field instanceof String) {
-                        cell.setCellValue((String) field);
-                    } else if (field instanceof Integer) {
-                        cell.setCellValue((Integer) field);
-                    } else if (field instanceof Long) {
-                        cell.setCellValue((Long) field);
-                    } else if (field instanceof Boolean) {
-                        cell.setCellValue((Boolean) field);
-                    } else if (field instanceof Character) {
-                        cell.setCellValue((Character) field);
-                    } else if (field instanceof BigInteger) {
-                        cell.setCellValue(String.valueOf((BigInteger) field));
-                    } else
-                        cell.setCellValue((String) field);
-                }
-                //This is to avoid the two SRC and TRG mismatch records
-                if (sheetNum == 2) {
-                    excelDataRequest.getResultSet().next();
-                }
-
-            } else {
-                if (sheetNum == 2) {
-                    for (int i = 4; i < noOfColumns; i++) {
-                        Object field = excelDataRequest.getResultSet().getString(i);
-                        Cell cell = row.createCell(noOfColumns - 6 + i);
-                        cell.setCellStyle(mismatchStyle);
-                        if (field instanceof String) {
-                            cell.setCellValue((String) field);
-                        } else if (field instanceof Integer) {
-                            cell.setCellValue((Integer) field);
-                        } else if (field instanceof Long) {
-                            cell.setCellValue((Long) field);
-                        } else if (field instanceof Boolean) {
-                            cell.setCellValue((Boolean) field);
-                        } else if (field instanceof Character) {
-                            cell.setCellValue((Character) field);
-                        } else if (field instanceof BigInteger) {
-                            cell.setCellValue(String.valueOf((BigInteger) field));
-                        } else
-                            cell.setCellValue((String) field);
-                    }
-                }
-            }
+    private static void handleTragetValues(int noOfColumns, ExcelDataRequest excelDataRequest, int sheetNum, CellStyle mismatchStyle, Row row) throws SQLException {
+        if (sheetNum == 1) {
+            excelDataRequest.getResultSet().next();
         }
+        for (int i = 4; i < noOfColumns; i++) {
+            Object field = excelDataRequest.getResultSet().getString(i);
+            Cell cell = row.createCell(noOfColumns - 6 + i);
+            cell.setCellStyle(mismatchStyle);
+            setTargetCells(field, cell);
+        }
+        //This is to avoid the two SRC and TRG mismatch records
+        if (sheetNum == 2) {
+            excelDataRequest.getResultSet().next();
+        }
+    }
+
+    private static void setMismatchCells(Object field, Cell cell) {
+        if (field instanceof String) {
+            cell.setCellValue((String) field);
+        } else if (field instanceof Integer) {
+            cell.setCellValue((Integer) field);
+        } else if (field instanceof Long) {
+            cell.setCellValue((Long) field);
+        } else if (field instanceof Boolean) {
+            cell.setCellValue((Boolean) field);
+        } else if (field instanceof Character) {
+            cell.setCellValue((Character) field);
+        } else if (field instanceof BigInteger) {
+            cell.setCellValue(String.valueOf((BigInteger) field));
+        } else{
+            cell.setCellValue((String) field);
+        }
+    }
+
+    private static void setTargetCells(Object field, Cell cell) {
+        if (field instanceof String) {
+            cell.setCellValue((String) field);
+        } else if (field instanceof Integer) {
+            cell.setCellValue((Integer) field);
+        } else if (field instanceof Long) {
+            cell.setCellValue((Long) field);
+        } else if (field instanceof Boolean) {
+            cell.setCellValue((Boolean) field);
+        } else if (field instanceof Character) {
+            cell.setCellValue((Character) field);
+        } else if (field instanceof BigInteger) {
+            cell.setCellValue(String.valueOf((BigInteger) field));
+        } else
+            cell.setCellValue((String) field);
+    }
+
+    private static void setSourceDataCells(Object field, Cell cell) {
+        if (field instanceof String) {
+            cell.setCellValue((String) field);
+        } else if (field instanceof Integer) {
+            cell.setCellValue((Integer) field);
+        } else if (field instanceof Long) {
+            cell.setCellValue((Long) field);
+        } else if (field instanceof Boolean) {
+            cell.setCellValue((Boolean) field);
+        } else if (field instanceof Character) {
+            cell.setCellValue((Character) field);
+        } else if (field instanceof BigInteger) {
+            cell.setCellValue(String.valueOf((BigInteger) field));
+        } else
+            cell.setCellValue((String) field);
     }
 }

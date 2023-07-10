@@ -44,6 +44,7 @@ import java.sql.SQLException;
             return this.isPoolInitialized;
         }
         public OraDataSource() {
+            //empty constructor
         }
         public Connection getDBConnection() throws SQLException {
             logger.info("Source DB Pool Size="+hkDataSource.getMaximumPoolSize());

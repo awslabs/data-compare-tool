@@ -27,6 +27,24 @@ import java.util.stream.Collectors;
 @Service
 public class RecommendationServiceImpl implements RecommendationService {
 
+    public static final String WHERE = " WHERE ";
+    public static final String SOURCE_HOST_NAME = "source_host_name='";
+    public static final String AND = " and ";
+    public static final String SOURCE_HOST_NAME1 = "source_host_name";
+    public static final String TARGET_HOST_NAME = "target_host_name";
+    public static final String DATABASE_NAME = "database_name";
+    public static final String SCHEMA_NAME = "schema_name";
+    public static final String TABLE_NAME = "table_name";
+    public static final String SCHEMA_RUN = "schema_run";
+    public static final String TABLE_RUN = "table_run";
+    public static final String RUN_ID = "run_id";
+    public static final String EXECUTION_DATE = "execution_date";
+    public static final String RUN_ID1 = "run_id='";
+    public static final String VAL_TYPE = "val_type";
+    public static final String EXCEPTION_STATUS = "exception_status";
+    public static final String MISSING = "Missing";
+    public static final String MISMATCH_SRC = "Mismatch_src";
+    public static final String MISMATCH_TRG = "Mismatch_trg";
     @Autowired
     public DataSource dataSource;
     public Logger logger = LoggerFactory.getLogger("RecommendationServiceImpl");
@@ -102,51 +120,50 @@ public class RecommendationServiceImpl implements RecommendationService {
         String whereQueryCondition = "";
         String queryWithOptionalParam = "SELECT * FROM public.run_details";
         if (inputRunDetails_1.getSourceHostName() != null) {
-            whereQueryCondition = whereQueryCondition + " WHERE ";
-            whereQueryCondition = whereQueryCondition + "source_host_name='" + inputRunDetails_1.getSourceHostName() + "' ";
+            whereQueryCondition = whereQueryCondition + WHERE;
+            whereQueryCondition = whereQueryCondition + SOURCE_HOST_NAME + inputRunDetails_1.getSourceHostName() + "' ";
         }
         if (inputRunDetails_1.getTargetHostName() != null) {
-            whereQueryCondition = whereQueryCondition + " and " + "target_host_name='" + inputRunDetails_1.getTargetHostName() + "' ";
+            whereQueryCondition = whereQueryCondition + AND + "target_host_name='" + inputRunDetails_1.getTargetHostName() + "' ";
         }
         if (inputRunDetails_1.getDatabaseName() != null) {
-            whereQueryCondition = whereQueryCondition + " and " + "database_name='" + inputRunDetails_1.getDatabaseName() + "' ";
+            whereQueryCondition = whereQueryCondition + AND + "database_name='" + inputRunDetails_1.getDatabaseName() + "' ";
         }
 
         if (inputRunDetails_1.getSchemaName() != null) {
-            whereQueryCondition = whereQueryCondition + " and " + "schema_name='" + inputRunDetails_1.getSchemaName() + "' ";
+            whereQueryCondition = whereQueryCondition + AND + "schema_name='" + inputRunDetails_1.getSchemaName() + "' ";
         }
 
         if (inputRunDetails_1.getTableName() != null) {
-            whereQueryCondition = whereQueryCondition + " and " + "table_name='" + inputRunDetails_1.getTableName() + "' ";
+            whereQueryCondition = whereQueryCondition + AND + "table_name='" + inputRunDetails_1.getTableName() + "' ";
         }
 
         if (inputRunDetails_1.getSchemaRun() != 0) {
-            whereQueryCondition = whereQueryCondition + " and " + "schema_run='" + inputRunDetails_1.getSchemaRun() + "' ";
+            whereQueryCondition = whereQueryCondition + AND + "schema_run='" + inputRunDetails_1.getSchemaRun() + "' ";
         }
 
         if (inputRunDetails_1.getTableRun() != 0) {
-            whereQueryCondition = whereQueryCondition + " and " + "table_run='" + inputRunDetails_1.getTableRun() + "' ";
+            whereQueryCondition = whereQueryCondition + AND + "table_run='" + inputRunDetails_1.getTableRun() + "' ";
         }
 
         query = queryWithOptionalParam + whereQueryCondition;
-        Connection dbConn =null;
-        PreparedStatement pst =null;
-        try { dbConn =dataSource.getDBConnection();
-             pst = dbConn.prepareStatement(query);
+
+        try (Connection dbConn =dataSource.getDBConnection();
+        PreparedStatement pst = dbConn.prepareStatement(query);){
              ResultSet rs = pst.executeQuery();
 
             while (rs.next()) {
 
                 RunDetails runDetails = new RunDetails();
-                runDetails.setSourceHostName(rs.getString("source_host_name"));
-                runDetails.setTargetHostName(rs.getString("target_host_name"));
-                runDetails.setDatabaseName(rs.getString("database_name"));
-                runDetails.setSchemaName(rs.getString("schema_name"));
-                runDetails.setTableName(rs.getString("table_name"));
-                runDetails.setSchemaRun(rs.getInt("schema_run"));
-                runDetails.setTableRun(rs.getInt("table_run"));
-                runDetails.setRunId(rs.getString("run_id"));
-                runDetails.setExecutionDate(rs.getString("execution_date"));
+                runDetails.setSourceHostName(rs.getString(SOURCE_HOST_NAME1));
+                runDetails.setTargetHostName(rs.getString(TARGET_HOST_NAME));
+                runDetails.setDatabaseName(rs.getString(DATABASE_NAME));
+                runDetails.setSchemaName(rs.getString(SCHEMA_NAME));
+                runDetails.setTableName(rs.getString(TABLE_NAME));
+                runDetails.setSchemaRun(rs.getInt(SCHEMA_RUN));
+                runDetails.setTableRun(rs.getInt(TABLE_RUN));
+                runDetails.setRunId(rs.getString(RUN_ID));
+                runDetails.setExecutionDate(rs.getString(EXECUTION_DATE));
 
                 outputRunDetailsList.add(runDetails);
             }
@@ -162,24 +179,24 @@ public class RecommendationServiceImpl implements RecommendationService {
 
         List<RunDetails> outputRunDetailsList = new ArrayList<>();
         String query = "SELECT * FROM public.run_details WHERE "
-                + "source_host_name='" + hostName + "' ";
-        Connection dbConn =null;
-        try { dbConn = dataSource.getDBConnection();
-             PreparedStatement pst = dbConn.prepareStatement(query);
+                + SOURCE_HOST_NAME + hostName + "' ";
+
+        try (Connection dbConn =dataSource.getDBConnection();
+             PreparedStatement pst = dbConn.prepareStatement(query);){
              ResultSet rs = pst.executeQuery();
 
             while (rs.next()) {
 
                 RunDetails runDetails = new RunDetails();
-                runDetails.setSourceHostName(rs.getString("source_host_name"));
-                runDetails.setTargetHostName(rs.getString("target_host_name"));
-                runDetails.setDatabaseName(rs.getString("database_name"));
-                runDetails.setSchemaName(rs.getString("schema_name"));
-                runDetails.setTableName(rs.getString("table_name"));
-                runDetails.setSchemaRun(rs.getInt("schema_run"));
-                runDetails.setTableRun(rs.getInt("table_run"));
-                runDetails.setRunId(rs.getString("run_id"));
-                runDetails.setExecutionDate(rs.getString("execution_date"));
+                runDetails.setSourceHostName(rs.getString(SOURCE_HOST_NAME1));
+                runDetails.setTargetHostName(rs.getString(TARGET_HOST_NAME));
+                runDetails.setDatabaseName(rs.getString(DATABASE_NAME));
+                runDetails.setSchemaName(rs.getString(SCHEMA_NAME));
+                runDetails.setTableName(rs.getString(TABLE_NAME));
+                runDetails.setSchemaRun(rs.getInt(SCHEMA_RUN));
+                runDetails.setTableRun(rs.getInt(TABLE_RUN));
+                runDetails.setRunId(rs.getString(RUN_ID));
+                runDetails.setExecutionDate(rs.getString(EXECUTION_DATE));
 
                 outputRunDetailsList.add(runDetails);
             }
@@ -187,10 +204,7 @@ public class RecommendationServiceImpl implements RecommendationService {
         } catch (SQLException ex) {
             logger.error("Exception while fetching table details in getHostRunDetails");
             logger.error(ex.getMessage());
-        }finally {
-            if(dbConn!=null)
-            dbConn.close();
-    }
+        }
         return outputRunDetailsList;
     }
 
@@ -199,33 +213,30 @@ public class RecommendationServiceImpl implements RecommendationService {
 
         List<RunDetails> outputRunDetailsList = new ArrayList<>();
         String query = "SELECT * FROM public.run_details";
-        Connection dbConn =null;
-        try { dbConn =dataSource.getDBConnection();
-             PreparedStatement pst = dbConn.prepareStatement(query);
+
+        try ( Connection dbConn =dataSource.getDBConnection();
+             PreparedStatement pst = dbConn.prepareStatement(query);){
              ResultSet rs = pst.executeQuery();
 
             while (rs.next()) {
 
                 RunDetails runDetails = new RunDetails();
-                runDetails.setSourceHostName(rs.getString("source_host_name"));
-                runDetails.setTargetHostName(rs.getString("target_host_name"));
-                runDetails.setDatabaseName(rs.getString("database_name"));
-                runDetails.setSchemaName(rs.getString("schema_name"));
-                runDetails.setTableName(rs.getString("table_name"));
-                runDetails.setSchemaRun(rs.getInt("schema_run"));
-                runDetails.setTableRun(rs.getInt("table_run"));
-                runDetails.setRunId(rs.getString("run_id"));
-                runDetails.setExecutionDate(rs.getString("execution_date"));
+                runDetails.setSourceHostName(rs.getString(SOURCE_HOST_NAME1));
+                runDetails.setTargetHostName(rs.getString(TARGET_HOST_NAME));
+                runDetails.setDatabaseName(rs.getString(DATABASE_NAME));
+                runDetails.setSchemaName(rs.getString(SCHEMA_NAME));
+                runDetails.setTableName(rs.getString(TABLE_NAME));
+                runDetails.setSchemaRun(rs.getInt(SCHEMA_RUN));
+                runDetails.setTableRun(rs.getInt(TABLE_RUN));
+                runDetails.setRunId(rs.getString(RUN_ID));
+                runDetails.setExecutionDate(rs.getString(EXECUTION_DATE));
                 outputRunDetailsList.add(runDetails);
             }
 
         } catch (SQLException ex) {
             logger.error("Exception while fetching table details in getHostRunDetailsForSelection");
             logger.error(ex.getMessage());
-        }finally {
-            if(dbConn!=null)
-                dbConn.close();
-    }
+        }
         return outputRunDetailsList;
     }
 
@@ -270,17 +281,7 @@ public class RecommendationServiceImpl implements RecommendationService {
                 List<SchemaDetails> schemaDetailsList = new ArrayList<>();
                 for (String schemaNm : uniqueSchemaNm) {
                     Set<RunDetails> uniqueSchemaRunDetails = runDetails.stream().filter(rd -> rd.getSourceHostName().equals(hostNm) && rd.getDatabaseName().equals(dbNm) && rd.getSchemaName().equals(schemaNm)).collect(Collectors.toSet());
-                    Set<RunWithDate> schemaRun = new TreeSet<>();
-                    for(RunDetails uTableRd:uniqueSchemaRunDetails) {
-                        RunWithDate runWithDate = new RunWithDate();
-                        Date executionDate = convertStrDateToDate(uTableRd.getExecutionDate());
-                        runWithDate.setRun(uTableRd.getTableRun());
-                        runWithDate.setExecutionDate(executionDate);
-                        schemaRun.add(runWithDate);
-                        runWithDate.setRunId(uTableRd.getRunId());
-                        runWithDate.setTableName(uTableRd.getTableName());
-                        runWithDate.setSchemaName(uTableRd.getSchemaName());
-                    }
+                    Set<RunWithDate> schemaRun = getRunWithDates(uniqueSchemaRunDetails);
                     SchemaDetails schemaDetails = new SchemaDetails();
                     schemaDetails.setSchemaName(schemaNm);
                     schemaDetails.setSchemaRun(schemaRun);
@@ -288,17 +289,7 @@ public class RecommendationServiceImpl implements RecommendationService {
                     Set<String> uniqueTableNm = runDetails.stream().filter(rd -> rd.getSourceHostName().equals(hostNm) && rd.getDatabaseName().equals(dbNm) && rd.getSchemaName().equals(schemaNm)).map(rd -> rd.getTableName()).collect(Collectors.toSet());
                     for (String tableNm : uniqueTableNm) {
                         Set<RunDetails> uniqueTableRunDetails = runDetails.stream().filter(rd -> rd.getSourceHostName().equals(hostNm) && rd.getDatabaseName().equals(dbNm) && rd.getSchemaName().equals(schemaNm) && rd.getTableName().equals(tableNm)).collect(Collectors.toSet());
-                        Set<RunWithDate> tableRun = new TreeSet<>();
-                        for(RunDetails uTableRd:uniqueTableRunDetails) {
-                            RunWithDate runWithDate = new RunWithDate();
-                            Date executionDate = convertStrDateToDate(uTableRd.getExecutionDate());
-                            runWithDate.setRun(uTableRd.getTableRun());
-                            runWithDate.setExecutionDate(executionDate);
-                            tableRun.add(runWithDate);
-                            runWithDate.setRunId(uTableRd.getRunId());
-                            runWithDate.setTableName(uTableRd.getTableName());
-                            runWithDate.setSchemaName(uTableRd.getSchemaName());
-                        }
+                        Set<RunWithDate> tableRun = getRunWithDates(uniqueTableRunDetails);
                         TableDetails tableDetails = new TableDetails();
                         tableDetails.setTableName(tableNm);
                         tableDetails.setTableRun(tableRun);
@@ -317,6 +308,20 @@ public class RecommendationServiceImpl implements RecommendationService {
         return runDetailsSelectionResponse;
     }
 
+    private static Set<RunWithDate> getRunWithDates(Set<RunDetails> uniqueSchemaRunDetails) {
+        Set<RunWithDate> schemaRun = new TreeSet<>();
+        for(RunDetails uTableRd: uniqueSchemaRunDetails) {
+            RunWithDate runWithDate = new RunWithDate();
+            Date executionDate = convertStrDateToDate(uTableRd.getExecutionDate());
+            runWithDate.setRun(uTableRd.getTableRun());
+            runWithDate.setExecutionDate(executionDate);
+            schemaRun.add(runWithDate);
+            runWithDate.setRunId(uTableRd.getRunId());
+            runWithDate.setTableName(uTableRd.getTableName());
+            runWithDate.setSchemaName(uTableRd.getSchemaName());
+        }
+        return schemaRun;
+    }
 
 
     private static Date convertStrDateToDate(String strDate) {
@@ -333,14 +338,13 @@ public class RecommendationServiceImpl implements RecommendationService {
     public List<Integer> getValIdFromValidationTable(RunDetails inputRunDetails_1, DatabaseInfo databaseInfo, String ValidationTableName) throws Exception {
 
         List<Integer> valIdList = new ArrayList<>();
-        String selectQuery = "SELECT val_id FROM " + inputRunDetails_1.getSchemaName() + "." + ValidationTableName + " WHERE " +
-                "run_id='" + inputRunDetails_1.getRunId() + "' "
+        String selectQuery = "SELECT val_id FROM " + inputRunDetails_1.getSchemaName() + "." + ValidationTableName + WHERE +
+                RUN_ID1 + inputRunDetails_1.getRunId() + "' "
                 + "ORDER BY val_id ASC ";
 
         //+"ORDER BY val_id ASC LIMIT 100";
-        Connection dbConn =null;
-        try { dbConn = dataSource.getDBConnection();
-             PreparedStatement pst = dbConn.prepareStatement(selectQuery);
+        try (Connection dbConn =dataSource.getDBConnection();
+             PreparedStatement pst = dbConn.prepareStatement(selectQuery);){
              ResultSet rs = pst.executeQuery();
 
             while (rs.next()) {
@@ -349,9 +353,6 @@ public class RecommendationServiceImpl implements RecommendationService {
         } catch (SQLException ex) {
             logger.error("Exception while fetching table details in getValIdFromValidationTable");
             logger.error(ex.getMessage());
-        }finally {
-            if(dbConn!=null)
-            dbConn.close();
         }
         return valIdList;
     }
@@ -359,8 +360,8 @@ public class RecommendationServiceImpl implements RecommendationService {
 
     public List<Map<String, Object>> getEntireValidationTable(RunDetails inputRunDetails_1, DatabaseInfo databaseInfo, String ValidationTableName) throws Exception {
 
-        String selectQuery = "SELECT * FROM " + inputRunDetails_1.getSchemaName() + "." + ValidationTableName + " WHERE " +
-                "run_id='" + inputRunDetails_1.getRunId() + "' "
+        String selectQuery = "SELECT * FROM " + inputRunDetails_1.getSchemaName() + "." + ValidationTableName + WHERE +
+                RUN_ID1 + inputRunDetails_1.getRunId() + "' "
          //       + "ORDER BY val_id ASC ";
 
         +"ORDER BY val_id ASC LIMIT 10";
@@ -386,11 +387,7 @@ public class RecommendationServiceImpl implements RecommendationService {
                         String columnName = rsmd.getColumnName(_iterator + 1);
                         // get the value of the SQL column
                         Object columnValue = rs.getObject(_iterator + 1);
-                        if(rsKeyValMap.containsKey(columnName)){
-                            rsKeyValMap.put("target_"+columnName, columnValue);
-                        }else{
-                            rsKeyValMap.put(columnName, columnValue);
-                        }
+                        setrsKeyValue(rsKeyValMap, columnName, columnValue);
                     }
                     rsKeyValMapList.add(rsKeyValMap);
                 }
@@ -399,10 +396,12 @@ public class RecommendationServiceImpl implements RecommendationService {
             logger.error("Exception while fetching table details in getEntireValidationTable");
             logger.error(ex.getMessage());
         }finally {
-             if(pst!=null)
+             if(pst!=null){
                  pst.close();
-            if(dbConn!=null)
-            dbConn.close();
+             }
+            if(dbConn!=null){
+                dbConn.close();
+            }
         }
         return rsKeyValMapList;
     }
@@ -411,11 +410,11 @@ public class RecommendationServiceImpl implements RecommendationService {
         List<String> adminColumnNameOfValTable = new ArrayList<String>();
         adminColumnNameOfValTable.add("val_id");
         adminColumnNameOfValTable.add("val_ts");
-        adminColumnNameOfValTable.add("run_id");
+        adminColumnNameOfValTable.add(RUN_ID);
         adminColumnNameOfValTable.add("val_log");
-        adminColumnNameOfValTable.add("val_type");
+        adminColumnNameOfValTable.add(VAL_TYPE);
         adminColumnNameOfValTable.add("exception_rank");
-        adminColumnNameOfValTable.add("exception_status");
+        adminColumnNameOfValTable.add(EXCEPTION_STATUS);
         return adminColumnNameOfValTable;
     }
 
@@ -455,11 +454,7 @@ public class RecommendationServiceImpl implements RecommendationService {
                         String columnName = rsmd.getColumnName(_iterator + 1);
                         // get the value of the SQL column
                         Object columnValue = rs.getObject(_iterator + 1);
-                        if(rsKeyValMap.containsKey(columnName)){
-                            rsKeyValMap.put("target_"+columnName, columnValue);
-                        }else{
-                            rsKeyValMap.put(columnName, columnValue);
-                        }
+                        setrsKeyValue(rsKeyValMap, columnName, columnValue);
                         List<String> AdminColumnNameOfValTable=getAdminColumnNameOfValTable();
                         if(!AdminColumnNameOfValTable.contains(columnName)){
                             if(rsKeyValMap.containsKey(columnName)){
@@ -468,15 +463,7 @@ public class RecommendationServiceImpl implements RecommendationService {
                         }
                     }
                     Object recommendationCode = null;
-                    if("Mismatch".equalsIgnoreCase(rsKeyValMap.get("val_type").toString())){
-                        recommendationCode=2;
-                    }
-                    else if("Missing".equalsIgnoreCase(rsKeyValMap.get("val_type").toString())){
-                        recommendationCode=1;
-                    }
-                    else if("SrcMissing".equalsIgnoreCase(rsKeyValMap.get("val_type").toString())){
-                        recommendationCode=3;
-                    }
+                    recommendationCode = setRecommendationCode(rsKeyValMap, recommendationCode);
                     recommendationRowList.add(new RecommendationRow(recommendationCode,recommendationColumns,rs.getInt(2),null));
                     rsKeyValMapList.add(rsKeyValMap);
                 }
@@ -485,11 +472,34 @@ public class RecommendationServiceImpl implements RecommendationService {
             logger.error("Exception while fetching table details in getRecommendationResponse");
             logger.error(ex.getMessage());
         }finally {
-            if(dbConn!=null)
-            dbConn.close();
+            if(dbConn!=null){
+                dbConn.close();
+            }
+
     }
         recommendationResponse.setRows(recommendationRowList);
         return recommendationResponse;
+    }
+
+    private static Object setRecommendationCode(Map<String, Object> rsKeyValMap, Object recommendationCode) {
+        if("Mismatch".equalsIgnoreCase(rsKeyValMap.get(VAL_TYPE).toString())){
+            recommendationCode =2;
+        }
+        else if(MISSING.equalsIgnoreCase(rsKeyValMap.get(VAL_TYPE).toString())){
+            recommendationCode =1;
+        }
+        else if("SrcMissing".equalsIgnoreCase(rsKeyValMap.get(VAL_TYPE).toString())){
+            recommendationCode =3;
+        }
+        return recommendationCode;
+    }
+
+    private static void setrsKeyValue(Map<String, Object> rsKeyValMap, String columnName, Object columnValue) {
+        if(rsKeyValMap.containsKey(columnName)){
+            rsKeyValMap.put("target_"+ columnName, columnValue);
+        }else{
+            rsKeyValMap.put(columnName, columnValue);
+        }
     }
 
     public String getTableJoinQueryForSourceTarget(RunDetails inputRunDetails_1, DatabaseInfo databaseInfo, String ValidationTableName) throws Exception {
@@ -511,7 +521,7 @@ public class RecommendationServiceImpl implements RecommendationService {
                 selectColumn = selectColumn + " target." + logColsListSplit[index] + " as " + " target_" + logColsListSplit[index];
 
                 if (index < logColsListSplit.length - 1) {
-                    tableJoinClause = tableJoinClause + " and ";
+                    tableJoinClause = tableJoinClause + AND;
 
                     selectColumn = selectColumn + " , ";
                 }
@@ -531,10 +541,11 @@ public class RecommendationServiceImpl implements RecommendationService {
     }
 
     private String getUniqueColumnFromValTable(RunDetails inputRunDetails_1, DatabaseInfo databaseInfo, String ValidationTableName) throws Exception {
-        String selectColumnsQuery = "SELECT val_log FROM " + inputRunDetails_1.getSchemaName() + "." + ValidationTableName + " WHERE " + "run_id='" + inputRunDetails_1.getRunId() + "' " + " and val_type='Log-Cols-List'";
+        String selectColumnsQuery = "SELECT val_log FROM " + inputRunDetails_1.getSchemaName() + "." + ValidationTableName + WHERE + RUN_ID1 + inputRunDetails_1.getRunId() + "' " + " and val_type='Log-Cols-List'";
         String logColsList="";
-        Connection dbConn =null;
-        try { dbConn = dataSource.getDBConnection(); PreparedStatement pst = dbConn.prepareStatement(selectColumnsQuery); ResultSet rs = pst.executeQuery();
+        try (Connection dbConn =dataSource.getDBConnection();
+             PreparedStatement pst = dbConn.prepareStatement(selectColumnsQuery);){
+            ResultSet rs = pst.executeQuery();
 
             while (rs.next()) {
                 logColsList = rs.getString("val_log");
@@ -542,9 +553,6 @@ public class RecommendationServiceImpl implements RecommendationService {
         } catch (SQLException ex) {
             logger.error("Exception while fetching table details in getUniqueColumnFromValTable");
             logger.error(ex.getMessage());
-        }finally {
-            if(dbConn!=null)
-            dbConn.close();
         }
         return logColsList;
     }
@@ -553,7 +561,7 @@ public class RecommendationServiceImpl implements RecommendationService {
         List<RunDetails> outputRunDetailsList = new ArrayList<>();
         String query = null;
         String queryWithOptionalParam = "SELECT * FROM public.run_details WHERE " +
-                "source_host_name='" + inputRunDetails_1.getSourceHostName() + "' " +
+                SOURCE_HOST_NAME + inputRunDetails_1.getSourceHostName() + "' " +
                 "and target_host_name='" + inputRunDetails_1.getTargetHostName() + "' " +
                 "and database_name='" + inputRunDetails_1.getDatabaseName() + "' " +
                 "and schema_name='" + inputRunDetails_1.getSchemaName() + "' ";
@@ -567,48 +575,39 @@ public class RecommendationServiceImpl implements RecommendationService {
             queryWithOptionalParam = queryWithOptionalParam + " and table_run='" + inputRunDetails_1.getTableRun() + "' ";
         }
         query = queryWithOptionalParam;
-        Connection dbConn =null;
-        try { dbConn = dataSource.getDBConnection();
-             PreparedStatement pst = dbConn.prepareStatement(query);
+        try (Connection dbConn =dataSource.getDBConnection();
+             PreparedStatement pst = dbConn.prepareStatement(query);){
              ResultSet rs = pst.executeQuery();
             while (rs.next()) {
                 RunDetails runDetails = new RunDetails();
-                runDetails.setSourceHostName(rs.getString("source_host_name"));
-                runDetails.setTargetHostName(rs.getString("target_host_name"));
-                runDetails.setDatabaseName(rs.getString("database_name"));
-                runDetails.setSchemaName(rs.getString("schema_name"));
-                runDetails.setTableName(rs.getString("table_name"));
-                runDetails.setSchemaRun(rs.getInt("schema_run"));
-                runDetails.setTableRun(rs.getInt("table_run"));
-                runDetails.setRunId(rs.getString("run_id"));
-                runDetails.setExecutionDate(rs.getString("execution_date"));
+                runDetails.setSourceHostName(rs.getString(SOURCE_HOST_NAME1));
+                runDetails.setTargetHostName(rs.getString(TARGET_HOST_NAME));
+                runDetails.setDatabaseName(rs.getString(DATABASE_NAME));
+                runDetails.setSchemaName(rs.getString(SCHEMA_NAME));
+                runDetails.setTableName(rs.getString(TABLE_NAME));
+                runDetails.setSchemaRun(rs.getInt(SCHEMA_RUN));
+                runDetails.setTableRun(rs.getInt(TABLE_RUN));
+                runDetails.setRunId(rs.getString(RUN_ID));
+                runDetails.setExecutionDate(rs.getString(EXECUTION_DATE));
                 outputRunDetailsList.add(runDetails);
             }
         } catch (SQLException ex) {
             logger.error("Exception while fetching table details in getRunDetails");
             logger.error(ex.getMessage());
-        }finally {
-            if(dbConn!=null)
-            dbConn.close();
         }
         return outputRunDetailsList;
     }
 
     public boolean executeDbProcedure(RunDetails inputRunDetails_1, DatabaseInfo databaseInfo) throws Exception {
         boolean executeDbProcedureResult = false;
-        Connection dbConn =null;
-        PreparedStatement pst =null;
-        try { dbConn = dataSource.getDBConnection();
-            pst = dbConn.prepareStatement("call helloworld()");
+
+        try (Connection dbConn =dataSource.getDBConnection();
+             PreparedStatement pst = dbConn.prepareStatement("call helloworld()");){
             pst.execute();
             executeDbProcedureResult = true;
         } catch (SQLException ex) {
             logger.error("Exception in execute Db Procedure");
             logger.error(ex.getMessage());
-        }
-        finally {
-            if(dbConn!=null)
-            dbConn.close();
         }
         return executeDbProcedureResult;
     }
@@ -616,7 +615,7 @@ public class RecommendationServiceImpl implements RecommendationService {
     public int insertRunDetailsRecord(RunDetails inputRunDetails_1, DatabaseInfo databaseInfo) throws Exception {
         int updateResult = 0;
         String insertQuery = "Insert into public.run_details ( source_host_name,target_host_name,database_name,schema_name, table_name,schema_run, execution_date)";
-        Connection dbConn =null;
+
         insertQuery = insertQuery + " values (" +
                 "'" + inputRunDetails_1.getSourceHostName() + "'," +
                 "'" + inputRunDetails_1.getTargetHostName() + "'," +
@@ -626,18 +625,15 @@ public class RecommendationServiceImpl implements RecommendationService {
                 "'" + inputRunDetails_1.getSchemaRun() + "'," +
                 "current_timestamp)";
 
-        try {
-            dbConn = dataSource.getDBConnection();
-            PreparedStatement pst = dbConn.prepareStatement(insertQuery);
+        try (
+                Connection dbConn = dataSource.getDBConnection();
+            PreparedStatement pst = dbConn.prepareStatement(insertQuery);){
             updateResult = pst.executeUpdate();
         } catch (SQLException ex) {
             logger.error("Exception while fetching table details insertRunDetailsRecord");
             logger.error(ex.getMessage());
         }
-        finally {
-            if(dbConn!=null)
-            dbConn.close();
-        }
+
         return updateResult;
     }
 
@@ -673,10 +669,10 @@ public class RecommendationServiceImpl implements RecommendationService {
                     rsKeyValMap.put(columnName, columnValue);
                 }
                 valIdMap.put(resultSet.getObject(4),Integer.valueOf(resultSet.getString(2)));
-                if ("Mismatch_src".equalsIgnoreCase(resultSet.getObject(3).toString()) ||
-                        "Missing".equalsIgnoreCase(resultSet.getObject(3).toString())) {
+                if (MISMATCH_SRC.equalsIgnoreCase(resultSet.getObject(3).toString()) ||
+                        MISSING.equalsIgnoreCase(resultSet.getObject(3).toString())) {
                     srcValueMap.put(resultSet.getObject(4), rsKeyValMap);
-                } else if ("Mismatch_trg".equalsIgnoreCase(resultSet.getObject(3).toString())||
+                } else if (MISMATCH_TRG.equalsIgnoreCase(resultSet.getObject(3).toString())||
                         "EXTRA_RECORD".equalsIgnoreCase(resultSet.getObject(3).toString())) {
                     tgtValueMap.put(resultSet.getObject(4), rsKeyValMap);
                 }
@@ -700,12 +696,12 @@ public class RecommendationServiceImpl implements RecommendationService {
                             recommendationColumns.add(new RecommendationColumn(srcColumns.toString(), srcValue.get(srcColumns), ""));
                         }
                     }
-                    if ("exception_status".equalsIgnoreCase(srcColumns.toString())) {
-                        if ("Mismatch_src".equalsIgnoreCase(srcValue.get(srcColumns).toString())) {
+                    if (EXCEPTION_STATUS.equalsIgnoreCase(srcColumns.toString())) {
+                        if (MISMATCH_SRC.equalsIgnoreCase(srcValue.get(srcColumns).toString())) {
                             recommendationCode = 2;
-                        } else if ("Missing".equalsIgnoreCase(srcValue.get(srcColumns).toString())) {
+                        } else if (MISSING.equalsIgnoreCase(srcValue.get(srcColumns).toString())) {
                             recommendationCode = 1;
-                        } else if ("Mismatch_trg".equalsIgnoreCase(srcValue.get(srcColumns).toString())) {
+                        } else if (MISMATCH_TRG.equalsIgnoreCase(srcValue.get(srcColumns).toString())) {
                             recommendationCode = 3;
                         }else{
                             recommendationCode = 4;
@@ -726,18 +722,19 @@ public class RecommendationServiceImpl implements RecommendationService {
                 }
                 for (Object tgtColumns : tgtValue.keySet()) {
                     if (!AdminColumnNameOfValTable.contains(tgtColumns.toString())) {
-                        if (srcValue.containsKey(tgtColumns)) {
-                            recommendationColumns.add(new RecommendationColumn(tgtColumns.toString(), srcValue.get(tgtColumns), tgtValue.get(tgtColumns)));
-                        } else {
-                            recommendationColumns.add(new RecommendationColumn(tgtColumns.toString(), srcValue.get(tgtColumns), tgtValue.get(tgtColumns)));
-                        }
+//                        if (srcValue.containsKey(tgtColumns)) {
+//                            recommendationColumns.add(new RecommendationColumn(tgtColumns.toString(), srcValue.get(tgtColumns), tgtValue.get(tgtColumns)));
+//                        } else {
+//                            recommendationColumns.add(new RecommendationColumn(tgtColumns.toString(), srcValue.get(tgtColumns), tgtValue.get(tgtColumns)));
+//                        }
+                        recommendationColumns.add(new RecommendationColumn(tgtColumns.toString(), srcValue.get(tgtColumns), tgtValue.get(tgtColumns)));
                     }
-                    if ("exception_status".equalsIgnoreCase(tgtColumns.toString())) {
-                        if ("Mismatch_src".equalsIgnoreCase(tgtValue.get(tgtColumns).toString())) {
+                    if (EXCEPTION_STATUS.equalsIgnoreCase(tgtColumns.toString())) {
+                        if (MISMATCH_SRC.equalsIgnoreCase(tgtValue.get(tgtColumns).toString())) {
                             recommendationCode = 2;
-                        } else if ("Missing".equalsIgnoreCase(tgtValue.get(tgtColumns).toString())) {
+                        } else if (MISSING.equalsIgnoreCase(tgtValue.get(tgtColumns).toString())) {
                             recommendationCode = 1;
-                        } else if ("Mismatch_trg".equalsIgnoreCase(tgtValue.get(tgtColumns).toString())) {
+                        } else if (MISMATCH_TRG.equalsIgnoreCase(tgtValue.get(tgtColumns).toString())) {
                             recommendationCode = 3;
                         }else{
                             recommendationCode = 4;
@@ -755,8 +752,9 @@ public class RecommendationServiceImpl implements RecommendationService {
            e.printStackTrace();
        }
        finally {
-            if(con!=null)
-            con.close();
+            if(con!=null){
+                con.close();
+            }
        }
         return recommendationResponse;
     }
@@ -790,30 +788,34 @@ public class RecommendationServiceImpl implements RecommendationService {
                 firstCol=false;
                 list.add(col);
             }
+            PreparedStatement pst = null ;
             excelDataRequest.setColList(list);
             String preparedQuery="";
-            if(!excelDataRequest.isValidationRequest())
+            if(!excelDataRequest.isValidationRequest()){
+
                 preparedQuery=  "SELECT SRC.*, DENSE_RANK () OVER ( ORDER BY SRC.val_id  ASC) EXCEPTION_RANK FROM \n" +
                     "(SELECT RUN_ID, VAL_ID, UPPER(VAL_TYPE) AS EXCEPTION_STATUS,"+stb.toString()+" FROM "+excelDataRequest.getSchemaName()+"."+excelDataRequest.getTableName()+"_val \n" +
                     "WHERE RUN_ID = ? \n" +
                     "AND UPPER(VAL_TYPE) IN ('MISMATCH_SRC','MISMATCH_TRG','MISSING','EXTRA_RECORD') \n" +
                     ") SRC ORDER BY EXCEPTION_RANK ASC,VAL_ID ASC;\n";
+                try {
+                        pst = con.prepareStatement(preparedQuery,ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                pst.setString(1, excelDataRequest.getRunId());
+            }
             else {
                 preparedQuery = "SELECT SRC.*, DENSE_RANK () OVER ( ORDER BY SRC.val_id  ASC) EXCEPTION_RANK FROM \n" +
                         "(SELECT RUN_ID, VAL_ID, UPPER(VAL_TYPE) AS EXCEPTION_STATUS,"+stb.toString()+" FROM "+excelDataRequest.getSchemaName()+"."+excelDataRequest.getTableName()+"_val \n" +
                         "WHERE RUN_ID IN ( SELECT RUN_ID FROM "+excelDataRequest.getSchemaName()+"."+excelDataRequest.getTableName()+"_val ORDER BY VAL_ID DESC LIMIT 1 ) \n" +
                         "AND UPPER(VAL_TYPE) IN ('MISMATCH_SRC','MISMATCH_TRG','MISSING','LOG-END','EXTRA_RECORD')  \n" +
                         ") SRC ORDER BY EXCEPTION_RANK ASC,VAL_ID ASC";
-            }
-
-            PreparedStatement pst = null ;
-            try {
-                pst = con.prepareStatement(preparedQuery,ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-            {   if(!excelDataRequest.isValidationRequest())
-                pst.setString(1, excelDataRequest.getRunId());
+                try {
+                    pst = con.prepareStatement(preparedQuery,ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
             }
             rs= pst.executeQuery();
             excelDataRequest.setResultSet(rs);

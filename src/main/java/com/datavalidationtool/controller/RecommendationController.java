@@ -28,6 +28,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.*;
 @RestController
@@ -72,12 +73,12 @@ public class RecommendationController {
 
 
     @PostMapping("remediation/remediate-data")
-    public int insertRunDetailsRecord(@RequestBody RemediateRequest remediateRequest) throws Exception {
+    public int insertRunDetailsRecord(@RequestBody RemediateRequest remediateRequest) throws SQLException {
         return remediateService.remediateData(remediateRequest);
     }
 
     @PostMapping("recommendation/upload")
-    public ResponseEntity<?> handleFileUpload(@RequestParam("file") MultipartFile file ) throws Exception {
+    public ResponseEntity<String> handleFileUpload(@RequestParam("file") MultipartFile file ) throws Exception {
         String fileName = file.getOriginalFilename() ;
         try {
             byte[] bytes = file.getBytes();

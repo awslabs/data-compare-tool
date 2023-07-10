@@ -12,9 +12,15 @@
 package com.datavalidationtool.model;
 
 public class DatabaseInfo {
-	
+
+	public static final String ORACLE_JDBC_DRIVER_ORACLE_DRIVER = "oracle.jdbc.driver.OracleDriver";
+	public static final String PORTSTRING = ")(PORT=";
+	public static final String JDBC_ORACLE_THIN_DESCRIPTION_ADDRESS_PROTOCOL_TCPS_HOST = "jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=tcps)(HOST=";
+	public static final String CONNECT_DATA_SERVICE_NAME = "))(CONNECT_DATA=(SERVICE_NAME=";
+	public static final String JDBC_ORACLE_THIN = "jdbc:oracle:thin:@";
+
 	public enum dbType {
-		POSTGRESQL, POSTGRESQL_SSL, ORACLE, SQLSERVER, ORACLE_SID, ORACLE_Service
+		POSTGRESQL, POSTGRESQL_SSL, ORACLE, SQLSERVER, ORACLE_SID, ORACLE_SERVICE
 	}
 	
 	private final String	hostName;
@@ -147,11 +153,11 @@ public class DatabaseInfo {
 			case POSTGRESQL_SSL:
 				return "org.postgresql.Driver";
 			case ORACLE:
-				return "oracle.jdbc.driver.OracleDriver";
+				return ORACLE_JDBC_DRIVER_ORACLE_DRIVER;
 			case ORACLE_SID:
-				return "oracle.jdbc.driver.OracleDriver";
-			case ORACLE_Service:
-				return "oracle.jdbc.driver.OracleDriver";
+				return ORACLE_JDBC_DRIVER_ORACLE_DRIVER;
+			case ORACLE_SERVICE:
+				return ORACLE_JDBC_DRIVER_ORACLE_DRIVER;
 			case SQLSERVER:
 				return "com.microsoft.sqlserver.jdbc.SQLServerDriver";
 		}
@@ -162,6 +168,7 @@ public class DatabaseInfo {
 	/**
 	 * 
 	 * @return
+	 *
 	 */
 	public String getURL() {
 		
@@ -177,21 +184,21 @@ public class DatabaseInfo {
 				break;
 			case ORACLE:
 				if (sslRequire)
-					url = "jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=tcps)(HOST=" + hostName + ")(PORT=" + port + "))(CONNECT_DATA=(SERVICE_NAME=" + database + ")))";
+					url = JDBC_ORACLE_THIN_DESCRIPTION_ADDRESS_PROTOCOL_TCPS_HOST + hostName + PORTSTRING + port + CONNECT_DATA_SERVICE_NAME + database + ")))";
 				else
-					url = "jdbc:oracle:thin:@" + hostName + ":" + port + ":" + database;
+					url = JDBC_ORACLE_THIN + hostName + ":" + port + ":" + database;
 				break;
 			case ORACLE_SID:
 				if (sslRequire)
-					url = "jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=tcps)(HOST=" + hostName + ")(PORT=" + port + "))(CONNECT_DATA=(SERVICE_NAME=" + database + ")))";
+					url = JDBC_ORACLE_THIN_DESCRIPTION_ADDRESS_PROTOCOL_TCPS_HOST + hostName + PORTSTRING + port + CONNECT_DATA_SERVICE_NAME + database + ")))";
 				else
-					url = "jdbc:oracle:thin:@" + hostName + ":" + port + ":" + database;
+					url = JDBC_ORACLE_THIN + hostName + ":" + port + ":" + database;
 				break;
-			case ORACLE_Service:
+			case ORACLE_SERVICE:
 				if (sslRequire)
-					url = "jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=tcps)(HOST=" + hostName + ")(PORT=" + port + "))(CONNECT_DATA=(SERVICE_NAME=" + database + ")))";
+					url = JDBC_ORACLE_THIN_DESCRIPTION_ADDRESS_PROTOCOL_TCPS_HOST + hostName + PORTSTRING + port + CONNECT_DATA_SERVICE_NAME + database + ")))";
 				else
-					url = "jdbc:oracle:thin:@" + hostName + ":" + port + "/" + database;
+					url = JDBC_ORACLE_THIN + hostName + ":" + port + "/" + database;
 				break;
 			case SQLSERVER:
 				url = "jdbc:sqlserver://" + hostName + ":" + port + ";databaseName=" + database;

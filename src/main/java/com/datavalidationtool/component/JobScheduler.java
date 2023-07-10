@@ -6,6 +6,7 @@ import com.datavalidationtool.model.request.ScheduleRequest;
 import com.datavalidationtool.model.response.ScheduleResponse;
 import com.datavalidationtool.service.SchedulerService;
 import com.datavalidationtool.service.ValidationService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,8 +22,7 @@ import java.util.List;
 @Component
 public class JobScheduler {
 
-    private static final SimpleDateFormat dateFormat = new SimpleDateFormat(
-            "MM/dd/yyyy HH:mm:ss");
+
     @Autowired
     private ValidationService validationService;
     @Autowired
@@ -30,23 +30,22 @@ public class JobScheduler {
     @Autowired
     private SchedulerService schedulerService;
 
-    public boolean validationFlag=false;
-    public Logger logger = LoggerFactory.getLogger("JobScheduler");
+    private  boolean validationFlag=false;
+    private Logger logger = LoggerFactory.getLogger("JobScheduler");
 
     @Scheduled(initialDelay = 60000, fixedRate = 60000)
     public void performDelayedTask() throws SQLException {
         logger.info("Schedule Started");
         List<ScheduleRequest> schList= getSchedules();
-        if(schList!=null && schList.size()>0 && !validationFlag) {
+        if(CollectionUtils.isNotEmpty(schList) && !validationFlag) {
             for (int i = 0; i < schList.size(); i++) {
                 logger.info("Scheduled Validation started");
                 validationFlag = true;
-                String runId = validationService.validateData(schList.get(i));
+                validationService.validateData(schList.get(i));
                 validationFlag = false;
                 ScheduleRequest scheduleRequest= schList.get(i);
                 updateScheduleStatus(scheduleRequest);
                 scheduleRequest.setEndDate(scheduleRequest.getScheduleEndDate());
-                //scheduleRequest.setScheduleTime(scheduleRequest.getScheduleEndDate());
                 schedulerService.addRunSchedules(scheduleRequest);
                 logger.info("Scheduled Validation completed");
             }
@@ -54,13 +53,10 @@ public class JobScheduler {
     }
 
     private void updateScheduleStatus(ScheduleRequest scheduleRequest) throws SQLException {
-        ScheduleResponse sResponse= new ScheduleResponse();
-        RunDetails runDetails = new RunDetails();
         String query = "update public.schedule_runs set status=?,run_id=?,schedule_time=? where id=?" ;
         Connection dbConn=null;
         PreparedStatement pst =null;
         Timestamp scheduledDate=getScheduledDate(scheduleRequest);
-        int count=0;
         try {
             dbConn= dataSource.getDBConnection();
                 pst = dbConn.prepareStatement(query);
@@ -68,7 +64,7 @@ public class JobScheduler {
                 pst.setString(2, scheduleRequest.getRunId());
                 pst.setTimestamp(3, scheduleRequest.getScheduleTime());
                 pst.setLong(4, scheduleRequest.getScheduleId());
-                count = pst.executeUpdate();
+                pst.executeUpdate();
         } catch (SQLException ex) {
             logger.error("Exception while adding schedule details");
             logger.error(ex.getMessage());
@@ -96,11 +92,10 @@ public class JobScheduler {
 
     private List<ScheduleRequest> getSchedules() throws SQLException {
 
-        RunDetails runDetails = new RunDetails();
         String query = "select * from public.schedule_runs where schedule_time >= now()- INTERVAL '5 minutes' and schedule_time <= now() and status ='Open' and end_date >= schedule_time";
         Connection dbConn=null;
         Statement st =null;
-        ArrayList<ScheduleRequest> scheduleList=new ArrayList<ScheduleRequest>();
+        ArrayList<ScheduleRequest> scheduleList=new ArrayList<>();
         try {
             dbConn= dataSource.getDBConnection();
             st=dbConn.createStatement();

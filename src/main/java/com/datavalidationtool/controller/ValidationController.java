@@ -3,6 +3,7 @@ package com.datavalidationtool.controller;
 import com.datavalidationtool.model.RunDetails;
 import com.datavalidationtool.model.request.ExportDataRequest;
 import com.datavalidationtool.model.request.ValidationRequest;
+import com.datavalidationtool.model.response.HostDetails;
 import com.datavalidationtool.model.response.LastRunDetails;
 import com.datavalidationtool.model.response.RunInfo;
 import com.datavalidationtool.service.ExcelDataService;
@@ -36,7 +37,7 @@ public class ValidationController {
 
     @GetMapping(value = "validation/dbDetails")
     @CrossOrigin(origins = "*", allowedHeaders = "*")
-    public ResponseEntity<?> getValidationScreenDetails() throws Exception {
+    public ResponseEntity<HostDetails> getValidationScreenDetails() throws Exception {
         var s = service.getValidationDetails();
         return new ResponseEntity(s, HttpStatus.ACCEPTED);
     }

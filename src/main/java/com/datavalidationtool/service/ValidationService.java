@@ -77,11 +77,11 @@ public class ValidationService {
 						    executor.execute(compareData);
 							//validationRequest.setEndRange(endRange);
 							runId=validationRequest.getRunId();
-					}else{
+						}else{
 							long endRange=generateChunks(validationRequest);
 							validationRequest.setEndRange(endRange);
 							runId=validationRequest.getRunId();
-					}
+						}
 						addRunDetails(validationRequest);
 					}
 					executor.shutdown();
@@ -91,7 +91,6 @@ public class ValidationService {
 					//get last one
 					if (compareData != null) {
 						runId = compareData.getRunId();
-
 					}
   				} else {
 					getCurrentSchemaRunInfo(validationRequest);
@@ -236,8 +235,9 @@ public class ValidationService {
 		}
 		finally {
 			pst.close();
-			if(dbConn!=null)
-			dbConn.close();
+			if(dbConn!=null){
+				dbConn.close();
+			}
 		}
 		return runDetails;
 	}
@@ -257,11 +257,12 @@ public class ValidationService {
 			ResultSet rs = pst.executeQuery();
 			while (rs.next()) {
 				// If it is a schema run
-				if(appProperties.getTableName()==null || appProperties.getTableName().isBlank()) {
-					runDetails.setTableRun(rs.getInt(1) + 1);
-				}else{
-					runDetails.setTableRun(rs.getInt(1) + 1);
-				}
+//				if(appProperties.getTableName()==null || appProperties.getTableName().isBlank()) {
+//					runDetails.setTableRun(rs.getInt(1) + 1);
+//				}else{
+//					runDetails.setTableRun(rs.getInt(1) + 1);
+//				}
+				runDetails.setTableRun(rs.getInt(1) + 1);
 			}
 
 		} catch (SQLException ex) {
@@ -270,8 +271,10 @@ public class ValidationService {
 		}
 		finally {
 			pst.close();
-			if(dbConn != null)
+			if(dbConn != null){
+
 				dbConn.close();
+			}
 		}
 		return runDetails;
 	}
@@ -306,8 +309,10 @@ public class ValidationService {
 			logger.error(ex.getMessage());
 		}finally {
 			pst.close();
-			if(dbConn!=null)
-			dbConn.close();
+			if(dbConn!=null){
+
+				dbConn.close();
+			}
 		}
 		return outputRunDetailsList;
 	}
@@ -433,10 +438,13 @@ public class ValidationService {
 			logger.error(ex.getMessage(), ex);
 		} finally {
 
-			if(rs!=null)
+			if(rs!=null){
+
 				rs.close();
-			if(sourceConn!=null)
-			sourceConn.close();
+			}
+			if(sourceConn!=null){
+				sourceConn.close();
+			}
 		}
 		if (!tableNames.isEmpty()) {
 			ExecutorService executor = Executors.newFixedThreadPool(tableNames.size());
@@ -570,12 +578,15 @@ public class ValidationService {
 		long mismatch=0;
 		for(RecommendationRow row : recommendationResponse.getRows())
 		{
-          if((Integer) row.getRecommendationCode()==1)
+          if((Integer) row.getRecommendationCode()==1){
 			  missing++;
-		  else if((Integer) row.getRecommendationCode()==2)
+		  }
+		  else if((Integer) row.getRecommendationCode()==2){
 			  mismatch++;
-		  else if((Integer) row.getRecommendationCode()==4)
+		  }
+		  else if((Integer) row.getRecommendationCode()==4){
 			runInfo.setDuration(row.getDurationText());
+		  }
 		}
 		runInfo.setMismatchRows(mismatch);
 		runInfo.setMissingRows(missing);
@@ -601,8 +612,9 @@ public class ValidationService {
 			logger.error(ex.getMessage());
 		}
 		finally {
-			if(dbConn!=null)
-			dbConn.close();
+			if(dbConn!=null){
+				dbConn.close();
+			}
 		}
 		return count;
 
