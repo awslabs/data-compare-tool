@@ -530,6 +530,7 @@ export default function Validation() {
                                         ifFormTouched === FormStatus.MODIFIED
                                     }
                                     onChange={handleInput}
+                                    disabled={true}
                                 />
                             </Grid>
                             <Grid item xs={12} md={2}>
@@ -547,6 +548,7 @@ export default function Validation() {
                                         ifFormTouched === FormStatus.MODIFIED
                                     }
                                     onChange={handleInput}
+                                    disabled={true}
                                     onKeyPress={(e) =>
                                         !/[0-9]/.test(e.key) &&
                                         e.preventDefault()
@@ -568,9 +570,10 @@ export default function Validation() {
                                         ifFormTouched === FormStatus.MODIFIED
                                     }
                                     onChange={handleInput}
+                                    disabled={true}
                                 />
                             </Grid>
-                            <Grid item xs={12} md={2}>
+                            {/* <Grid item xs={12} md={2}>
                                 <FormGroup>
                                     <FormControlLabel
                                         control={
@@ -583,7 +586,7 @@ export default function Validation() {
                                         label="SSL Mode"
                                     />
                                 </FormGroup>
-                            </Grid>
+                            </Grid> */}
                             <Grid item xs={12} md={3}>
                                 <TextField
                                     fullWidth
@@ -598,9 +601,10 @@ export default function Validation() {
                                         ifFormTouched === FormStatus.MODIFIED
                                     }
                                     onChange={handleInput}
+                                    disabled={true}
                                 />
                             </Grid>
-                            <Grid item xs={12} md={3}>
+                            {/* <Grid item xs={12} md={3}>
                                 <TextField
                                     fullWidth
                                     size="small"
@@ -615,8 +619,9 @@ export default function Validation() {
                                         ifFormTouched === FormStatus.MODIFIED
                                     }
                                     onChange={handleInput}
+                                    disabled={true}
                                 />
-                            </Grid>
+                            </Grid> */}
                             {/* </Grid> */}
                             <Grid item xs={12} md={4}></Grid>
                         </Grid>
