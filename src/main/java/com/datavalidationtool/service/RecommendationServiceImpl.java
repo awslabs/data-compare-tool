@@ -340,6 +340,7 @@ public class RecommendationServiceImpl implements RecommendationService {
         //+"ORDER BY val_id ASC LIMIT 100";
         Connection dbConn =null;
         try { dbConn = dataSource.getDBConnection();
+            logger.info(selectQuery);
              PreparedStatement pst = dbConn.prepareStatement(selectQuery);
              ResultSet rs = pst.executeQuery();
 
@@ -467,7 +468,7 @@ public class RecommendationServiceImpl implements RecommendationService {
                             }
                         }
                     }
-                    Object recommendationCode = null;
+                    int recommendationCode = 0;
                     if("Mismatch".equalsIgnoreCase(rsKeyValMap.get("val_type").toString())){
                         recommendationCode=2;
                     }
@@ -612,7 +613,6 @@ public class RecommendationServiceImpl implements RecommendationService {
         }
         return executeDbProcedureResult;
     }
-
     public int insertRunDetailsRecord(RunDetails inputRunDetails_1, DatabaseInfo databaseInfo) throws Exception {
         int updateResult = 0;
         String insertQuery = "Insert into public.run_details ( source_host_name,target_host_name,database_name,schema_name, table_name,schema_run, execution_date)";
@@ -686,7 +686,7 @@ public class RecommendationServiceImpl implements RecommendationService {
             for (Object srcKey : srcValueMap.keySet()) {
                 rowCount++;
                 List<RecommendationColumn> recommendationColumns = new ArrayList<>();
-                Object recommendationCode = 1;
+                int recommendationCode = 1;
                 Map<String, Object> srcValue = srcValueMap.get(srcKey);
                 Map<String, Object> tgtValue = new HashMap<>();
                 if (tgtValueMap.containsKey(srcKey)) {
@@ -713,12 +713,13 @@ public class RecommendationServiceImpl implements RecommendationService {
                         }
                     }
                 }
+                if(recommendationCode!=3)
                 recommendationRowList.add(new RecommendationRow(recommendationCode, recommendationColumns,valIdMap.get(srcKey),durationText));
             }
             for (Object tgtKey : tgtValueMap.keySet()) {
                 rowCount++;
                 List<RecommendationColumn> recommendationColumns = new ArrayList<>();
-                Object recommendationCode = 1;
+                int recommendationCode = 0;
                 Map<String, Object> tgtValue = tgtValueMap.get(tgtKey);
                 Map<String, Object> srcValue = new HashMap<>();
                 if (srcValueMap.containsKey(tgtKey)) {
@@ -745,6 +746,7 @@ public class RecommendationServiceImpl implements RecommendationService {
                         }
                     }
                 }
+                if(recommendationCode!=3)
                 recommendationRowList.add(new RecommendationRow(recommendationCode, recommendationColumns,valIdMap.get(tgtKey),durationText));
             }
         }
@@ -808,6 +810,7 @@ public class RecommendationServiceImpl implements RecommendationService {
 
             PreparedStatement pst = null ;
             try {
+                logger.info("Query"+preparedQuery);
                 pst = con.prepareStatement(preparedQuery,ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
             } catch (SQLException e) {
                 e.printStackTrace();

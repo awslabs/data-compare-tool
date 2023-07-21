@@ -584,12 +584,13 @@ public class ValidationService {
 	}
 
 	private long getTableCount(ValidationRequest inputRunDetails) throws SQLException {
-		String query = "SELECT count(*) from "+ inputRunDetails.getTargetSchemaName()+"."+inputRunDetails.getTableName();
+		String query = "SELECT count(*) from "+ inputRunDetails.getSourceSchemaName()+"."+inputRunDetails.getTableName();
 		long count=0;
 		Connection dbConn=null;
 		try {
 			dbConn= oraDataSource.getDBConnection();
 			Statement pst = dbConn.createStatement();
+			logger.info("Query"+query);
 			ResultSet rs = pst.executeQuery(query);
 			while (rs.next()) {
 				// If it is a schema run
