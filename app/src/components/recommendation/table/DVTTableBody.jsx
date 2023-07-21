@@ -26,13 +26,13 @@ function DVTTableBody(props) {
         console.log(val);
         switch (val) {
             case 1:
-                return "missing_trgt";
+                return "missing";
             case 2:
-                return "mismatch";
+                return "mismatch_src";
+            case 3:
+                return "mismatch_tgt";
             case 4:
                 return "Additional_tgt";
-            case 3:
-                return "missing_src";
         }
     };
 
@@ -95,7 +95,7 @@ function DVTTableBody(props) {
                     </TableCell>
                     <TableCell
                         style={{ width: "1%" }}
-                        key={2 * columnsDsiplayLimit + 1}
+                        key={20 * columnsDsiplayLimit + 1}
                     >
                         <Button
                             value={rowIndex}

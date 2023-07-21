@@ -68,7 +68,7 @@ public class RemediateService {
             if (remediateReq.getExceptionType().toUpperCase().startsWith("MISSING")) {
                 if (rowChangeValid != valId) {
                     if (!strInsertValue.equals("")) {
-                        strInsertValue = strInsertValue +","+ remediateReq.getValId();
+                        strInsertValue = strInsertValue +";"+ remediateReq.getValId();
                     } else {
                         strInsertValue = strInsertValue + remediateReq.getValId() ;
                     }

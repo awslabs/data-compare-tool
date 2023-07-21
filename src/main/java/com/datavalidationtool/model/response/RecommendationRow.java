@@ -11,7 +11,7 @@ import java.util.List;
 @Setter
 public class RecommendationRow {
 
-    Object recommendationCode;
+    int recommendationCode;
     List<RecommendationColumn> columns;
     int valId;
     String durationText;

@@ -113,12 +113,12 @@ function Recommendation() {
         console.log(val);
         switch (val) {
             case 1:
-                return "missing_trgt";
+                return "missing";
             case 2:
-                return "mismatch";
+                return "mismatch_src";
             case 3:
-                return "missing_src";
-            case 3:
+                return "mismatch_trg";
+            case 4:
                 return "Additional_tgt";
         }
     };

@@ -20,6 +20,8 @@ import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.postgresql.core.ResultCursor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -39,6 +41,7 @@ public class ExcelDataService {
     private static final long MAX_ROWS_IN_SHEET = 100000;
     @Autowired
     public DataSource dataSource;
+    public Logger logger = LoggerFactory.getLogger("RecommendationService-Excel");
 
     public String processDBUpdates(String filePath) throws Exception {
         SchemaData dbUpdateData = readExcel(filePath);
@@ -65,6 +68,7 @@ public class ExcelDataService {
                 con = dataSource.getDBConnection();
                 String dbFunction = "{ call fn_remediate_mismatch_exceptions_dvt2(?,?,?,?,?) }";
                 try {
+                    logger.info(dbFunction);
                     cst = con.prepareCall(dbFunction);
                 } catch (SQLException e) {
                     e.printStackTrace();
@@ -133,6 +137,7 @@ public class ExcelDataService {
                 String dbFunction = "{ call fn_remediate_missing_exceptions_dvt2(?,?,?,?,?) }";
                 CallableStatement cst = null;
                 try {
+                    logger.info(dbFunction);
                     cst = con.prepareCall(dbFunction);
                 } catch (SQLException e) {
                     e.printStackTrace();
@@ -422,6 +427,7 @@ public class ExcelDataService {
                     ") SRC ORDER BY EXCEPTION_RANK ASC,VAL_ID ASC;\n";
             PreparedStatement pst = null;
             try {
+                logger.info(preparedQuery);
                 pst = con.prepareStatement(preparedQuery, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
             } catch (SQLException e) {
                 e.printStackTrace();

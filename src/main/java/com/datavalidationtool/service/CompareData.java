@@ -79,7 +79,7 @@ public class CompareData implements Runnable {
                 stmt = con.createStatement();
                 long keySize = 0;
                 long valSize = 0;
-                String dbFunction = "{ call fn_post_mig_data_validation_dvt2_include_exclude(?,?,?,?,?,?,?,?,?,?) }";
+                String dbFunction = "{ call fn_post_mig_data_validation_dvt2(?,?,?,?,?,?,?,?,?,?) }";
                 CallableStatement cst = null ;
                 try {
                     cst = con.prepareCall(dbFunction);
@@ -96,7 +96,7 @@ public class CompareData implements Runnable {
                 cst.setBoolean(8, validationRequest.isIgnoreColumns());
                 cst.setBoolean(9, validationRequest.isCheckAdditionalRows());
                 cst.setString(10, validationRequest.getRunId());
-            logger.info(" Filter...in thread."+filter);
+                logger.info("Query"+dbFunction);
                 rs= cst.executeQuery();
                 while(rs.next()) {
                     String result = rs.getString(1);
