@@ -220,10 +220,13 @@ public class ExcelDataService {
                            else if (cellIndex == 1) {
                                 //_remediate_missing_exceptions(‘ops$ora’,‘crtdms’,‘ppt_100’,‘ppt_100’,‘433;434;435’)
                                 if (cellValue.startsWith("MISSING")) {
-                                    strInsertValue = strInsertValue + cellValue0;
-                                    if (index < lastRow && (index>(firstRow + 2))) {
-                                        strInsertValue = strInsertValue + ";";
+
+                                    if (!strInsertValue.equals("")) {
+                                        strInsertValue = strInsertValue +";"+ cellValue0;
+                                    } else {
+                                        strInsertValue = strInsertValue + cellValue0 ;
                                     }
+
                                     details.setMissingPresent(true);
                                 }
                                 //fn_remediate_mismatch_exceptions_dvt2(‘a888c0794d9aba2991ecf5d0830a26af’,’440,id,transaction,country;439,id,transaction,country;438,id,transaction,country;437,id,transaction,country;’,’ops$ora’,‘crtdms’,‘ppt_100’,‘ppt_100’)
