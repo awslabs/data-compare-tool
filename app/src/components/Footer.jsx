@@ -1,5 +1,6 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
+import logo from "./logo.png";
 
 const Footer = () => {
     const today = new Date();
@@ -20,8 +21,16 @@ const Footer = () => {
             }}
         >
             <Typography variant="p" align="left">
-                &copy; {today.getFullYear()}, Amazon Web Services, Inc. or its
-                affiliates. All rights reserved.
+                <span>
+                    <img
+                        src={logo}
+                        alt="Logo"
+                        align="left"
+                        valign="bottom"
+                        width="20px"
+                    />
+                </span>
+                {today.getFullYear()}, DVT. Licensed under Apache v2.0.
             </Typography>
         </Box>
     );

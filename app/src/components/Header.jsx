@@ -71,7 +71,7 @@ export default function Header() {
                             pl: { xs: "10px", md: "20px", lg: "30px" },
                         }}
                     >
-                        SCOOT
+                        DVT
                     </Typography>
                 </div>
                 {userName && (
