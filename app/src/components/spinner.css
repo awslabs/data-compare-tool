@@ -43,7 +43,7 @@
   letter-spacing: 5px;
   filter: blur(0px);
   transform: scale(0.8);
-  animation: blur-text 1s infinite linear alternate;
+  animation: blur-text 0.9s infinite linear alternate;
 }
 
 @keyframes blur-text {
@@ -67,13 +67,7 @@
 } 
 .loading-text span:nth-child(3) {
   animation-delay: 0.3s;
-} 
-.loading-text span:nth-child(4) {
-  animation-delay: 0.4s;
-} 
-.loading-text span:nth-child(5) {
-  animation-delay: 0.5s;
-} 
+}
 
 .is-loading-text {
   position: absolute;
