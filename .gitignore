@@ -1,0 +1,6 @@
+app/node_modules
+app/node
+app/build
+app/src/aws-secrets.js
+app/yarn.lock
+target

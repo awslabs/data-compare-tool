@@ -1,0 +1,71 @@
+{
+  "name": "my-app",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@emotion/react": "^11.10.8",
+    "@emotion/styled": "^11.10.8",
+    "@material-ui/core": "^4.12.4",
+    "@material-ui/icons": "latest",
+    "@mui/icons-material": "^5.10.6",
+    "@mui/material": "^5.12.3",
+    "@mui/styled-engine-sc": "latest",
+    "@mui/x-data-grid": "latest",
+    "@mui/x-data-grid-generator": "^5.0.0",
+    "@mui/x-data-grid-pro": "^5.0.0",
+    "@testing-library/jest-dom": "^5.16.4",
+    "@testing-library/react": "^13.3.0",
+    "@testing-library/user-event": "^14.2.1",
+    "@types/jest": "^28.1.4",
+    "@types/material-ui": "^0.21.12",
+    "@types/node": "^18.0.0",
+    "@types/react": "^18.0.14",
+    "@types/react-dom": "^18.0.5",
+    "@types/react-router-dom": "^5.3.3",
+    "@types/yup": "^0.29.14",
+    "amazon-cognito-identity-js": "^5.2.9",
+    "aws-sdk": "^2.1167.0",
+    "axios": "^0.24.0",
+    "classnames": "^2.3.2",
+    "mdb-react-ui-kit": "^5.1.0",
+    "react": "^18.2.0",
+    "react-burger-menu": "^3.0.9",
+    "react-datepicker": "^4.11.0",
+    "react-datetime-picker": "^5.0.3",
+    "react-dom": "^18.2.0",
+    "react-loader-spinner": "^5.3.4",
+    "react-router-dom": "^6.8.2",
+    "react-scripts": "5.0.1",
+    "react-select": "^5.7.0",
+    "react-table": "^7.8.0",
+    "serve": "^14.2.0",
+    "styled-components": "latest",
+    "typescript": "^4.7.4",
+    "web-vitals": "^2.1.4",
+    "yup": "^0.32.11"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}

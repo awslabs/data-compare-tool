@@ -1,0 +1,87 @@
+{
+  "host_name": "test-host-name1",
+  "port": 1234,
+  "database_name": "h1_database_1",
+  "ssl_mode": true,
+  "username": "h1_db1_user_1",
+  "password": "Password123",
+  "schema_details": [
+    {
+      "schema_name": "h1_db1_schema_1",
+      "table_details": [
+        {
+          "table_name": "h1_db1_s1_table1",
+          "columns_names": ["c11", "c12", "c13", "c14"]
+        },
+        {
+          "table_name": "h1_db1_s1_table2",
+          "columns_names": ["c21", "c22", "c23", "c24", "c25", "c26", "c27", "c28", "c29"]
+        }
+      ]
+    },
+    {
+      "schema_name": "h1_db1_schema_2",
+      "table_details": [
+        {
+          "table_name": "h1_db1_s2_table1",
+          "columns_names": ["c11", "c12"]
+        }
+      ]
+    },
+    {
+      "schema_name": "h1_db1_schema_3",
+      "table_details": [
+        {
+          "table_name": "h1_db1_s3_table1",
+          "columns_names": ["s3t1c11", "s3t1c12", "s3t1c13", "s3t1c14"]
+        },
+        {
+          "table_name": "h1_db1_s3_table2",
+          "columns_names": ["s3t2c21", "s3t2c22", "s3t2c23"]
+        },
+        {
+          "table_name": "h1_db1_s3_table3",
+          "columns_names": [
+            "s3t3c31",
+            "s3t3c32",
+            "s3t3c33",
+            "s3t3c34",
+            "s3t3c35",
+            "s3t3c36",
+            "s3t3c37",
+            "s3t3c38",
+            "s3t3c39",
+            "s3t3c310",
+            "s3t3c311",
+            "s3t3c312",
+            "s3t3c313",
+            "s3t3c314",
+            "s3t3c315",
+            "s3t3c316",
+            "s3t3c317",
+            "s3t3c318",
+            "s3t3c319",
+            "s3t3c320",
+            "s3t3c321"
+          ]
+        },
+        {
+          "table_name": "h1_db1_s3_table4",
+          "columns_names": ["s3t4c1", "s3t4c2", "s3t4c3", "s3t4c4", "s3t4c5", "s3t4c6", "s3t4c7", "s3t4c8", "s3t4c9"]
+        },
+        {
+          "table_name": "h1_db1_s3_table5",
+          "columns_names": ["s3t5c1", "s3t5c2"]
+        },
+        {
+          "table_name": "h1_db1_s3_table6",
+          "columns_names": ["s3t6c1", "s3t6c2", "s3t6c3", "s3t6c4"]
+        },
+        {
+          "table_name": "h1_db1_s3_table7",
+          "columns_names": ["s3t7c1", "s3t7c2", "s3t7c3", "s3t7c4", "s3t7c5", "s3t7c6", "s3t7c7"]
+        }
+      ]
+    }
+  ]
+}
