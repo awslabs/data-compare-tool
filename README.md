@@ -46,6 +46,7 @@ Software:
 -   Maven: It's required to build the project, preferable apache-maven-3.8.1 or higher.
 -   OJDBC jar: It's required to run the project, preferable ojdbc7-12.1.0.2.jar or higher.
 -   IDE: Your preferred IDE for code changes (like Eclipse/IntelliJ).
+-   Node: Required node version to run tool is v14.xx.x.(v14.21.3).
 -   Web Browser/Postman: To launch the tool from web browser with URL.
 -   Database management tool to connect and view DB (like DBever/pgAdmin)
 
