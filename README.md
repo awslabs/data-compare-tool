@@ -25,6 +25,7 @@ The data compare tool helps in validating the migrated data. Source will be eith
 -   Ignore columns in a table from comparison.
 -   Ability to provide chunk size for comparison in a table. Will fetch that many rows from a table.
 -   Ability to execute chunks in parallel.
+-   Ability to validate incremental data.
 -   Option to get detail report for mismatch data.
 -   Compare partial data using SQL Filter.
 -   Compares Clob and Blob data types also.
@@ -34,10 +35,13 @@ The data compare tool helps in validating the migrated data. Source will be eith
 -   Ability to schedule incremental validations.
 -   Ability to remediate mismatched data.
 -   Option to view last run/validation details.
+-   Ability to manage user.
+-   Option to download mismatched report in excel.
+-   Option to remediate bulk data using excel upload.
 
 ## High Level Design
 
-<img width="500" alt="Flowchart" src="/doc/data-validation.png">
+<img alt="Architecture diagram of data validation tool" src="/doc/data-validation.png">
 
 ## Setup & Infra
 
