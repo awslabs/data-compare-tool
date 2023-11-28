@@ -79,7 +79,9 @@ function DVTTableBody(props) {
                                 key={columnIndex + columnsDsiplayLimit}
                                 title={eachCol.targetValue}
                                 sx={{
-                                    color: "#FD6552 !important",
+                                    color: eachRow?.isRemediated
+                                        ? "#008000 !important"
+                                        : "#FD6552 !important",
                                     fontStyle: "italic",
                                     overflow: "hidden",
                                     whiteSpace: "nowrap",
@@ -95,9 +97,11 @@ function DVTTableBody(props) {
                         {showMismatchType(eachRow.recommendationCode)}
                     </TableCell>
                     <TableCell>
-                        {eachRow?.isRemediated
-                            ? "Remediated"
-                            : "Not Remediated"}
+                        {eachRow?.isRemediated ? (
+                            <span style={{ color: "#008000" }}>Remediated</span>
+                        ) : (
+                            "Not Remediated"
+                        )}
                     </TableCell>
                     <TableCell
                         style={{ width: "1%" }}
