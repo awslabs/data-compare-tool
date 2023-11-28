@@ -52,6 +52,7 @@ function DVTTableBody(props) {
                             onClick={props.rowCheckboxHandler}
                             checked={props.isChecked(rowIndex)}
                             style={{ height: 8 }}
+                            disabled={eachRow?.isRemediated ? true : false}
                         />
                     </TableCell>
 
@@ -93,6 +94,11 @@ function DVTTableBody(props) {
                     <TableCell>
                         {showMismatchType(eachRow.recommendationCode)}
                     </TableCell>
+                    <TableCell>
+                        {eachRow?.isRemediated
+                            ? "Remediated"
+                            : "Not Remediated"}
+                    </TableCell>
                     <TableCell
                         style={{ width: "1%" }}
                         key={20 * columnsDsiplayLimit + 1}
@@ -100,7 +106,9 @@ function DVTTableBody(props) {
                         <Button
                             value={rowIndex}
                             onClick={(event) =>
-                                props.openDetailsModalHandler(event)
+                                eachRow?.isRemediated
+                                    ? null
+                                    : props.openDetailsModalHandler(event)
                             }
                         >
                             +

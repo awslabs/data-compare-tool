@@ -14,6 +14,7 @@ function Recommendation() {
     const [errorMessage, setErrorMessage] = useState(null);
     // const [showSummaryFlag, setShowSummaryFlag] = useState(false);
     const [summaryData, setSummaryData] = useState([]);
+    const [remediatedData, setRemediatedData] = useState([]);
 
     //alert("Length =" + summaryData.length);
 
@@ -57,6 +58,7 @@ function Recommendation() {
                 setSuccessMessage(null);
                 setErrorMessage(null);
                 setSummaryData([]);
+                setRemediatedData([]);
             })
             .catch((error) => {
                 setErrorMessage("An Unexpected Error occured..");
@@ -124,8 +126,6 @@ function Recommendation() {
     };
 
     function summaryContinueHandler() {
-        setSummaryData([]);
-
         let dataToSubmit = [];
 
         summaryData.map((eachRow, rowIndex) => {
@@ -170,7 +170,7 @@ function Recommendation() {
         requestBody.exceptionType = "";
         requestBody.columnDetails = dataToSubmit;
         requestParams.body = JSON.stringify(requestBody);
-        console.log(" request ", requestParams.body);
+
         fetch(BACKEND_BASEURL_SUBMIT, requestParams)
             .then((response) => {
                 if (response.ok) {
@@ -182,6 +182,22 @@ function Recommendation() {
                     resultData !== null ? resultData : "Saved Sucessfully";
                 setSuccessMessage(msg);
                 setErrorMessage(null);
+                setRemediatedData([...remediatedData, ...summaryData]);
+                const updatedRowData = data.rows.map((row) => {
+                    const matchedData = [
+                        ...remediatedData,
+                        ...summaryData,
+                    ].find(
+                        (remediatedRow) =>
+                            remediatedRow.valId === row.valId &&
+                            remediatedRow.recommendationCode ===
+                                row.recommendationCode
+                    );
+                    row.isRemediated = matchedData ? true : false;
+                    return row;
+                });
+                setData({ ...data, rows: updatedRowData });
+                setSummaryData([]);
             })
             .catch((error) => {
                 console.log("Error ::", error);

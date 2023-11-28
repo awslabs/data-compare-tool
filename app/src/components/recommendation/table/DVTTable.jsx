@@ -74,8 +74,14 @@ function DVTTable(props) {
     const selectAllCheckboxHandler = (event, name) => {
         //console.log("handleSelectAllClick " + event.target.checked);
         if (event.target.checked) {
-            const newSelected = data.rows.map((n, index) => "" + index);
-            //console.log("newSelected", newSelected);
+            const newSelected = [];
+            data.rows.map((n, index) => {
+                if (!n?.isRemediated) {
+                    newSelected.push("" + index);
+                }
+                return;
+            });
+            console.log("newSelected", newSelected);
             setSelected(newSelected);
         } else {
             console.log("newSelected", []);

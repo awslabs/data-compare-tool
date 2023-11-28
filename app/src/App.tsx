@@ -22,7 +22,7 @@ import logo from "./logo.svg";
 import Validation from "./components/validation/user_credentials";
 import SchemaAndTableSelectCopy from "./components/SchemaAndRunDetailsCopy";
 import Recommendation from "./components/recommendation/Recommendation";
-import Menu from "./components/hmenu";
+import Homepage from "./components/homepage";
 import './styles/globals.css';
 
 
@@ -61,16 +61,15 @@ const MainRoute: React.FunctionComponent = () => (
 
     <Route path="/dvt/changepassword" element={<ChangePassword />} />
     <Route path="/dvt/selection" element={<SchemaAndTableSelectCopy />}></Route>
-    <Route path="/dvt/menu" element={<Menu />}></Route>
     <Route path="/dvt/recommend" element={<Recommendation />}></Route>
     <Route path="http://localhost:8090/compareData" element={<Validation />}></Route>
     <Route path="/dvt/compare" element={<Validation />}></Route>
-    <Route path="/dvt/menu" element={<Menu />}></Route>
     <Route path="/dvt/addSchedules" element={<AddSchedules />}></Route>
     <Route path="/dvt/viewSchedules" element={<ViewSchedules />}></Route>
     <Route path="/dvt/viewScheduleRuns" element={<ViewScheduleRuns />}></Route>
-    <Route path="/" element={<Menu />}></Route>
-    <Route path="*" element={<Menu />}></Route>
+    <Route path="/dvt/homepage" element={<Homepage />}></Route>
+    <Route path="/" element={<Homepage />}></Route>
+    <Route path="*" element={<Homepage />}></Route>
   </Routes>
 
 )

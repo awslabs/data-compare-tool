@@ -28,6 +28,10 @@ body h6.heading {
   margin-bottom: 15px;
 }
 
+body .sub-heading {
+  font-size: 1.125rem;
+}
+
 .react-datepicker-popper {
   z-index: 2;
 }

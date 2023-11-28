@@ -53,6 +53,7 @@ function DVTTableHeader(props) {
         });
 
         columnArr.push(<TableCell>Exception Status</TableCell>);
+        columnArr.push(<TableCell>Remediation Status</TableCell>);
         if (columns.length >= columnsDsiplayLimit) {
             columnArr.push(
                 <TableCell
