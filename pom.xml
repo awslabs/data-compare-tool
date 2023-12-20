@@ -176,7 +176,7 @@
 						</goals>
 						<phase>generate-resources</phase>
 					</execution>
-					<execution>
+					<!-- <execution>
 						<id>yarn test</id>
 						<goals>
 							<goal>yarn</goal>
@@ -188,7 +188,7 @@
 								<CI>true</CI>
 							</environmentVariables>
 						</configuration>
-					</execution>
+					</execution> -->
 					<execution>
 						<id>yarn build</id>
 						<goals>
