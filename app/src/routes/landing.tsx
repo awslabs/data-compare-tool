@@ -2,29 +2,16 @@ import React from 'react'
 
 import { useNavigate } from 'react-router-dom'
 
-import { makeStyles } from '@material-ui/core/styles'
-
-import Typography from '@material-ui/core/Typography'
-import Grid from '@material-ui/core/Grid'
-import Box from '@material-ui/core/Box'
-import Button from '@material-ui/core/Button'
-import Link from '@material-ui/core/Link'
-import GitHubIcon from '@material-ui/icons/GitHub'
+import Grid from '@mui/material/Grid'
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import Link from '@mui/material/Link'
+import GitHubIcon from '@mui/icons-material/GitHub'
+import Typography from '@mui/material/Typography'
 
 import logoImage from './logo.png'
 
-const useStyles = makeStyles((theme) => ({
-  root: {
-    height: '100vh',
-  },
-  title: {
-    textAlign: 'center',
-  },
-}))
-
 const Landing: React.FunctionComponent = () => {
-  const classes = useStyles()
-
   const history = useNavigate()
 
   const signIn = () => {
@@ -33,17 +20,17 @@ const Landing: React.FunctionComponent = () => {
 
   return (
     <Grid container>
-      <Grid className={classes.root} container direction="column" justify="center" alignItems="center">
+      <Grid container direction="column" height="100vh" justifyContent="center" alignItems="center">
         <Box m={2}>
           <img src={logoImage} width={224} height={224} alt="logo" />
         </Box>
         <Box m={2}>
           <Link underline="none" color="inherit" href="https://github.com/dbroadhurst/aws-cognito-react">
-            <Grid container direction="row" justify="center" alignItems="center">
+            <Grid container direction="row" alignItems="center" justifyContent="center" >
               <Box mr={3}>
                 <GitHubIcon fontSize="large" />
               </Box>
-              <Typography className={classes.title} variant="h3">
+              <Typography variant="h3" textAlign="center">
                 AWS Cognito Starter
               </Typography>
             </Grid>

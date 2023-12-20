@@ -4,8 +4,8 @@ import Container from "./components/Container";
 
 import { HashRouter as Router, Route, Routes } from 'react-router-dom'
 
-import { createMuiTheme, ThemeProvider, responsiveFontSizes } from '@material-ui/core/styles'
-import CssBaseline from '@material-ui/core/CssBaseline'
+import { createMuiTheme, ThemeProvider, responsiveFontSizes } from '@mui/material/styles'
+import CssBaseline from '@mui/material/CssBaseline'
 import AuthProvider, { AuthIsSignedIn, AuthIsNotSignedIn } from './contexts/authContext'
 import SignIn from './routes/auth/signIn'
 import SignUp from './routes/auth/signUp'
@@ -28,7 +28,7 @@ import './styles/globals.css';
 
 let lightTheme = createMuiTheme({
   palette: {
-    type: 'light',
+    mode: 'light',
   },
 })
 lightTheme = responsiveFontSizes(lightTheme)
