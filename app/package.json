@@ -35,6 +35,7 @@
         "react-scripts": "^5.0.1",
         "react-select": "^5.8.0",
         "styled-components": "^6.1.2",
+        "typescript": "^5.3.3",
         "web-vitals": "^3.5.0"
     },
     "scripts": {
