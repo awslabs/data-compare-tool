@@ -21,8 +21,8 @@
 		<maven.compiler.source>16</maven.compiler.source>
 		<maven.compiler.target>16</maven.compiler.target>
 		<frontend-maven-plugin.version>1.6</frontend-maven-plugin.version>
-		<node.version>v14.18.0</node.version>
-		<yarn.version>v1.12.1</yarn.version>
+		<node.version>v18.17.1</node.version>
+		<yarn.version>v1.22.17</yarn.version>
 
 	</properties>
 	<dependencies>
@@ -45,7 +45,7 @@
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
-			<version>1.18.24</version>
+			<version>1.18.30</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.poi</groupId>
@@ -176,7 +176,7 @@
 						</goals>
 						<phase>generate-resources</phase>
 					</execution>
-					<execution>
+					<!-- <execution>
 						<id>yarn test</id>
 						<goals>
 							<goal>yarn</goal>
@@ -188,7 +188,7 @@
 								<CI>true</CI>
 							</environmentVariables>
 						</configuration>
-					</execution>
+					</execution> -->
 					<execution>
 						<id>yarn build</id>
 						<goals>

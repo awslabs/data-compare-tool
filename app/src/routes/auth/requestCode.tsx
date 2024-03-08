@@ -2,30 +2,19 @@ import React, { useState, useContext } from 'react'
 
 import { useNavigate } from 'react-router-dom'
 
-import { makeStyles } from '@material-ui/core/styles'
-import Box from '@material-ui/core/Box'
-import Grid from '@material-ui/core/Grid'
-import Button from '@material-ui/core/Button'
-import Typography from '@material-ui/core/Typography'
-import Paper from '@material-ui/core/Paper'
+import Box from '@mui/material/Box'
+import Grid from '@mui/material/Grid'
+import Button from '@mui/material/Button'
+import Typography from '@mui/material/Typography'
+import Paper from '@mui/material/Paper'
 
 import { useValidUsername } from '../../hooks/useAuthHooks'
 import { Username } from '../../components/authComponents'
 
 import { AuthContext } from '../../contexts/authContext'
 
-const useStyles = makeStyles({
-  hover: {
-    '&:hover': { cursor: 'pointer' },
-  },
-  text: {
-    textAlign: 'center',
-  },
-})
 
 export default function RequestCode() {
-  const classes = useStyles()
-
   const { username, setUsername, usernameIsValid } = useValidUsername('')
   const [error, setError] = useState('')
   const [resetSent, setResetSent] = useState(false)
@@ -48,7 +37,7 @@ export default function RequestCode() {
   const emailSent = (
     <>
       <Box mt={1}>
-        <Typography className={classes.text} variant="h5">{`Reset Code Sent to ${username}`}</Typography>
+        <Typography textAlign="center" variant="h5">{`Reset Code Sent to ${username}`}</Typography>
       </Box>
       <Box mt={4}>
         <Button onClick={() => history('/dvt/forgotpassword')} color="primary" variant="contained">
@@ -70,7 +59,7 @@ export default function RequestCode() {
       </Box>
 
       <Box mt={2}>
-        <Grid container direction="row" justify="center">
+        <Grid container direction="row" justifyContent="center">
           <Box m={1}>
             <Button color="secondary" variant="contained" onClick={() => history(-1)}>
               Cancel
@@ -87,10 +76,10 @@ export default function RequestCode() {
   )
 
   return (
-    <Grid container direction="row" justify="center" alignItems="center">
-      <Grid xs={11} sm={6} lg={4} container direction="row" justify="center" alignItems="center" item>
+    <Grid container direction="row" alignItems="center" justifyContent="center">
+      <Grid xs={11} sm={6} lg={4} container direction="row" alignItems="center" item justifyContent="center">
         <Paper style={{ width: '100%', padding: 32 }}>
-          <Grid container direction="column" justify="center" alignItems="center">
+          <Grid container direction="column" alignItems="center" justifyContent="center">
             <Box m={2}>
               <Typography variant="h5" className='heading'>Send Reset Code</Typography>
             </Box>
