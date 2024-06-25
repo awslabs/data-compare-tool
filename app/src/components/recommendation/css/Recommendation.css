@@ -1,0 +1,82 @@
+@import url("//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css");
+
+.success-msg,
+.error-msg {
+  margin: auto;
+  padding: 10px;
+  border-radius: 3px 3px 3px 3px;
+  width: 40%;
+}
+
+.success-msg {
+  color: #270;
+  background-color: #dff2bf;
+}
+
+.error-msg {
+  color: #d8000c;
+  background-color: #ffbaba;
+}
+
+/*
+Table
+*/
+.dvttbl, .dvttblh2 {
+  border-collapse: collapse;
+  width: 100%;
+}
+table.dvttblh2 {
+  border-collapse: separate;
+}
+
+.dvttbl th, .dvttblh2 th {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  text-align: left;
+  background-color: #1976d2;
+  color: white;
+  border-left: 1px solid #fff;
+  border-right: 1px solid #fff;
+  font-weight: bold;
+  font-size: 0.938rem;
+}
+.dvttbl th:first-child, .dvttblh2 th:first-child {
+  border-left: 0;
+}
+.dvttbl th:last-child, .dvttblh2 th:last-child {
+  border-right: 0;
+}
+
+.dvttbl td, .dvttblh2 td,
+#customers th {
+  border: 1px solid #ddd;
+  padding: 4px;
+}
+
+.dvttbl tbody tr:nth-child(even), .dvttblh2 tbody tr:nth-child(even) {
+  background-color: #d9ecff;
+}
+
+.dvttbl tbody tr:hover, .dvttblh2 tbody tr:hover {
+  background-color: #abd0f5;
+}
+
+.dvttblh2 thead tr:nth-child(1) th {
+  text-align: center;
+}
+.dvttblh2 thead tr:nth-child(1) th:nth-child(1) {
+  background: transparent;
+  border: none;
+}
+.dvttblh2 thead tr:nth-child(2) th:nth-child(1) {
+  border: none;
+}
+.dvttblh2 thead tr:nth-child(1) th:nth-child(2) {
+  background: #ffa500;
+}
+.dvttblh2 thead tr:nth-child(1) th:nth-child(3) {
+  background: #FD6552;
+}
+.dvttblh2 thead tr:nth-child(2) th {
+  text-align: left;
+}
